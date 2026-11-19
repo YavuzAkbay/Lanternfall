@@ -89,7 +89,7 @@ namespace Selene
                 bmp.BeginInit();
                 bmp.CacheOption = BitmapCacheOption.OnLoad;
                 bmp.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
-                bmp.DecodePixelWidth = width;
+                bmp.DecodePixelWidth = PixelSize.Width(width);   // (layout units -> real pixels)
                 bmp.StreamSource = ms;
                 bmp.EndInit();
                 bmp.Freeze();

@@ -154,7 +154,7 @@ namespace Selene
                 var bmp = new BitmapImage();
                 bmp.BeginInit();
                 bmp.CacheOption = BitmapCacheOption.OnLoad;
-                bmp.DecodePixelWidth = width;
+                bmp.DecodePixelWidth = PixelSize.Width(width);   // (layout units -> real pixels)
                 bmp.UriSource = new Uri(path);
                 bmp.EndInit();
                 bmp.Freeze();

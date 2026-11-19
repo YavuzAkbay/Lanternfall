@@ -33,7 +33,7 @@ namespace Selene
         private static readonly ConditionalWeakTable<FrameworkElement, object> hooked = new ConditionalWeakTable<FrameworkElement, object>();
         private static readonly Stack<Request> queue = new Stack<Request>();
         private static readonly object gate = new object();
-        private static bool working, background;
+        private static bool working, background, scaleLogged;
         private static int decoded;
         private static readonly HashSet<string> sizeLogged = new HashSet<string>();
 
@@ -96,15 +96,14 @@ namespace Selene
                     return;
                 }
                 // the size it's drawn at, in pixels (the cover stretches to the tile's width)
-                var source = PresentationSource.FromVisual(el);
-                double scale = source != null && source.CompositionTarget != null ? source.CompositionTarget.TransformToDevice.M11 : 1;
+                double scale = PixelScale(el);
                 double w = el.ActualWidth > 0 ? el.ActualWidth : el.Width > 0 ? el.Width : 0;
                 // Collection's cover has no size of its own before its picture arrives: the tile it fills (200 px was a guess, blurry when drawn larger)
                 for (var up = VisualTreeHelper.GetParent(el) as FrameworkElement; w <= 0 && up != null; up = VisualTreeHelper.GetParent(up) as FrameworkElement)
                     if (up.ActualWidth > 0) w = up.ActualWidth;
                 if (w <= 0) w = 200;
                 double zoom = el.Name == "PART_ImageCover" ? CollectionZoom : SpotlightZoom;   // (the selected tile is drawn larger than it is laid out)
-                int width = (int)Math.Min(900, Math.Ceiling(w * scale * zoom / 16) * 16);   // (rounded up: one cached picture serves nearby sizes)
+                int width = (int)Math.Min(1400, Math.Ceiling(w * scale * zoom / 16) * 16);   // (rounded up: one cached picture serves nearby sizes)
                 if (!sizeLogged.Contains(el.Name)) { sizeLogged.Add(el.Name); HomeNav.Log("covers: " + el.Name + " decoded at " + width + " px (drawn " + Math.Round(w) + " x" + scale + ")"); }
                 var key = path + "|" + width;
                 wanted.Remove(el);
@@ -122,6 +121,39 @@ namespace Selene
                 ThreadPool.QueueUserWorkItem(_ => Work(el.Dispatcher));
             }
             catch (Exception ex) { HomeNav.Log("covers: " + ex.Message); }
+        }
+
+        // Screen pixels per layout unit at el: the DPI scale times the stretch of the window's content. Playnite Fullscreen
+        // lays a theme out at its design size (1920 x 1080) and stretches it to the screen, so a 160-unit tile is 213 px on a
+        // 1440p screen and 320 px on 4K. Reading the DPI alone decoded every cover for 1080p and blew it up on bigger screens.
+        // Measured from the window (not el itself) so the selected tile's zoom and the row's intro animation don't count.
+        public static double PixelScale(FrameworkElement el)
+        {
+            double dpi = 1, stretch = 1;
+            try
+            {
+                var source = PresentationSource.FromVisual(el);
+                if (source != null && source.CompositionTarget != null) dpi = source.CompositionTarget.TransformToDevice.M11;
+                var win = Window.GetWindow(el);
+                var content = win != null ? win.Content as FrameworkElement : null;
+                // the window's content and whatever wraps it (a Viewbox) down to the first element laid out at design size
+                var walked = new System.Text.StringBuilder();
+                for (var cur = content; cur != null; )
+                {
+                    walked.Append(cur.GetType().Name).Append('(').Append(Math.Round(cur.ActualWidth)).Append(") ");
+                    var box = cur as Viewbox;
+                    var inner = box != null ? box.Child as FrameworkElement : null;
+                    if (inner != null && inner.ActualWidth > 0 && box.ActualWidth > 0) { stretch = box.ActualWidth / inner.ActualWidth; break; }
+                    var lt = cur.LayoutTransform;
+                    if (lt != null && !lt.Value.IsIdentity && lt.Value.M11 > 0) { stretch = lt.Value.M11; break; }
+                    cur = VisualTreeHelper.GetChildrenCount(cur) == 1 ? VisualTreeHelper.GetChild(cur, 0) as FrameworkElement : null;
+                }
+                if (!scaleLogged) { scaleLogged = true; HomeNav.Log("covers: pixel scale dpi " + dpi + " stretch " + Math.Round(stretch, 3) + " via " + walked); }
+            }
+            catch { }
+            if (stretch < 1) stretch = 1;   // (a smaller screen: decoding at the design size is already enough)
+            PixelSize.Measured(dpi * stretch);
+            return dpi * stretch;
         }
 
         // the tile no longer follows Playnite's binding (it would decode the cover on the UI thread again)

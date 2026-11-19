@@ -299,7 +299,7 @@ namespace Selene
                         try
                         {
                             var pic = new System.Windows.Media.Imaging.BitmapImage();
-                            pic.BeginInit(); pic.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad; pic.DecodePixelWidth = 560; pic.UriSource = new Uri(made); pic.EndInit(); pic.Freeze();
+                            pic.BeginInit(); pic.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad; pic.DecodePixelWidth = PixelSize.Width(560); pic.UriSource = new Uri(made); pic.EndInit(); pic.Freeze();
                             var fill = new Border { CornerRadius = new CornerRadius(11), Background = new ImageBrush(pic) { Stretch = Stretch.UniformToFill }, Opacity = 0 };
                             tile.Face.Child = fill;
                             Ui.Fade(fill, 1, 240);

@@ -624,7 +624,7 @@ namespace Selene
                 // so every cached screenshot also kept its whole file in memory); no shared WPF cache, a replaced file reloads
                 bi.CreateOptions = BitmapCreateOptions.IgnoreColorProfile | BitmapCreateOptions.IgnoreImageCache;
                 bi.UriSource = new Uri(path);
-                if (width > 0) bi.DecodePixelWidth = width;
+                if (width > 0) bi.DecodePixelWidth = PixelSize.Width(width);   // (layout units -> real pixels)
                 bi.EndInit();
                 bi.Freeze();
                 return bi;

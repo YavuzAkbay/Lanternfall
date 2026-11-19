@@ -126,7 +126,7 @@ namespace Selene
             try
             {
                 var bmp = new System.Windows.Media.Imaging.BitmapImage();
-                bmp.BeginInit(); bmp.UriSource = new Uri(file); bmp.DecodePixelWidth = 512; bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad; bmp.EndInit(); bmp.Freeze();
+                bmp.BeginInit(); bmp.UriSource = new Uri(file); bmp.DecodePixelWidth = PixelSize.Width(512); bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad; bmp.EndInit(); bmp.Freeze();
                 pic.Child = null;
                 pic.Background = new ImageBrush(bmp) { Stretch = Stretch.UniformToFill };
             }

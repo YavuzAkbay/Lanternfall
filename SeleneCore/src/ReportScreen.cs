@@ -219,7 +219,7 @@ namespace Selene
             var image = new System.Windows.Media.Imaging.BitmapImage();
             image.BeginInit();
             image.StreamSource = new MemoryStream(shot);
-            image.DecodePixelWidth = 160;
+            image.DecodePixelWidth = PixelSize.Width(160);
             image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
             image.EndInit();
             var line = new StackPanel { Orientation = Orientation.Horizontal };

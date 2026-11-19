@@ -41,6 +41,7 @@ namespace Selene
         public static System.Windows.Media.ImageSource Load(string file, int width = 1920)
         {
             if (string.IsNullOrEmpty(file) || !File.Exists(file)) return null;
+            width = PixelSize.Width(width);   // (layout units -> the screen's real pixels)
             try
             {
                 // never enlarged while decoding (a 64 px icon decoded at 300 came out smeared); the screen scales it instead
