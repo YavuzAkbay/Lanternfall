@@ -4,6 +4,11 @@ Selene (theme) and Selene Core (add-on) share one version number and are release
 
 ## Unreleased
 
+## 1.5.8-3 - 2026-11-19 (Lanternfall Core 1.5.8; Lanternfall Browser 0.4.2)
+
+- No more background music: the "Selene OST" track is gone from the theme, and Lanternfall Core takes back what Selene had set up in UniPlaySong for it (its default-music file) and switches UniPlaySong's Ambient music off, once. Sound & music > Ambient music brings it back if you want it. Interface sounds are unchanged.
+- Install `Lanternfall.pthm` and `LanternfallCore.pext` once by hand (the version number is still 1.5.8, so Playnite does not offer them).
+
 ## 1.5.8-2 - 2026-11-19 (Lanternfall Core 1.5.8; Lanternfall Browser 0.4.2)
 
 - Browser fixes reach you on their own: Menu > Update now also offers a release that only brings a newer Lanternfall Browser (such as a YouTube fix), and then installs just the Browser. Needs this Lanternfall Core, installed once by hand.

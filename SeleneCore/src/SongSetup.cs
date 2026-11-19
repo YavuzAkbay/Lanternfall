@@ -140,7 +140,7 @@ namespace Selene
         }
 
         // a copy of UniPlaySong's settings changed by `change`, handed to its settings service and saved (false: nothing to change)
-        private static bool UpdateUps(Func<object, bool> change, string reason)
+        internal static bool UpdateUps(Func<object, bool> change, string reason)
         {
             var plugin = UpsPlugin();
             var service = plugin != null ? Field(plugin, "_settingsService") : null;

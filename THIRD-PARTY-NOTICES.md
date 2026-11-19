@@ -38,11 +38,7 @@ FANTASY XVI, CRISIS CORE, KINGDOM HEARTS III), (c) SQUARE ENIX. They are not fre
 maintainer's choice and will be replaced if asked.
 
 ## Background music
-`theme/Media/Selene OST.mp3` is the login music (`audio/LoginOST.mp3`) of the Aniki ReMake Playnite theme by Mike Aniki
-(https://github.com/Mike-Aniki/Aniki-ReMake, MIT License). It is the default music Selene sets in UniPlaySong when no default file is
-chosen. The file's own tag reads "UI#12 (UI/UI058_Equip_Off)" (2008) and Aniki ReMake does not say where the audio comes from, so it may
-not be Mike Aniki's to license: it is here by the maintainer's choice and will be removed or replaced if he or a rights holder asks
-(the swap is one file).
+Lanternfall does not ship Selene's default background music ("Selene OST", `theme/Media/Selene OST.mp3`): the file was removed.
 
 ## Theme palettes
 The color themes in `theme/Palettes` are generated from the palettes of [Omarchy](https://github.com/basecamp/omarchy)'s

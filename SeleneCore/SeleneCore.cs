@@ -58,6 +58,7 @@ namespace Selene
             SongSetup.DisableManagedAutomaticDownloads();
             SongSetup.ApplySongSettle();
             SongSetup.ApplyDefaultMusic();
+            ForkQuiet.Apply();   // Lanternfall: no ambient background music unless asked for
             GamesSetup.AskLater();
             XboxSignIn.AskLater();
             if (Features.On("perflog")) PerformanceRecorder.SetRecording(true);
@@ -423,7 +424,7 @@ namespace Selene
             new Option { Group = "Sound & music", Key = "upsspotify", Label = "Spotify as ambient music", About = "Your Spotify plays instead of the ambient tracks, wherever a game has no song. Needs the Spotify app open and signed in.", DefaultOn = false, Get = MusicLevel.SpotifyAmbient, Put = MusicLevel.SetSpotifyAmbient, Available = () => MusicLevel.Installed() && Features.On("upsdefault") },
             new Option { Group = "Sound & music", Key = "upsnight", Label = "Night music", About = "Softer, lower music for the evening. This is UniPlaySong's own switch.", DefaultOn = false, Get = () => MusicLevel.UpsSwitch("CalmDownModeEnabled"), Put = on => MusicLevel.SetUpsSwitch("CalmDownModeEnabled", on), Available = MusicLevel.Installed },
             new Option { Group = "Sound & music", Key = "songsetup", Label = "Get game songs", About = "Opt in to songs for your library. Asks before downloading songs or about 130 MB of required tools.", DefaultOn = false, Note = SongSetup.Status, Progress = Background.SongsProgress, Available = () => HasAddon("UniPlaySong") },
-            new Option { Group = "Sound & music", Key = "selenemusic", Label = "Selene OST as default music", About = "Use Selene OST when no default music file is selected." },
+            new Option { Group = "Sound & music", Key = "selenemusic", Label = "Selene OST as default music", About = "Use Selene OST when no default music file is selected.", DefaultOn = false },
             new Option { Group = "Sound & music", Key = "songsettle", Label = "Songs wait until you stop", About = "A game's song starts once you rest on it, so holding a direction scrolls smoothly. Sets UniPlaySong's hover delay.", Available = () => HasAddon("UniPlaySong") },
             new Option { Group = "Sound & music", Key = "music", Label = "Let Selene run the music", About = "Selene sets UniPlaySong's level and pauses and resumes it as you browse, launch games and watch trailers. Off leaves it alone.", Available = () => HasAddon("UniPlaySong") },
             new Option { Group = "Sound & music", Key = "independentmusic", Label = "Game music without trailers", About = "Play game songs without waiting for a trailer. Requires UniPlaySong.", DefaultOn = false },
