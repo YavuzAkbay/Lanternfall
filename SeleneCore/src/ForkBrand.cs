@@ -18,7 +18,7 @@ namespace Selene
 
         // where the fork lives: updates come from its releases, problem reports and ideas go to its issues and discussions
         // (never to Selene's: its author doesn't support the fork). No report service of its own: reports open GitHub's form.
-        public const string Repo = "OWNER/Lanternfall";
+        public const string Repo = "YavuzAkbay/Lanternfall";
         public const string RepoUrl = "https://github.com/" + Repo;
         public const string ReportService = "";
         public const string ThemePackage = "Lanternfall.pthm";
