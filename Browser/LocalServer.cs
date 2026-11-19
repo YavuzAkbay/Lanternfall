@@ -234,16 +234,38 @@ namespace SeleneBrowser
 
         // ---------------------------------------------------------------- DASH manifest
         static bool IsVp9(StreamFormat f) { return f.Codecs.StartsWith("vp09", StringComparison.OrdinalIgnoreCase) || f.Codecs.StartsWith("vp9", StringComparison.OrdinalIgnoreCase); }
+        static bool IsAvc(StreamFormat f) { return f.Codecs.StartsWith("avc1", StringComparison.OrdinalIgnoreCase); }
+        static bool IsAv1(StreamFormat f) { return f.Codecs.StartsWith("av01", StringComparison.OrdinalIgnoreCase); }
+        static bool IsHdr(StreamFormat f)
+        {
+            if (f.Codecs.StartsWith("vp09.02", StringComparison.OrdinalIgnoreCase) || f.Codecs.Equals("vp9.2", StringComparison.OrdinalIgnoreCase)) return true;
+            string[] p = f.Codecs.Split('.');   // av01.<profile>.<level><tier>.<bit depth>...: 10-bit is YouTube's HDR
+            return IsAv1(f) && p.Length > 3 && p[3] == "10";
+        }
 
-        public static List<StreamFormat> PlayableVideo(StreamInfo si)
+        /// <summary>The codecs string the manifest declares. YouTube often says just "vp9" / "vp9.2": Chromium plays that,
+        /// but Edge (WebView2 too) cannot set up its hardware VP9 decoder from it and the video never gets its first frame.
+        /// The full form (profile, level 5.1 = up to 4K60, bit depth) is what Edge needs.</summary>
+        public static string DashCodec(StreamFormat f)
+        {
+            if (f.Codecs.Equals("vp9", StringComparison.OrdinalIgnoreCase)) return "vp09.00.51.08";
+            if (f.Codecs.Equals("vp9.2", StringComparison.OrdinalIgnoreCase)) return "vp09.02.51.10";
+            return f.Codecs;
+        }
+
+        /// <summary>The video renditions of one codec: "av1" (mp4), "vp9" (webm) or "avc" (H.264 mp4). AV1 is the first
+        /// choice where the engine decodes it in hardware: YouTube's 4K VP9 webm has seek points ~50 s apart, so one
+        /// request is ~180 MB and playback stalls on it; AV1 mp4 comes in small even fragments. H.264 is the last resort.</summary>
+        public static List<StreamFormat> PlayableVideo(StreamInfo si, string codec = "vp9")
         {
             List<StreamFormat> sdr = new List<StreamFormat>(), all = new List<StreamFormat>();
             foreach (StreamFormat f in si.Video)
             {
-                if (!f.MimeBase.Equals("video/webm", StringComparison.OrdinalIgnoreCase) || !IsVp9(f)) continue;
+                bool mp4 = f.MimeBase.Equals("video/mp4", StringComparison.OrdinalIgnoreCase), webm = f.MimeBase.Equals("video/webm", StringComparison.OrdinalIgnoreCase);
+                if (codec == "av1" ? !mp4 || !IsAv1(f) : codec == "avc" ? !mp4 || !IsAvc(f) : !webm || !IsVp9(f)) continue;
                 if (f.IndexEnd <= 0 || f.InitEnd <= 0) continue;
                 all.Add(f);
-                if (!f.Codecs.StartsWith("vp09.02", StringComparison.OrdinalIgnoreCase)) sdr.Add(f);
+                if (!IsHdr(f)) sdr.Add(f);
             }
             return sdr.Count > 0 ? sdr : all;
         }
@@ -263,10 +285,10 @@ namespace SeleneBrowser
 
         static string X(string s) { return System.Security.SecurityElement.Escape(s ?? ""); }
 
-        /// <summary>Builds the static DASH MPD (VP9 webm video + Opus webm audio). Formats must already carry tokens.</summary>
-        public static string BuildMpd(StreamInfo si)
+        /// <summary>Builds the static DASH MPD (VP9 webm video, or H.264 mp4 video when avc, + Opus webm audio). Formats must already carry tokens.</summary>
+        public static string BuildMpd(StreamInfo si, string codec = "vp9")
         {
-            List<StreamFormat> vids = PlayableVideo(si);
+            List<StreamFormat> vids = PlayableVideo(si, codec);
             List<StreamFormat> auds = PlayableAudio(si);
             double dur = si.Duration;
             StringBuilder sb = new StringBuilder();
@@ -278,12 +300,12 @@ namespace SeleneBrowser
             List<StreamFormat> sortedV = new List<StreamFormat>(vids);
             sortedV.Sort(delegate (StreamFormat a, StreamFormat b) { return a.Height != b.Height ? a.Height.CompareTo(b.Height) : a.Bitrate.CompareTo(b.Bitrate); });
             HashSet<int> itags = new HashSet<int>();
-            sb.Append("<AdaptationSet id=\"0\" contentType=\"video\" mimeType=\"video/webm\" startWithSAP=\"1\" subsegmentAlignment=\"true\" subsegmentStartsWithSAP=\"1\">\n");
+            sb.Append("<AdaptationSet id=\"0\" contentType=\"video\" mimeType=\"").Append(codec == "vp9" ? "video/webm" : "video/mp4").Append("\" startWithSAP=\"1\" subsegmentAlignment=\"true\" subsegmentStartsWithSAP=\"1\">\n");
             foreach (StreamFormat f in sortedV)
             {
                 if (!itags.Add(f.Itag)) continue;
                 sb.Append("<Representation id=\"").Append(f.Itag).Append("\" bandwidth=\"").Append(f.Bitrate > 0 ? f.Bitrate : 1000000)
-                  .Append("\" codecs=\"").Append(X(f.Codecs)).Append("\" width=\"").Append(f.Width).Append("\" height=\"").Append(f.Height)
+                  .Append("\" codecs=\"").Append(X(DashCodec(f))).Append("\" width=\"").Append(f.Width).Append("\" height=\"").Append(f.Height)
                   .Append("\" frameRate=\"").Append(f.Fps > 0 ? f.Fps : 30).Append("\">\n");
                 AppendSegmentInfo(sb, f);
                 sb.Append("</Representation>\n");
@@ -448,7 +470,8 @@ namespace SeleneBrowser
                 Result<StreamInfo> sr = GetCached(id, false);
                 if (!sr.Ok) { SendText(ns, 502, "text/plain", sr.Error, head, keep); return keep; }
                 string mpd;
-                try { mpd = BuildMpd(sr.Value); }
+                string mc = r.Q["c"] ?? "";
+                try { mpd = BuildMpd(sr.Value, mc == "avc" || mc == "av1" ? mc : "vp9"); }
                 catch (Exception e) { SendText(ns, 500, "text/plain", e.Message, head, keep); return keep; }
                 SendText(ns, 200, "application/dash+xml", mpd, head, keep);
                 return keep;
@@ -529,7 +552,23 @@ namespace SeleneBrowser
                 }
                 else if (si.IsLive) cfg["error"] = "This live stream is not available right now.";
                 else if (si.Duration <= 0) cfg["error"] = "Live streams are not supported yet.";
-                else if (PlayableVideo(si).Count == 0 || PlayableAudio(si).Count == 0) cfg["error"] = "No WebM (VP9/Opus) streams are available for this video.";
+                // codec candidates, best first: the page plays the first one the engine can decode, asked about the best
+                // rendition under the cap with its full codec string (Edge says no to a bare "vp9", yes to "vp09.00.51.08")
+                List<object> cands = new List<object>();
+                foreach (string codec in new[] { "av1", "vp9", "avc" })
+                {
+                    StreamFormat top = null;
+                    foreach (StreamFormat f in PlayableVideo(si, codec))
+                        if ((q <= 0 || f.Height <= q) && (top == null || f.Height > top.Height || f.Height == top.Height && f.Fps > top.Fps)) top = f;
+                    if (top == null) continue;
+                    Dictionary<string, object> c = new Dictionary<string, object>();
+                    c["name"] = codec; c["suffix"] = codec == "vp9" ? "" : "?c=" + codec;
+                    c["type"] = (codec == "vp9" ? "video/webm" : "video/mp4") + "; codecs=" + DashCodec(top);
+                    c["w"] = top.Width; c["h"] = top.Height; c["fps"] = top.Fps > 0 ? top.Fps : 30; c["rate"] = top.Bitrate > 0 ? top.Bitrate : 4000000;
+                    cands.Add(c);
+                }
+                cfg["cands"] = cands;
+                if (!live && cfg["error"].ToString().Length == 0 && (cands.Count == 0 || PlayableAudio(si).Count == 0)) cfg["error"] = "No playable streams are available for this video.";
                 foreach (CaptionTrack c in si.Captions)
                 {
                     Dictionary<string, object> d = new Dictionary<string, object>();
@@ -555,10 +594,11 @@ namespace SeleneBrowser
             return keep;
         }
 
-        // all VP9 webm itags share one codecs string, so switching between them never needs changeType
+        // all SDR VP9 webm itags share one codecs string, so switching between them never needs changeType. The full form,
+        // not YouTube's bare "vp9": Edge cannot set up its hardware VP9 decoder from that, and 1440p+ never showed.
         static string SbMime(StreamFormat f)
         {
-            if (f.MimeBase.EndsWith("webm", StringComparison.OrdinalIgnoreCase) && IsVp9(f)) return "video/webm; codecs=\"vp9\"";
+            if (f.MimeBase.EndsWith("webm", StringComparison.OrdinalIgnoreCase) && IsVp9(f)) return "video/webm; codecs=\"" + (IsHdr(f) ? "vp09.02.51.10" : "vp09.00.51.08") + "\"";
             return f.MimeBase + "; codecs=\"" + f.Codecs + "\"";
         }
 

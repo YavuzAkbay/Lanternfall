@@ -49,11 +49,13 @@ namespace SeleneBrowser
     {
         private static readonly ILogger logger = LogManager.GetLogger();
 
-        public static IPageView Create()
+        /// <param name="windowed">Edge only: a windowed (HWND) WebView2 instead of the composition control. Video plays at
+        /// full frame rate and sharpness, but nothing WPF can be drawn over it in the same window.</param>
+        public static IPageView Create(bool windowed = false)
         {
             try
             {
-                IPageView edge = TryCreateEdge();
+                IPageView edge = TryCreateEdge(windowed);
                 if (edge != null) return edge;
             }
             catch (Exception ex) { logger.Warn("SeleneBrowser: WebView2 probe failed: " + ex.Message); }
@@ -63,10 +65,10 @@ namespace SeleneBrowser
 
         // WebView2 types are only touched from NoInlining methods so a missing DLL fails here, not in the caller
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static IPageView TryCreateEdge()
+        private static IPageView TryCreateEdge(bool windowed)
         {
             if (!EdgeView.IsAvailable()) return null;
-            EdgeView v = new EdgeView();
+            EdgeView v = new EdgeView(windowed);
             logger.Info("SeleneBrowser: browser engine = Edge WebView2 " + EdgeView.RuntimeVersion());
             return v;
         }

@@ -42,9 +42,13 @@ var CFG = /*NOMAD_CFG*/;
   }
   // Auto quality = ABR between a floor and the cap. The floor (720p, or the best rendition under the cap when the
   // video has nothing that high) keeps a seek's slow first range request from dropping a TV picture to 144p.
+  // The cap hides the renditions above it from shaka, so the menu's list is the one taken at load, before the cap.
   function applyCap(){
     if (!player) return;
-    var cap = S.cap > 0 && minHeight() <= S.cap ? S.cap : Infinity;
+    // the full list, taken before any cap hides renditions (the first call comes while the stream is still loading)
+    var all = heights();
+    if (!S.allHeights || all.length > S.allHeights.length) S.allHeights = all;
+    var cap = S.auto && S.cap > 0 && minHeight() <= S.cap ? S.cap : Infinity;   // a picked quality is never capped back
     var floor = 0, hs = heights();
     for (var i = 0; i < hs.length; i++) if (hs[i] <= cap && hs[i] <= 720) { floor = hs[i]; break; }
     try { player.configure({ restrictions: { maxHeight: cap }, abr: { restrictions: { minHeight: floor } } }); } catch (e) {}
@@ -63,6 +67,24 @@ var CFG = /*NOMAD_CFG*/;
   function curLang(){
     var a = activeTrack();
     return a ? a.language : '';
+  }
+
+  // The first codec candidate (AV1, then VP9 webm, then H.264; see LocalServer.PlayableVideo) this engine can decode,
+  // asked with the stream's own codec string, size and frame rate. AV1 only in hardware (power efficient): software AV1
+  // at 4K stutters. H.264, the last, is taken without asking.
+  function pickManifest(){
+    var url = location.origin + CFG.manifest, list = CFG.cands || [];
+    function use(c){ S.codec = c ? c.name : 'vp9'; return url + (c ? c.suffix : ''); }
+    if (!list.length) return Promise.resolve(use(null));
+    if (!navigator.mediaCapabilities) return Promise.resolve(use(list.filter(function(c){ return c.name !== 'av1'; })[0] || list[0]));
+    function at(i){
+      var c = list[i];
+      if (i >= list.length - 1) return Promise.resolve(use(c));
+      return navigator.mediaCapabilities.decodingInfo({ type: 'media-source',
+        video: { contentType: c.type, width: c.w, height: c.h, bitrate: c.rate, framerate: c.fps } })
+        .then(function(r){ return r && r.supported && (c.name !== 'av1' || r.powerEfficient) ? use(c) : at(i + 1); }, function(){ return at(i + 1); });
+    }
+    return at(0);
   }
 
   function init(){
@@ -85,7 +107,7 @@ var CFG = /*NOMAD_CFG*/;
       });
       player.addEventListener('buffering', function(e){ S.buffering = !!e.buffering; });
       player.addEventListener('trackschanged', applyCap);
-      return player.load(location.origin + CFG.manifest, CFG.start > 0 ? CFG.start : null);
+      return pickManifest().then(function(url){ return player.load(url, CFG.start > 0 ? CFG.start : null); });
     }).then(function(){
       S.ready = true;
       applyCap();
@@ -160,7 +182,9 @@ var CFG = /*NOMAD_CFG*/;
       t: t, d: liveEdge(), ws: liveStart(), live: true, behind: Math.max(0, liveTarget() - t),
       paused: video.paused, buffering: !!S.buffering && !video.paused || (S.buffering && !S.ready),
       ended: false, quality: S.auto ? 'auto' : (lv ? lv.height : 'auto'), height: lv ? (lv.height || 0) : 0, qualities: liveHeights(),
-      captions: [], caption: '', audios: [], audio: '', rate: S.rate, error: S.err, skipped: 0, ready: S.ready
+      captions: [], caption: '', audios: [], audio: '', rate: S.rate, error: S.err, skipped: 0, ready: S.ready,
+      dbg: 'rs=' + video.readyState + ' ns=' + video.networkState + ' buf=' + (video.buffered.length ? video.buffered.start(0).toFixed(1) + '-' + video.buffered.end(video.buffered.length - 1).toFixed(1) : 'none')
+        + ' seek=' + liveStart().toFixed(1) + '-' + liveEdge().toFixed(1) + ' lv=' + (hls ? hls.levels.length + '/' + hls.currentLevel : '-') + ' vis=' + document.visibilityState
     });
   }
   function initLive(){
@@ -199,10 +223,27 @@ var CFG = /*NOMAD_CFG*/;
     video.currentTime = s;
   }
 
+  // A video starts playing and keeps playing until the user pauses it (A, or the overlay closing). A start play() the
+  // browser refused or dropped (autoplay before any input, a play() cut short by the stream reloading) is retried here,
+  // and on the first click (the host clicks the page once it loads), instead of leaving the video paused.
+  var wantPlay = true;
+  function retryPlay(){ if (wantPlay && S.ready && video.paused && !video.ended && !S.err) { var p = video.play(); if (p && p.catch) p.catch(function(){}); } }
+  setInterval(retryPlay, 700);
+  document.addEventListener('pointerdown', retryPlay, true);
+  document.addEventListener('mousedown', retryPlay, true);
+
   window.nomad = {
-    play: function(){ var p = video.play(); if (p && p.catch) p.catch(function(){}); },
-    pause: function(){ video.pause(); },
-    toggle: function(){ if (video.paused) window.nomad.play(); else video.pause(); },
+    play: function(){ wantPlay = true; var p = video.play(); if (p && p.catch) p.catch(function(){}); },
+    pause: function(){ wantPlay = false; video.pause(); },
+    // leaving the player: nothing may keep playing, even if the host's navigation away never lands
+    stop: function(){
+      wantPlay = false; S.ready = false;
+      try { video.pause(); } catch (e) {}
+      try { if (player) player.unload(); } catch (e) {}
+      try { if (hls) hls.destroy(); } catch (e) {}
+      try { video.removeAttribute('src'); video.load(); } catch (e) {}
+    },
+    toggle: function(){ if (video.paused) window.nomad.play(); else window.nomad.pause(); },
     seekBy: function(s){ seekTo(video.currentTime + s); },
     seekTo: function(s){ seekTo(s); },
     setRate: function(r){ S.rate = r; video.playbackRate = r; },
@@ -254,10 +295,12 @@ var CFG = /*NOMAD_CFG*/;
       var q = S.auto ? 'auto' : (a ? a.height : 'auto');
       return JSON.stringify({
         t: video.currentTime || 0, d: d, paused: video.paused, buffering: !!S.buffering && !video.paused || (S.buffering && !S.ready),
-        ended: video.ended, quality: q, height: a ? a.height : 0, qualities: heights(),
+        ended: video.ended, quality: q, height: a ? a.height : 0, qualities: S.allHeights || heights(),
         captions: (CFG.captions || []).map(function(c){ return { lang: c.lang, label: c.label }; }), caption: S.caption,
         audios: (CFG.audios || []).map(function(c){ return { lang: c.lang, label: c.label }; }), audio: curLang(),
-        rate: S.rate, error: S.err, skipped: S.skipped, ready: S.ready
+        rate: S.rate, error: S.err, skipped: S.skipped, ready: S.ready,
+        dbg: 'rs=' + video.readyState + ' ns=' + video.networkState + ' buf=' + (video.buffered.length ? video.buffered.start(0).toFixed(1) + '-' + video.buffered.end(video.buffered.length - 1).toFixed(1) : 'none')
+          + ' vis=' + document.visibilityState + ' rate=' + video.playbackRate + ' codec=' + (S.codec || '?') + ' pic=' + video.videoWidth + 'x' + video.videoHeight + ' offered=' + (S.allHeights || []).join('/')
       });
     }
   };
@@ -574,7 +617,13 @@ var CFG = /*NOMAD_CFG*/;
     if (!SG) return;
     if (h === 'auto' || !h) { S.auto = true; SG.low = 0; if (SG.vi > segCapIdx()) SG.vi = segCapIdx(); return; }
     h = parseInt(h, 10);
-    for (var i = 0; i < SG.ladder.length; i++) if (SG.ladder[i].height === h) { S.auto = false; SG.vi = i; return; }
+    for (var i = 0; i < SG.ladder.length; i++) if (SG.ladder[i].height === h) {
+      var was = SG.vi;
+      S.auto = false; SG.vi = i;
+      // a picked quality shows now, not after the ~15 s already buffered at the old one: refetch from the current segment
+      if (i !== was && SG.started && SG.head > 0) segSeekSq(Math.floor(segCurSq()));
+      return;
+    }
   }
   function segState(){
     var t = video.currentTime || 0, hs = [], cur = SG && SG.ladder.length ? SG.ladder[SG.vi] : null;
@@ -592,7 +641,7 @@ var CFG = /*NOMAD_CFG*/;
   function segDbg(cur, behind){
     if (!cur) return '';
     var thr = segThroughput();
-    return 'r=' + cur.height + 'p' + (cur.fps > 0 ? Math.round(cur.fps) : '') + ' thr=' + (thr === null ? '-' : thr.toFixed(1)) + 'Mbps inf=' + (SG.inf.v + SG.inf.a)
+    return 'r=' + cur.height + 'p' + (cur.fps > 0 ? Math.round(cur.fps) : '') + ' pic=' + video.videoWidth + 'x' + video.videoHeight + ' thr=' + (thr === null ? '-' : thr.toFixed(1)) + 'Mbps inf=' + (SG.inf.v + SG.inf.a)
       + ' ahead=' + segAhead().toFixed(1) + 's head=' + SG.head + ' cur=' + Math.round(segCurSq()) + ' behind=' + Math.max(0, behind).toFixed(1)
       + 's dn=' + SG.down + ' up=' + SG.up;
   }

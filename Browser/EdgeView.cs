@@ -26,7 +26,7 @@ namespace SeleneBrowser
         private static bool loaderPathSet;
 
         private readonly HashSet<string> logged = new HashSet<string>();
-        private readonly WebView2CompositionControl web = new WebView2CompositionControl();
+        private readonly IWebView2 web;   // WebView2CompositionControl, or the windowed WebView2 for the video player
         private CoreWebView2 core;
         private string pendingUrl;
         private double zoomLevel;
@@ -98,9 +98,13 @@ namespace SeleneBrowser
 
         // ----- creation -----
 
-        public EdgeView()
+        public EdgeView() : this(false) { }
+
+        public EdgeView(bool windowed)
         {
             Focusable = false;
+            if (windowed) web = new WebView2();
+            else web = new WebView2CompositionControl();
             Content = web;
             try
             {

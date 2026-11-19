@@ -704,7 +704,7 @@ namespace SeleneBrowser
             if (f.Height <= 0 || f.Url.Length == 0) return false;
             string c = f.Codecs.ToLowerInvariant();
             if (f.MimeBase.Equals("video/webm", StringComparison.OrdinalIgnoreCase))
-                return (c.StartsWith("vp9") || c.StartsWith("vp09")) && !c.StartsWith("vp09.02");   // no HDR (Profile 2)
+                return (c.StartsWith("vp9") || c.StartsWith("vp09")) && !c.StartsWith("vp09.02") && c != "vp9.2";   // no HDR (Profile 2, either spelling)
             if (f.MimeBase.Equals("video/mp4", StringComparison.OrdinalIgnoreCase)) return c.StartsWith("avc1");
             return false;
         }

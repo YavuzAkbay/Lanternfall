@@ -14,6 +14,13 @@
            top bar            filter tabs (home) / filter presets (library), clock, notifications, menu
            AcceuilSettings    the login (Selene Core builds its scene into LoginCenterShell and removes the layer)
          Element names are what Selene Core looks for - keep them when restyling. -->
+
+    <!-- Lanternfall: the Browser and YouTube overlays start hidden. Playnite skips App.xaml (it is not a ResourceDictionary),
+         so without these the overlays' DynamicResource is unresolved, falls back to Visible, and YouTube covers the screen
+         until Core starts. Core later sets the same keys on Application.Resources, which win over this merged dictionary. -->
+    <Visibility x:Key="SeleneBrowserOverlayVis">Collapsed</Visibility>
+    <Visibility x:Key="SeleneYouTubeOverlayVis">Collapsed</Visibility>
+
     <Style TargetType="{x:Type Main}">
         <Setter Property="Template">
             <Setter.Value>

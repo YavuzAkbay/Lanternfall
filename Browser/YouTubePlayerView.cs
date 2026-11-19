@@ -37,6 +37,7 @@ namespace SeleneBrowser
             + "if(v&&v.buffered.length){var t=v.currentTime;for(var i=0;i<v.buffered.length;i++){if(v.buffered.start(i)<=t+0.5&&v.buffered.end(i)>=t)b=v.buffered.end(i);}}"
             + "s.b=b;return JSON.stringify(s);}catch(e){return null;}})()";
         private long lastDbgLogAt = -100000;
+        private int loggedHeight;
         private static readonly double[] Rates = { 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2 };
         private static readonly string[] ButtonNames = { "Quality", "Speed", "Captions", "Audio", "Up next" };
         private const double SeekW = 1800;
@@ -75,6 +76,7 @@ namespace SeleneBrowser
         private readonly List<Border> relRows = new List<Border>();
 
         private IPageView pv;   // Edge WebView2 when available (H.264, HLS), CEF otherwise
+        private PlayerOverlayWindow overlayWin;
         private string pvUrl = "";
         private bool liveMode;  // the current video is a live stream: no resume position, no watched progress
         private bool playing, barVisible, rowFocused, relatedOpen, counting, polling, endedHandled, prefsApplied;
@@ -87,7 +89,8 @@ namespace SeleneBrowser
         private int pageReqToken, loadedToken;   // which video's player page was requested / has finished loading
         private PState ps;
         private double dispT;
-        private long seekHoldUntil, lastInput, lastSeekPress, loadStartedAt;
+        private long seekHoldUntil, lastInput, lastSeekPress, loadStartedAt, startCheckAt;
+        private int startCheckToken = -1, startCheckRound;
 
         // ------------------------------------------------------------------ layout
 
@@ -221,7 +224,8 @@ namespace SeleneBrowser
 
             d.Children.Add(picker);
             d.Children.Add(playerToast);
-            playerLayer.Children.Add(new Viewbox { Stretch = Stretch.Uniform, Child = d, IsHitTestVisible = false });
+            // the controls sit in their own window over the player: the page is a windowed WebView2 (see PlayerOverlayWindow)
+            overlayWin = new PlayerOverlayWindow(playerLayer, new Viewbox { Stretch = Stretch.Uniform, Child = d, IsHitTestVisible = false });
 
             pollTimer.Tick += delegate { Guard("poll", PollPlayer); };
             saveTimer.Tick += delegate { Guard("save", SaveProgress); };
@@ -321,15 +325,18 @@ namespace SeleneBrowser
             string pq = NomadStore.GetPref("yt.quality", "auto");
             if (pq != "auto" && int.TryParse(pq, out prefQ) && prefQ > 0) cap = prefQ;
             int screen = ScreenHeight();
-            int max = cap > 0 ? Math.Min(cap, screen) : screen;
+            // a chosen quality (here or FreeTube's default) is taken as is, above the screen too, as YouTube does: a 2160p
+            // stream on a 1440p screen is sharper than the 1440p one. Only Auto stops at the screen's height.
+            int max = cap > 0 ? cap : screen;
 
-            // an HLS stream is only ever handed out for live videos (the player page goes live on it too)
-            liveMode = si.IsLive || !string.IsNullOrEmpty(si.HlsUrl);
+            // YouTube's isLive only: the ANDROID_VR client hands out an HLS manifest for ordinary videos too, and those
+            // must keep their resume position and watched progress (the page still reports live if it goes live)
+            liveMode = si.IsLive;
             logger.Info("SeleneBrowser: YouTube " + nowPlaying.Id + " live=" + liveMode + " (api isLive=" + si.IsLive + ", hls=" + !string.IsNullOrEmpty(si.HlsUrl) + ")");
             if (liveMode) nowPlaying.IsLive = true;
             if (pv == null)
             {
-                pv = PageViews.Create();
+                pv = PageViews.Create(true);   // windowed: full frame rate and native sharpness for video
                 pvHost.Children.Add(pv.Element);
                 pv.LoadEnd += OnPlayerLoadEnd;
                 PageViews.OnEdgeInitFailed(pv, OnEdgeFailed);
@@ -413,7 +420,8 @@ namespace SeleneBrowser
             CancelCountdown();
             CloseRelated();
             picker.Close();
-            if (pv != null) { pv.ExecuteScript("window.nomad&&window.nomad.pause();"); pv.Navigate("about:blank"); }
+            logger.Info("SeleneBrowser: YouTube back to the list (player stopped)");
+            if (pv != null) { pv.ExecuteScript("window.nomad&&(window.nomad.stop||window.nomad.pause)();"); pv.Navigate("about:blank"); }
             playerLayer.Visibility = Visibility.Collapsed;
             browseBox.Visibility = Visibility.Visible;
             if (current.Kind == CardKind.Video && nowPlaying != null)
@@ -437,6 +445,7 @@ namespace SeleneBrowser
         private void PauseForHide()
         {
             if (!playing) return;
+            logger.Info("SeleneBrowser: YouTube screen closed (player paused)");
             if (pv != null) pv.ExecuteScript("window.nomad&&window.nomad.pause();");
             CancelCountdown();
             FinishCurrent();
@@ -505,6 +514,11 @@ namespace SeleneBrowser
                 lastDbgLogAt = clock.ElapsedMilliseconds;
                 logger.Info("SeleneBrowser: live dbg " + s.Dbg);
             }
+            if (s.Height > 0 && s.Height != loggedHeight)
+            {
+                loggedHeight = s.Height;
+                logger.Info("SeleneBrowser: YouTube rendition " + s.Height + "p (" + (pv != null && PageViews.IsEdge(pv) ? "Edge" : "CEF") + ")");
+            }
             if (s.Live && !liveMode) { liveMode = true; if (nowPlaying != null) nowPlaying.IsLive = true; }   // the page knows best
             if (clock.ElapsedMilliseconds > seekHoldUntil) dispT = s.T;
             if (s.Error.Length > 0) { SetError("Playback problem: " + s.Error); return; }
@@ -512,6 +526,16 @@ namespace SeleneBrowser
             {
                 stage = Stage.Playing;
                 OnFirstReady();
+                startCheckToken = playToken;
+                startCheckRound = 0;
+                startCheckAt = clock.ElapsedMilliseconds + 5000;
+            }
+            // one line per video, 5 s after it is ready: whether it is really playing (a video stuck paused at start was a bug)
+            if (startCheckToken == playToken && startCheckAt > 0 && clock.ElapsedMilliseconds >= startCheckAt)
+            {
+                startCheckRound++;
+                startCheckAt = startCheckRound < 4 ? clock.ElapsedMilliseconds + (startCheckRound == 1 ? 10000 : 15000) : 0;
+                logger.Info("SeleneBrowser: YouTube " + (nowPlaying != null ? nowPlaying.Id : "?") + " " + (startCheckRound == 1 ? 5 : startCheckRound == 2 ? 15 : startCheckRound == 3 ? 30 : 45) + " s after start: " + (s.Paused ? "PAUSED" : "playing") + " t=" + s.T.ToString("0.0", CultureInfo.InvariantCulture) + (s.Buffering ? " buffering" : "") + " " + s.Dbg);
             }
             if (!s.Ended) endedHandled = false;
             else if (stage == Stage.Playing) HandleEnded();
@@ -705,6 +729,7 @@ namespace SeleneBrowser
 
         private bool HandlePlayerCore(string b)
         {
+            if (b == "B") logger.Info("SeleneBrowser: YouTube player B (stage=" + stage + ", bar=" + barVisible + ", picker=" + picker.IsOpen + ", related=" + relatedOpen + ", row=" + rowFocused + ", countdown=" + counting + ")");
             if (picker.IsOpen) { HandlePicker(b); return true; }
             if (relatedOpen) { HandleRelated(b); return true; }
             if (stage != Stage.Playing)
