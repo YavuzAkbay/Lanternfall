@@ -23,7 +23,7 @@ $versionFiles = @('theme/theme.yaml', 'SeleneCore/extension.yaml')
 
 if (-not (& git remote | Where-Object { $_ -eq 'upstream' })) { Invoke-Git remote add upstream https://github.com/mattxslv/Selene.git }
 if (@(& git status --porcelain).Count -gt 0) { throw 'The working tree has uncommitted changes: commit or stash them first.' }
-if ($From -eq 'upstream/main') { Invoke-Git fetch upstream --tags --quiet }
+if ($From -eq 'upstream/main') { Invoke-Git fetch upstream --no-tags --quiet   # (Selene's tags would clash with Lanternfall's own v<version> releases) }
 $behind = [int](& git rev-list --count "HEAD..$From")
 if ($behind -eq 0) { "Already up to date with Selene ($From)."; return }
 $theirVersion = ((& git show "${From}:theme/theme.yaml") -match '^Version:' | Select-Object -First 1).Substring(8).Trim()

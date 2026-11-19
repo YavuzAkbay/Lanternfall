@@ -1,6 +1,6 @@
 # Builds Selene Core and packs both parts into installable files with Playnite's Toolbox:
-#   dist\Selene_<id>_<version>.pthm   (theme)       dist\SeleneCore_<id>_<version>.pext   (add-on)
-#   plus copies named Selene.pthm and SeleneCore.pext for the GitHub release
+#   dist\Lanternfall_<id>_<version>.pthm (theme), dist\LanternfallCore_<id>_<version>.pext and LanternfallBrowser_<id>_<version>.pext
+#   plus copies named Lanternfall.pthm, LanternfallCore.pext and LanternfallBrowser.pext for the GitHub release
 #   -AllowDirty  a local test build from a working tree with uncommitted changes (never for a release)
 param([switch]$AllowDirty)
 $ErrorActionPreference = 'Stop'
@@ -33,10 +33,14 @@ $stage = Join-Path $root 'SeleneCore\obj\stage'   # always the fresh build (bin\
 if ($LASTEXITCODE -ne 0) { throw 'Theme packaging failed' }
 & $toolbox pack $stage $dist
 if ($LASTEXITCODE -ne 0) { throw 'Add-on packaging failed' }
+# Lanternfall Browser (Browser and YouTube screens), its own add-on
+& (Join-Path $root 'Browser\build.ps1')
+& $toolbox pack (Join-Path $root 'Browser\build') $dist
+if ($LASTEXITCODE -ne 0) { throw 'Browser add-on packaging failed' }
 # Toolbox skips a theme's top-level Fonts folder (it treats fonts as Playnite's template files), so the icon and button
 # fonts never reached users: add them to the package, then check that the parts the theme can't do without are in it
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$themes = @(Get-ChildItem $dist -Filter 'Selene_*.pthm')
+$themes = @(Get-ChildItem $dist -Filter 'Lanternfall_*.pthm')
 if ($themes.Count -ne 1) { throw 'Expected exactly one theme package' }
 $pthm = $themes[0].FullName
 $zip = [System.IO.Compression.ZipFile]::Open($pthm, 'Update')
@@ -56,15 +60,18 @@ foreach ($need in 'Fonts\MaterialIcons-Regular.ttf', 'Fonts\PlayStation4.ttf', '
 }
 "theme package: $($names.Count) files, fonts added"
 # Keep the inert helper replacement in updates to overwrite the old elevated interpreter.
-$addons = @(Get-ChildItem $dist -Filter 'SeleneCore_*.pext')
+$addons = @(Get-ChildItem $dist -Filter 'LanternfallCore_*.pext')
 if ($addons.Count -ne 1) { throw 'Expected exactly one add-on package' }
 $pext = $addons[0].FullName
 Test-SeleneCorePackage -Package $pext -Stage $stage -Localization (Join-Path $root 'SeleneCore\Localization')
-# fixed names for GitHub releases: the installer manifests (manifests\*.yaml) link to Selene.pthm and SeleneCore.pext
-Get-ChildItem $dist -Filter 'Selene_*.pthm' | Copy-Item -Destination (Join-Path $dist 'Selene.pthm')
-Get-ChildItem $dist -Filter 'SeleneCore_*.pext' | Copy-Item -Destination (Join-Path $dist 'SeleneCore.pext')
+# fixed names for GitHub releases: Lanternfall Core's update screen downloads Lanternfall.pthm and LanternfallCore.pext
+Get-ChildItem $dist -Filter 'Lanternfall_*.pthm' | Copy-Item -Destination (Join-Path $dist 'Lanternfall.pthm')
+Get-ChildItem $dist -Filter 'LanternfallCore_*.pext' | Copy-Item -Destination (Join-Path $dist 'LanternfallCore.pext')
+$browsers = @(Get-ChildItem $dist -Filter 'LanternfallBrowser_*.pext')
+if ($browsers.Count -ne 1) { throw 'Expected exactly one browser add-on package' }
+$browsers[0] | Copy-Item -Destination (Join-Path $dist 'LanternfallBrowser.pext')
 # Hash the final upload files, after all package modifications.
-@('Selene.pthm', 'SeleneCore.pext') | ForEach-Object {
+@('Lanternfall.pthm', 'LanternfallCore.pext', 'LanternfallBrowser.pext') | ForEach-Object {
     $hash = Get-FileHash -LiteralPath (Join-Path $dist $_) -Algorithm SHA256
     '{0}  {1}' -f $hash.Hash.ToLowerInvariant(), $_
 } | Set-Content -LiteralPath (Join-Path $dist 'SHA256SUMS') -Encoding ASCII
@@ -73,7 +80,7 @@ Get-ChildItem $dist -Filter 'SeleneCore_*.pext' | Copy-Item -Destination (Join-P
 $csc = Join-Path ([Environment]::GetFolderPath('Windows')) 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 $sdkDll = Join-Path $env:LOCALAPPDATA 'Playnite\Playnite.SDK.dll'
 $info = @(
-    "Selene build information",
+    "Lanternfall build information",
     "Source commit: $commit",
     "Local test mode: $([bool]$AllowDirty)",
     "Built: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm')) UTC",
