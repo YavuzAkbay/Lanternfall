@@ -4,6 +4,14 @@ Selene (theme) and Selene Core (add-on) share one version number and are release
 
 ## Unreleased
 
+## 1.5.8 - 2026-11-19 (Lanternfall; Lanternfall Browser 0.4.0)
+
+- Quick button taps register: Playnite looks at the controller every 16 ms and could miss a tap shorter than that (fast mashing, or a Bluetooth pad). Lanternfall Core now watches the pad more closely and passes on the taps Playnite missed. Advanced > Catch very quick taps turns it off.
+- Smoother home screen on a TV beside a faster monitor: Selene's frame watchdog made WPF draw at the fastest screen's rate (144 times a second on a 60 Hz 4K TV). It now listens only on the fastest screen, so a 60 Hz TV is drawn at 60.
+- The idle screen stays away while the Browser or YouTube is open.
+- UniPlaySong is listed as a clash instead of a recommended add-on (Lanternfall has no background music).
+- Lanternfall Browser 0.4.0: ad blocking with uBlock Origin Lite, a settings panel, a bar that hides itself, fullscreen video in the browser's top layer, less memory while hidden (the browser is freed when you leave it), and YouTube playback that recovers from expired streams.
+
 ## 1.5.7 - 2026-11-09
 
 - Launch choices use Selene's rounded dialog card and spaced rows. Look > Selene dialogs restores the native layout when off; applies to the next dialog opened.
