@@ -62,11 +62,12 @@ namespace SeleneBrowser
         private System.Windows.Shapes.Polygon cursorSprite;
         private readonly Canvas cursorLayer =new Canvas { IsHitTestVisible = false, Visibility = Visibility.Collapsed };
         private readonly Border toast = new Border();
-        private readonly TextBlock toastText = Theme.Text("", 26, Theme.Ink);
+        private readonly TextBlock toastText = Theme.Text("", 22, Theme.Ink);
         private readonly Border menuBox = new Border();
+        private readonly Grid menuShade = new Grid();
         private readonly StackPanel menuList = new StackPanel();
-        private readonly TextBlock hintText = Theme.Text("", 20, Theme.Ink60);
-        private readonly TextBlock addressText = Theme.Text("", 24, Theme.Ink);
+        private readonly HintBar hintText = new HintBar(18, HorizontalAlignment.Right);
+        private readonly TextBlock addressText = Theme.Text("", 22, Theme.Ink);
         private readonly List<Border> barItems = new List<Border>();
         private readonly List<Action> barActions = new List<Action>();
         private readonly List<MenuEntry> menuItems = new List<MenuEntry>();
@@ -504,21 +505,36 @@ namespace SeleneBrowser
             menuList.Children.Clear();
             foreach (var m in menuItems)
             {
-                m.Box = Theme.Tile(m.Label, 28);
-                m.Box.Padding = new Thickness(24, 10, 24, 10);
+                m.Box = Theme.Tile(m.Label, 24, MenuIcon(m.Label), Look.Ghost);
+                m.Box.Padding = new Thickness(24, 11, 28, 12);
+                m.Box.Margin = new Thickness(0, 3, 0, 3);
+                Theme.AlignLeft(m.Box);
                 menuList.Children.Add(m.Box);
             }
             menuIndex = 0;
             mode = Mode.Menu;
             cursorLayer.Visibility = Visibility.Collapsed;
-            menuBox.Visibility = Visibility.Visible;
+            menuShade.Visibility = Visibility.Visible;
             UpdateMenu();
             UpdateHints();
         }
 
+        // Material icons for the menu's rows
+        private static int MenuIcon(string label)
+        {
+            if (label.StartsWith("Add bookmark")) return 0xE867;      // bookmark_border
+            if (label.StartsWith("Remove bookmark")) return 0xE866;   // bookmark
+            if (label == "Zoom in") return 0xE8FF;
+            if (label == "Zoom out") return 0xE900;
+            if (label == "Reset zoom") return 0xE3BC;                 // crop_free (fit)
+            if (label.StartsWith("Clear")) return 0xE872;              // delete
+            if (label.StartsWith("Close")) return 0xE5CD;              // close
+            return 0;
+        }
+
         private void CloseMenu()
         {
-            menuBox.Visibility = Visibility.Collapsed;
+            menuShade.Visibility = Visibility.Collapsed;
             EnterFocus(false);
         }
 
@@ -633,14 +649,28 @@ namespace SeleneBrowser
 
         private void GoHome()
         {
+            // the start page in the theme's own colors (palette read now, so it follows the chosen palette)
+            Color ink = Theme.InkColor, glass = Theme.GlassColor, scrim = Theme.ScrimColor, focus = Theme.FocusColor;
             var sb = new StringBuilder();
             sb.Append("<!doctype html><html><head><meta charset='utf-8'><title>Home</title><style>")
-              .Append("body{margin:0;padding:48px 64px;background:#0b0e14;color:#f2f4f8;font:24px 'Segoe UI',sans-serif}")
-              .Append("h1{font-size:40px;margin:0 0 24px}h2{font-size:28px;margin:36px 0 16px;color:#9aa3b5;font-weight:600}")
-              .Append("input{width:100%;box-sizing:border-box;font-size:28px;padding:18px 24px;border-radius:12px;border:2px solid #394259;background:#161b27;color:#f2f4f8}")
-              .Append(".g{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}")
-              .Append("a{display:block;padding:22px 24px;background:#1d2434;border-radius:12px;color:#f2f4f8;text-decoration:none;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}")
-              .Append("small{display:block;color:#9aa3b5;font-size:18px;margin-top:6px;overflow:hidden;text-overflow:ellipsis}")
+              .Append(":root{--ink:").Append(Theme.Css(ink, 1)).Append(";--ink60:").Append(Theme.Css(ink, 0.6))
+              .Append(";--line:").Append(Theme.Css(ink, 0.16)).Append(";--glass:").Append(Theme.Css(glass, 0.72))
+              .Append(";--well:").Append(Theme.Css(scrim, 0.4)).Append(";--focus:").Append(Theme.Css(focus, 1)).Append("}")
+              .Append("html{min-height:100%;background:").Append(Theme.BackdropCss()).Append("}")
+              .Append("body{margin:0;padding:56px 72px;color:var(--ink);font:22px 'Segoe UI',sans-serif;background:transparent;")
+              .Append("-webkit-font-smoothing:antialiased}")
+              .Append("h1{font:600 44px 'Segoe UI Variable Display','Segoe UI',sans-serif;margin:0 0 28px}")
+              .Append("h2{font:600 15px 'Segoe UI',sans-serif;letter-spacing:.12em;text-transform:uppercase;margin:44px 0 16px;color:var(--ink60)}")
+              .Append("form{margin:0}input{width:100%;box-sizing:border-box;font:24px 'Segoe UI',sans-serif;padding:18px 30px;border-radius:999px;")
+              .Append("border:1px solid var(--line);background:var(--well);color:var(--ink);outline:none}")
+              .Append("input::placeholder{color:var(--ink60)}")
+              .Append(".g{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}")
+              .Append("a{display:flex;align-items:center;gap:18px;padding:18px 22px;background:var(--glass);border:1px solid var(--line);border-radius:16px;")
+              .Append("color:var(--ink);text-decoration:none;overflow:hidden;white-space:nowrap}")
+              .Append("a i{flex:none;width:44px;height:44px;border-radius:50%;background:var(--line);display:flex;align-items:center;justify-content:center;")
+              .Append("font:600 20px 'Segoe UI Variable Display','Segoe UI',sans-serif;font-style:normal;color:var(--focus)}")
+              .Append("a span{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;font-family:'Segoe UI Variable Display','Segoe UI',sans-serif;font-weight:600}")
+              .Append("small{display:block;color:var(--ink60);font:17px 'Segoe UI',sans-serif;margin-top:4px;overflow:hidden;text-overflow:ellipsis}")
               .Append("</style></head><body><h1>Browser</h1><form action='").Append(SearchAction).Append("'>")
               .Append("<input name='q' placeholder='Search the web' autocomplete='off'></form>");
             AppendTiles(sb, "Bookmarks", bookmarks);
@@ -658,9 +688,11 @@ namespace SeleneBrowser
                 string host = e.Url;
                 Uri u;
                 if (Uri.TryCreate(e.Url, UriKind.Absolute, out u)) host = u.Host;
-                sb.Append("<a href='").Append(WebUtility.HtmlEncode(e.Url)).Append("'>")
-                  .Append(WebUtility.HtmlEncode(e.Title ?? e.Url))
-                  .Append("<small>").Append(WebUtility.HtmlEncode(host)).Append("</small></a>");
+                string name = e.Title ?? e.Url ?? "";
+                string letter = name.Trim().Length > 0 ? name.Trim().Substring(0, 1).ToUpperInvariant() : "?";
+                sb.Append("<a href='").Append(WebUtility.HtmlEncode(e.Url)).Append("'><i>").Append(WebUtility.HtmlEncode(letter)).Append("</i><span>")
+                  .Append(WebUtility.HtmlEncode(name))
+                  .Append("<small>").Append(WebUtility.HtmlEncode(host)).Append("</small></span></a>");
             }
             sb.Append("</div>");
         }
@@ -731,7 +763,7 @@ namespace SeleneBrowser
             else h = "D-pad Move    A Select    B Back    X Reload    Y Top bar    LB/RB History    LT/RT Scroll    R-stick Cursor    L3/R3 Zoom    Start Menu";
             if (h == hints) return;
             hints = h;
-            hintText.Text = h;
+            hintText.Show(h);
             if (PropertyChanged != null) PropertyChanged(this, new PropertyChangedEventArgs("Hints"));
         }
 
@@ -744,17 +776,23 @@ namespace SeleneBrowser
             root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            var bar = new Grid { Margin = new Thickness(12, 8, 12, 8) };
-            AddBarItem(bar, "Back", delegate { view.GoBack(); EnterFocus(false); });
-            AddBarItem(bar, "Forward", delegate { view.GoForward(); EnterFocus(false); });
-            AddBarItem(bar, "Reload", delegate { view.Reload(); EnterFocus(false); });
-            var addr = Theme.Tile("", 24);
-            addr.Child = addressText;
+            // top bar: round icon buttons and the address pill, Selene's pills (glass at rest, the accent when focused)
+            var bar = new Grid { Margin = new Thickness(18, 12, 18, 10) };
+            AddBarItem(bar, "Back", 0xE5C4, delegate { view.GoBack(); EnterFocus(false); });          // arrow_back
+            AddBarItem(bar, "Forward", 0xE5C8, delegate { view.GoForward(); EnterFocus(false); });    // arrow_forward
+            AddBarItem(bar, "Reload", 0xE5D5, delegate { view.Reload(); EnterFocus(false); });        // refresh
+            AddBarItem(bar, "Home", 0xE88A, delegate { GoHome(); EnterFocus(false); });               // home
+            var addr = Theme.Tile("", 22, 0xE8B6, Look.Pill);   // search
+            Theme.AdoptLabel(addr, addressText);
+            Theme.AlignLeft(addr);
+            Theme.SetFocusScale(addr, 1.015);
+            addr.Padding = new Thickness(24, 0, 24, 1);
+            addr.Height = 56;
+            addr.Margin = new Thickness(10, 0, 10, 0);
             addr.HorizontalAlignment = HorizontalAlignment.Stretch;
             AddBarItem(bar, addr, EditAddress, true);
-            AddBarItem(bar, "Home", delegate { GoHome(); EnterFocus(false); });
-            AddBarItem(bar, "Zoom -", delegate { ZoomBy(-ZoomStep); });
-            AddBarItem(bar, "Zoom +", delegate { ZoomBy(ZoomStep); });
+            AddBarItem(bar, "Zoom -", 0xE900, delegate { ZoomBy(-ZoomStep); });   // zoom_out
+            AddBarItem(bar, "Zoom +", 0xE8FF, delegate { ZoomBy(ZoomStep); });    // zoom_in
             Grid.SetRow(bar, 0);
             root.Children.Add(bar);
             topBar = bar;
@@ -765,16 +803,17 @@ namespace SeleneBrowser
             {
                 Points = new PointCollection { new Point(0, 0), new Point(0, 30), new Point(8, 23), new Point(14, 35), new Point(19, 32), new Point(13, 21), new Point(23, 21) },
                 Fill = Theme.Ink,
-                Stroke = Brushes.Black,
-                StrokeThickness = 2
+                Stroke = Theme.ScrimA(0.9),
+                StrokeThickness = 2,
+                StrokeLineJoin = PenLineJoin.Round,
+                Effect = new System.Windows.Media.Effects.DropShadowEffect { ShadowDepth = 0, BlurRadius = 12, Opacity = 0.5, Color = Theme.FocusColor }
             };
             cursorLayer.Children.Add(cursorSprite);
             page.Children.Add(cursorLayer);
 
-            toast.Background = Theme.Panel;
-            toast.CornerRadius = new CornerRadius(10);
-            toast.Padding = new Thickness(26, 12, 26, 12);
-            toast.Margin = new Thickness(0, 0, 0, 40);
+            Theme.Glass(toast, 26);
+            toast.Padding = new Thickness(30, 12, 30, 14);
+            toast.Margin = new Thickness(0, 0, 0, 48);
             toast.HorizontalAlignment = HorizontalAlignment.Center;
             toast.VerticalAlignment = VerticalAlignment.Bottom;
             toast.Visibility = Visibility.Collapsed;
@@ -782,29 +821,43 @@ namespace SeleneBrowser
             toast.Child = toastText;
             page.Children.Add(toast);
 
-            menuBox.Background = Theme.Panel;
-            menuBox.CornerRadius = new CornerRadius(14);
-            menuBox.Padding = new Thickness(20);
+            // Start menu: the page dimmed, a glass card with the browser's name over its rows
+            Theme.Glass(menuBox, 28);
+            menuBox.Padding = new Thickness(22, 24, 22, 22);
+            menuBox.MinWidth = 480;
             menuBox.HorizontalAlignment = HorizontalAlignment.Center;
             menuBox.VerticalAlignment = VerticalAlignment.Center;
-            menuBox.Visibility = Visibility.Collapsed;
-            menuBox.Child = menuList;
-            page.Children.Add(menuBox);
+            var menuStack = new StackPanel();
+            var menuTitle = Theme.Title("Browser", 30);
+            menuTitle.Margin = new Thickness(24, 0, 24, 14);
+            menuStack.Children.Add(menuTitle);
+            menuStack.Children.Add(menuList);
+            menuBox.Child = menuStack;
+            menuShade.Background = Theme.ScrimA(0.62);
+            menuShade.Visibility = Visibility.Collapsed;
+            menuShade.Children.Add(menuBox);
+            page.Children.Add(menuShade);
             page.Children.Add(keyboard);
 
             Grid.SetRow(page, 1);
             root.Children.Add(page);
 
-            hintText.Margin = new Thickness(16, 6, 16, 8);
+            hintText.Margin = new Thickness(24, 10, 40, 14);
             Grid.SetRow(hintText, 2);
             root.Children.Add(hintText);
             UpdateAddress();
             return root;
         }
 
-        private void AddBarItem(Grid bar, string label, Action action)
+        // an icon button (its word when the theme's icon font is missing)
+        private void AddBarItem(Grid bar, string label, int icon, Action action)
         {
-            AddBarItem(bar, Theme.Tile(label, 24), action, false);
+            Border b = Theme.HasIcon(icon) ? Theme.Tile(null, 24, icon, Look.Pill) : Theme.Tile(label, 22);
+            if (Theme.HasIcon(icon)) { b.Width = 56; b.Height = 56; b.Padding = new Thickness(0); }
+            else b.Padding = new Thickness(20, 10, 20, 11);
+            b.Margin = new Thickness(5, 0, 5, 0);
+            b.VerticalAlignment = VerticalAlignment.Center;
+            AddBarItem(bar, b, action, false);
         }
 
         private void AddBarItem(Grid bar, Border item, Action action, bool stretch)
@@ -828,7 +881,7 @@ var hl=null, cur=null, enabled=true;
 function ensureHl(){
  if(hl&&hl.isConnected) return hl;
  hl=document.createElement('div');
- hl.style.cssText='position:fixed;z-index:2147483647;pointer-events:none;box-sizing:border-box;border:4px solid '+ACCENT+';border-radius:8px;box-shadow:0 0 0 2px rgba(0,0,0,.85),0 0 22px '+ACCENT+';display:none;margin:0;padding:0';
+ hl.style.cssText='position:fixed;z-index:2147483647;pointer-events:none;box-sizing:border-box;border:3px solid '+ACCENT+';border-radius:12px;box-shadow:0 0 18px '+ACCENT+'8C,0 0 0 1px rgba(0,0,0,.45),inset 0 0 0 1px rgba(0,0,0,.45);display:none;margin:0;padding:0;transition:left .14s cubic-bezier(.2,.7,.3,1),top .14s cubic-bezier(.2,.7,.3,1),width .14s cubic-bezier(.2,.7,.3,1),height .14s cubic-bezier(.2,.7,.3,1)';
  document.documentElement.appendChild(hl);
  return hl;
 }
@@ -845,7 +898,10 @@ function absRect(c){
 function place(){
  if(!cur||!cur.el.isConnected||!enabled){ if(hl) hl.style.display='none'; return; }
  var r=absRect(cur), h=ensureHl(), s=h.style;
- s.left=(r.l-4)+'px'; s.top=(r.t-4)+'px'; s.width=(r.w+8)+'px'; s.height=(r.h+8)+'px'; s.display='block';
+ // Selene's ring: 6 px out from the element, its corners following the element's own
+ var rad=10; try{ rad=Math.max(10,Math.min(40,(parseFloat(getComputedStyle(cur.el).borderTopLeftRadius)||0)+6)); }catch(e){}
+ s.borderRadius=rad+'px';
+ s.left=(r.l-6)+'px'; s.top=(r.t-6)+'px'; s.width=(r.w+12)+'px'; s.height=(r.h+12)+'px'; s.display='block';
 }
 function add(el,doc,ox,oy,out){
  var r=el.getBoundingClientRect();

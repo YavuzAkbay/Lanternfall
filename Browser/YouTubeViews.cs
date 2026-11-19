@@ -159,39 +159,43 @@ namespace SeleneBrowser
     /// <summary>Grid cards (fixed size so scrolling maths stays trivial).</summary>
     internal static class Cards
     {
-        public const double CellW = 382, CellH = 326, ThumbW = 358, ThumbH = 201;
+        // a cell holds the card (6 px ring gap inside it) plus the gap to the next one; the face is ThumbW wide
+        public const double CellW = 382, CellH = 326, ThumbW = 352, ThumbH = 198, Radius = 12;
 
-        private static Border Shell()
+        private static Border Shell(out Grid face)
         {
-            return new Border
-            {
-                Width = CellW - 18, Height = CellH - 16, Margin = new Thickness(9, 8, 9, 8),
-                BorderThickness = new Thickness(3), BorderBrush = Brushes.Transparent,
-                CornerRadius = new CornerRadius(10), Background = Theme.Panel
-            };
+            Border card = Theme.Card(CellW - 18, CellH - 16, Radius, out face);
+            card.Margin = new Thickness(9, 8, 9, 8);
+            return card;
         }
 
-        private static Brush Shade(byte alpha) { return new SolidColorBrush(Color.FromArgb(alpha, 0, 0, 0)); }
+        private static Brush Shade(double alpha) { return Theme.ScrimA(alpha); }
 
         private static Border Badge(string text, HorizontalAlignment h)
         {
-            TextBlock t = Theme.Text(text, 18, Brushes.White);
-            return new Border
-            {
-                Background = Shade(0xD9), CornerRadius = new CornerRadius(4), Padding = new Thickness(8, 2, 8, 2),
-                Margin = new Thickness(8, 0, 8, 12), HorizontalAlignment = h, VerticalAlignment = VerticalAlignment.Bottom, Child = t
-            };
+            Border b = Theme.Chip(text, Shade(0.82), Theme.Ink, 17);
+            b.Margin = new Thickness(10, 0, 10, 10);
+            b.HorizontalAlignment = h;
+            b.VerticalAlignment = VerticalAlignment.Bottom;
+            return b;
         }
 
         private static TextBlock Title(string text, double size, int lines)
         {
             TextBlock t = Theme.Text(text, size, Theme.Ink);
+            t.FontFamily = Theme.Display;
+            t.FontWeight = FontWeights.SemiBold;
             t.TextWrapping = TextWrapping.Wrap;
             t.LineHeight = size + 6;
             t.MaxHeight = (size + 6) * lines;
-            t.Margin = new Thickness(8, 8, 8, 0);
+            t.Margin = new Thickness(14, 10, 14, 0);
             t.VerticalAlignment = VerticalAlignment.Top;
             return t;
+        }
+
+        private static Grid Thumb()
+        {
+            return new Grid { Width = ThumbW, Height = ThumbH, Background = Theme.InkA(0.06), ClipToBounds = true, HorizontalAlignment = HorizontalAlignment.Left };
         }
 
         private static string Join(params string[] parts)
@@ -209,15 +213,17 @@ namespace SeleneBrowser
             return age >= -300 && age < 86400;
         }
 
+        public static readonly Brush LiveRed = MakeLiveRed();
+        private static Brush MakeLiveRed() { var b = new SolidColorBrush(Color.FromRgb(0xE5, 0x3A, 0x3A)); b.Freeze(); return b; }
+
         private static Border Pill(string text, Brush back, Brush fore, HorizontalAlignment h, VerticalAlignment va, Thickness margin)
         {
-            TextBlock t = Theme.Text(text, 18, fore);
-            t.FontWeight = FontWeights.Bold;
-            return new Border
-            {
-                Background = back, CornerRadius = new CornerRadius(5), Padding = new Thickness(8, 2, 8, 2),
-                Margin = margin, HorizontalAlignment = h, VerticalAlignment = va, Child = t, IsHitTestVisible = false
-            };
+            Border b = Theme.Chip(text, back, fore, 16);
+            ((TextBlock)b.Child).FontWeight = FontWeights.Bold;
+            b.Margin = margin;
+            b.HorizontalAlignment = h;
+            b.VerticalAlignment = va;
+            return b;
         }
 
         public static Border Video(VideoItem v, Dispatcher ui) { return Video(v, ui, true); }
@@ -225,77 +231,108 @@ namespace SeleneBrowser
         /// <summary>dimWatched: darken the card when the video is in the watch history (not wanted on the History tab itself).</summary>
         public static Border Video(VideoItem v, Dispatcher ui, bool dimWatched)
         {
-            Border card = Shell();
+            Grid face;
+            Border card = Shell(out face);
             StackPanel sp = new StackPanel();
             bool watched = dimWatched && !v.IsLive && WatchedIds.Contains(v.Id);
-            Grid thumb = new Grid { Width = ThumbW, Height = ThumbH, Background = Theme.Key, ClipToBounds = true, HorizontalAlignment = HorizontalAlignment.Left };
+            Grid thumb = Thumb();
             Image img = new Image { Stretch = Stretch.UniformToFill };
             thumb.Children.Add(img);
             string url = string.IsNullOrEmpty(v.Thumbnail) ? Fmt.Thumb(v.Id) : v.Thumbnail;
             ThumbCache.Load(url, 360, ui, delegate(BitmapImage b) { img.Source = b; });
-            if (watched) thumb.Children.Add(new Rectangle { Fill = Shade(0x8C), IsHitTestVisible = false });   // 55% black
+            if (watched) thumb.Children.Add(new Rectangle { Fill = Shade(0.55), IsHitTestVisible = false });
             if (v.IsLive)
-                thumb.Children.Add(Pill("LIVE", new SolidColorBrush(Color.FromRgb(0xE6, 0x1E, 0x1E)), Brushes.White, HorizontalAlignment.Right, VerticalAlignment.Bottom, new Thickness(8, 0, 8, 12)));
+                thumb.Children.Add(Pill("LIVE", LiveRed, Brushes.White, HorizontalAlignment.Right, VerticalAlignment.Bottom, new Thickness(10, 0, 10, 10)));
             else
             {
                 string dur = v.DurationText.Length > 0 ? v.DurationText : Fmt.Duration(v.Duration);
                 if (dur.Length > 0) thumb.Children.Add(Badge(dur, HorizontalAlignment.Right));
                 if (!watched && IsNew(v))
-                    thumb.Children.Add(Pill("NEW", Theme.Accent, Theme.Background, HorizontalAlignment.Left, VerticalAlignment.Top, new Thickness(8, 8, 0, 0)));
+                    thumb.Children.Add(Pill("NEW", Theme.Accent, Theme.OnAccent, HorizontalAlignment.Left, VerticalAlignment.Top, new Thickness(10, 10, 0, 0)));
             }
             if (v.Duration > 0 && v.WatchProgress > 0)
             {
+                // watched so far: a thin bar in the theme's accent along the thumbnail's foot
                 double frac = Math.Min(1.0, v.WatchProgress / v.Duration);
-                Grid track = new Grid { Height = 6, VerticalAlignment = VerticalAlignment.Bottom, Background = Shade(0x99) };
-                track.Children.Add(new Rectangle { Width = ThumbW * frac, Fill = new SolidColorBrush(Color.FromRgb(0xFF, 0x30, 0x30)), HorizontalAlignment = HorizontalAlignment.Left });
+                Grid track = new Grid { Height = 5, VerticalAlignment = VerticalAlignment.Bottom, Background = Theme.InkA(0.25) };
+                track.Children.Add(new Rectangle { Width = ThumbW * frac, Fill = Theme.Accent, HorizontalAlignment = HorizontalAlignment.Left });
                 thumb.Children.Add(track);
             }
             sp.Children.Add(thumb);
-            sp.Children.Add(Title(v.Title, 22, 2));
-            TextBlock meta = Theme.Text(Join(v.Author, v.Age, v.Views), 20, Theme.Ink60);
-            meta.Margin = new Thickness(8, 4, 8, 0);
+            sp.Children.Add(Title(v.Title, 21, 2));
+            TextBlock meta = Theme.Text(Join(v.Author, v.Age, v.Views), 18, Theme.Ink60);
+            meta.Margin = new Thickness(14, 5, 14, 0);
             sp.Children.Add(meta);
             if (watched)
             {
                 foreach (UIElement el in sp.Children) if (!(el is Grid)) el.Opacity = 0.6;   // title + meta; the thumbnail has its own overlay
             }
-            card.Child = sp;
+            face.Children.Add(sp);
             return card;
         }
 
         public static Border Playlist(PlaylistItem p, Dispatcher ui)
         {
-            Border card = Shell();
+            Grid face;
+            Border card = Shell(out face);
             StackPanel sp = new StackPanel();
-            Grid thumb = new Grid { Width = ThumbW, Height = ThumbH, Background = Theme.Key, ClipToBounds = true, HorizontalAlignment = HorizontalAlignment.Left };
+            Grid thumb = Thumb();
             Image img = new Image { Stretch = Stretch.UniformToFill };
             thumb.Children.Add(img);
             ThumbCache.Load(p.Thumbnail, 360, ui, delegate(BitmapImage b) { img.Source = b; });
-            thumb.Children.Add(Badge(p.VideoCount + (p.VideoCount == 1 ? " video" : " videos"), HorizontalAlignment.Right));
+            // the stack of videos: a side panel over the thumbnail's right third, like a playlist on the TV app
+            Border side = new Border
+            {
+                Width = ThumbW * 0.36, HorizontalAlignment = HorizontalAlignment.Right, Background = Shade(0.72), IsHitTestVisible = false
+            };
+            StackPanel count = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+            TextBlock n = Theme.Title(p.VideoCount.ToString(), 30);
+            n.HorizontalAlignment = HorizontalAlignment.Center;
+            count.Children.Add(n);
+            FrameworkElement icon = Theme.Icon(0xE05F, 30, Theme.Ink);   // playlist_play
+            if (icon != null) { icon.Margin = new Thickness(0, 4, 0, 0); count.Children.Add(icon); }
+            else
+            {
+                TextBlock w = Theme.Text(p.VideoCount == 1 ? "video" : "videos", 17, Theme.Ink60);
+                w.HorizontalAlignment = HorizontalAlignment.Center;
+                count.Children.Add(w);
+            }
+            side.Child = count;
+            thumb.Children.Add(side);
             sp.Children.Add(thumb);
-            sp.Children.Add(Title(p.Title, 22, 2));
-            card.Child = sp;
+            sp.Children.Add(Title(p.Title, 21, 2));
+            TextBlock meta = Theme.Text(p.VideoCount + (p.VideoCount == 1 ? " video" : " videos"), 18, Theme.Ink60);
+            meta.Margin = new Thickness(14, 5, 14, 0);
+            sp.Children.Add(meta);
+            face.Children.Add(sp);
             return card;
         }
 
         public static Border Channel(ChannelItem c, Dispatcher ui)
         {
-            Border card = Shell();
+            Grid face;
+            Border card = Shell(out face);
             StackPanel sp = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center };
-            Ellipse av = new Ellipse { Width = 170, Height = 170, Fill = Theme.Key, Margin = new Thickness(0, 28, 0, 8) };
+            // the avatar in a soft ring of ink, as Selene draws profile pictures
+            Grid avatar = new Grid { Width = 164, Height = 164, Margin = new Thickness(0, 30, 0, 14) };
+            Ellipse av = new Ellipse { Fill = Theme.InkA(0.08) };
             ThumbCache.Load(c.Thumbnail, 170, ui, delegate(BitmapImage b) { av.Fill = new ImageBrush(b) { Stretch = Stretch.UniformToFill }; });
-            sp.Children.Add(av);
-            TextBlock name = Theme.Text(c.Name, 26, Theme.Ink);
+            avatar.Children.Add(av);
+            avatar.Children.Add(new Ellipse { Stroke = Theme.InkA(0.18), StrokeThickness = 2, IsHitTestVisible = false });
+            sp.Children.Add(avatar);
+            TextBlock name = Theme.Title(c.Name, 24);
             name.HorizontalAlignment = HorizontalAlignment.Center;
             name.TextAlignment = TextAlignment.Center;
+            name.MaxWidth = ThumbW - 28;
             sp.Children.Add(name);
             if (!string.IsNullOrEmpty(c.Subscribers))
             {
-                TextBlock s = Theme.Text(c.Subscribers, 20, Theme.Ink60);
+                TextBlock s = Theme.Text(c.Subscribers, 18, Theme.Ink60);
                 s.HorizontalAlignment = HorizontalAlignment.Center;
+                s.Margin = new Thickness(0, 4, 0, 0);
                 sp.Children.Add(s);
             }
-            card.Child = sp;
+            face.Children.Add(sp);
             return card;
         }
     }
@@ -311,44 +348,58 @@ namespace SeleneBrowser
             public Border Box;
         }
 
-        private readonly TextBlock title = Theme.Text("", 28, Theme.Ink60);
+        private readonly TextBlock title = Theme.Title("", 30);
         private readonly StackPanel list = new StackPanel();
+        private readonly Border card = new Border();
         private List<Entry> entries = new List<Entry>();
         private int index;
 
         public bool IsOpen { get { return Visibility == Visibility.Visible; } }
         public Entry Current { get { return index >= 0 && index < entries.Count ? entries[index] : null; } }
 
+        // the whole screen dimmed, a glass card in the middle (Selene's dialogs)
         public PickerPanel()
         {
-            Background = Theme.Panel;
-            CornerRadius = new CornerRadius(14);
-            Padding = new Thickness(22);
-            MinWidth = 460;
-            HorizontalAlignment = HorizontalAlignment.Center;
-            VerticalAlignment = VerticalAlignment.Center;
+            Background = Theme.ScrimA(0.62);
+            HorizontalAlignment = HorizontalAlignment.Stretch;
+            VerticalAlignment = VerticalAlignment.Stretch;
             Visibility = Visibility.Collapsed;
+            Theme.Glass(card, 28);
+            card.Padding = new Thickness(26, 28, 26, 26);
+            card.MinWidth = 520;
+            card.MaxWidth = 900;
+            card.HorizontalAlignment = HorizontalAlignment.Center;
+            card.VerticalAlignment = VerticalAlignment.Center;
             StackPanel sp = new StackPanel();
-            title.Margin = new Thickness(6, 0, 0, 10);
+            title.Margin = new Thickness(22, 0, 22, 16);
             sp.Children.Add(title);
             sp.Children.Add(new ScrollViewer
             {
-                MaxHeight = 620, VerticalScrollBarVisibility = ScrollBarVisibility.Hidden,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Content = list
+                MaxHeight = 640, VerticalScrollBarVisibility = ScrollBarVisibility.Hidden,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Content = list, Padding = new Thickness(8, 4, 8, 4)
             });
-            Child = sp;
+            card.Child = sp;
+            Child = card;
         }
 
         public void Open(string heading, List<Entry> items, int start)
         {
             title.Text = heading;
+            title.Visibility = string.IsNullOrEmpty(heading) ? Visibility.Collapsed : Visibility.Visible;
             entries = items;
             list.Children.Clear();
+            bool anyChecked = false;
+            foreach (Entry e in items) anyChecked |= e.Checked;
             foreach (Entry e in items)
             {
-                e.Box = Theme.Tile((e.Checked ? "\u2713  " : "") + e.Label, 28);
-                e.Box.Padding = new Thickness(24, 10, 24, 10);
-                ((TextBlock)e.Box.Child).HorizontalAlignment = HorizontalAlignment.Left;
+                // the chosen option carries a check; the others keep its room so the words line up
+                e.Box = Theme.Tile(e.Label, 26, anyChecked ? 0xE5CA : 0, Look.Ghost);   // check
+                Theme.SetIconShown(e.Box, e.Checked);
+                e.Box.Padding = new Thickness(26, 11, 26, 12);
+                e.Box.Margin = new Thickness(6, 3, 6, 3);
+                Theme.SetFocusScale(e.Box, 1.02);   // (the list clips its sides)
+                Theme.AlignLeft(e.Box);
+                Theme.SetSelected(e.Box, e.Checked);
                 list.Children.Add(e.Box);
             }
             index = Math.Max(0, Math.Min(start, items.Count - 1));
@@ -453,15 +504,15 @@ namespace SeleneBrowser
     /// <summary>Small bottom-center message that disappears by itself.</summary>
     internal sealed class Toaster : Border
     {
-        private readonly TextBlock text = Theme.Text("", 26, Theme.Ink);
+        private readonly TextBlock text = Theme.Text("", 22, Theme.Ink);
         private readonly DispatcherTimer timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(2600) };
 
+        // Selene's notice: a glass pill
         public Toaster()
         {
-            Background = Theme.Panel;
-            CornerRadius = new CornerRadius(10);
-            Padding = new Thickness(26, 12, 26, 12);
-            Margin = new Thickness(0, 0, 0, 70);
+            Theme.Glass(this, 26);
+            Padding = new Thickness(30, 12, 30, 14);
+            Margin = new Thickness(0, 0, 0, 90);
             HorizontalAlignment = HorizontalAlignment.Center;
             VerticalAlignment = VerticalAlignment.Bottom;
             Visibility = Visibility.Collapsed;

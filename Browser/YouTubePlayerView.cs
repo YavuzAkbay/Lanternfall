@@ -50,16 +50,17 @@ namespace SeleneBrowser
         private readonly DispatcherTimer saveTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
         private readonly DispatcherTimer hideTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
         private readonly DispatcherTimer countTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        private readonly TextBlock pTitle = Theme.Text("", 38, Brushes.White);
-        private readonly TextBlock pChannel = Theme.Text("", 26, Theme.Ink60);
-        private readonly TextBlock pTime = Theme.Text("0:00 / 0:00", 26, Brushes.White);
+        private static readonly int[] ButtonIcons = { 0xE8B8, 0xE068, 0xE01C, 0xE3A1, 0xE05F };   // settings, slow_motion_video, closed_caption, audiotrack, playlist_play
+        private readonly TextBlock pTitle = Theme.Title("", 40);
+        private readonly TextBlock pChannel = Theme.Text("", 24, Theme.Ink60);
+        private readonly TextBlock pTime = Theme.Text("0:00 / 0:00", 24, Theme.Ink);
         private readonly Border liveBadge = new Border();
-        private readonly TextBlock liveBadgeText = Theme.Text("LIVE", 24, Brushes.White);
-        private readonly TextBlock pHint = Theme.Text("", 22, Theme.Ink60);
-        private readonly TextBlock stageText = Theme.Text("", 32, Brushes.White);
-        private readonly TextBlock stageSub = Theme.Text("", 24, Theme.Ink60);
-        private readonly TextBlock countText = Theme.Text("", 26, Brushes.White);
-        private readonly TextBlock relStatus = Theme.Text("", 24, Theme.Ink60);
+        private readonly TextBlock liveBadgeText = Theme.Text("LIVE", 20, Brushes.White);
+        private readonly HintBar pHint = new HintBar(19, HorizontalAlignment.Right);
+        private readonly TextBlock stageText = Theme.Title("", 32);
+        private readonly HintBar stageSub = new HintBar(20, HorizontalAlignment.Center);
+        private readonly TextBlock countText = Theme.Text("", 24, Theme.Ink);
+        private readonly TextBlock relStatus = Theme.Text("", 22, Theme.Ink60);
         private readonly Border pausedBadge = new Border();
         private readonly Border countBox = new Border();
         private readonly Border topBar = new Border(), bottomBar = new Border(), relatedPanel = new Border();
@@ -105,35 +106,39 @@ namespace SeleneBrowser
             topBar.Child = top;
             d.Children.Add(topBar);
 
-            Grid seek = new Grid { Width = SeekW, Height = 30, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 14) };
+            // the seek bar: an ink track, what's buffered a little brighter, played in the theme's accent with a glowing knob
+            Grid seek = new Grid { Width = SeekW, Height = 30, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 10, 0, 16) };
             seek.Children.Add(new Border
             {
-                Height = 10, CornerRadius = new CornerRadius(5), VerticalAlignment = VerticalAlignment.Center,
-                Background = new SolidColorBrush(Color.FromArgb(0x55, 255, 255, 255))
+                Height = 8, CornerRadius = new CornerRadius(4), VerticalAlignment = VerticalAlignment.Center, Background = Theme.InkA(0.22)
             });
-            seekBuf.Height = 10; seekBuf.CornerRadius = new CornerRadius(5); seekBuf.HorizontalAlignment = HorizontalAlignment.Left;
-            seekBuf.VerticalAlignment = VerticalAlignment.Center; seekBuf.Background = new SolidColorBrush(Color.FromArgb(0x99, 255, 255, 255));
-            seekFill.Height = 10; seekFill.CornerRadius = new CornerRadius(5); seekFill.HorizontalAlignment = HorizontalAlignment.Left;
+            seekBuf.Height = 8; seekBuf.CornerRadius = new CornerRadius(4); seekBuf.HorizontalAlignment = HorizontalAlignment.Left;
+            seekBuf.VerticalAlignment = VerticalAlignment.Center; seekBuf.Background = Theme.InkA(0.42);
+            seekFill.Height = 8; seekFill.CornerRadius = new CornerRadius(4); seekFill.HorizontalAlignment = HorizontalAlignment.Left;
             seekFill.VerticalAlignment = VerticalAlignment.Center; seekFill.Background = Theme.Accent;
             seekKnob.Fill = Theme.Accent;
+            seekKnob.Stroke = Theme.OnAccent;
+            seekKnob.StrokeThickness = 2;
+            seekKnob.Effect = new System.Windows.Media.Effects.DropShadowEffect { ShadowDepth = 0, BlurRadius = 16, Opacity = 0.6, Color = Theme.FocusColor };
             seek.Children.Add(seekBuf);
             seek.Children.Add(seekFill);
             seek.Children.Add(seekKnob);
 
-            StackPanel row = new StackPanel { Orientation = Orientation.Horizontal };
-            foreach (string name in ButtonNames)
+            StackPanel row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(-6, 0, 0, 0) };
+            for (int i = 0; i < ButtonNames.Length; i++)
             {
-                Border t = Theme.Tile(name, 26);
-                t.Padding = new Thickness(22, 8, 22, 8);
+                Border t = Theme.Tile(ButtonNames[i], 22, ButtonIcons[i], Look.Pill);
+                t.Padding = new Thickness(22, 10, 24, 11);
                 buttons.Add(t);
                 row.Children.Add(t);
             }
-            StackPanel bottom = new StackPanel { Margin = new Thickness(60, 90, 60, 24) };
+            StackPanel bottom = new StackPanel { Margin = new Thickness(64, 110, 64, 30) };
             liveBadgeText.FontWeight = FontWeights.Bold;
             liveBadge.Child = liveBadgeText;
-            liveBadge.CornerRadius = new CornerRadius(6);
-            liveBadge.Padding = new Thickness(14, 2, 14, 2);
-            liveBadge.Margin = new Thickness(0, 0, 16, 0);
+            liveBadge.CornerRadius = new CornerRadius(7);
+            liveBadge.Padding = new Thickness(12, 2, 12, 3);
+            liveBadge.Margin = new Thickness(0, 0, 14, 0);
+            liveBadge.VerticalAlignment = VerticalAlignment.Center;
             liveBadge.Visibility = Visibility.Collapsed;
             StackPanel timeRow = new StackPanel { Orientation = Orientation.Horizontal };
             timeRow.Children.Add(liveBadge);
@@ -141,19 +146,32 @@ namespace SeleneBrowser
             bottom.Children.Add(timeRow);
             bottom.Children.Add(seek);
             bottom.Children.Add(row);
-            pHint.Margin = new Thickness(4, 10, 0, 0);
+            pHint.Margin = new Thickness(0, 14, 0, 0);
             bottom.Children.Add(pHint);
             bottomBar.VerticalAlignment = VerticalAlignment.Bottom;
             bottomBar.Background = Fade(false);
             bottomBar.Child = bottom;
             d.Children.Add(bottomBar);
 
-            pausedBadge.Background = new SolidColorBrush(Color.FromArgb(0xB0, 0, 0, 0));
-            pausedBadge.CornerRadius = new CornerRadius(14);
-            pausedBadge.Padding = new Thickness(36, 14, 36, 14);
+            // paused: a glass disc with the pause mark (the word when the icon font is missing)
+            pausedBadge.Background = Theme.GlassA(0.82);
+            pausedBadge.BorderBrush = Theme.InkA(0.18);
+            pausedBadge.BorderThickness = new Thickness(1);
             pausedBadge.HorizontalAlignment = HorizontalAlignment.Center;
             pausedBadge.VerticalAlignment = VerticalAlignment.Center;
-            pausedBadge.Child = Theme.Text("Paused", 48, Brushes.White);
+            FrameworkElement pauseMark = Theme.Icon(0xE034, 64, Theme.Ink);   // pause
+            if (pauseMark != null)
+            {
+                pausedBadge.Width = pausedBadge.Height = 132;
+                pausedBadge.CornerRadius = new CornerRadius(66);
+                pausedBadge.Child = pauseMark;
+            }
+            else
+            {
+                pausedBadge.CornerRadius = new CornerRadius(36);
+                pausedBadge.Padding = new Thickness(40, 14, 40, 16);
+                pausedBadge.Child = Theme.Title("Paused", 40);
+            }
             pausedBadge.Visibility = Visibility.Collapsed;
             pausedBadge.IsHitTestVisible = false;
             d.Children.Add(pausedBadge);
@@ -173,9 +191,8 @@ namespace SeleneBrowser
             stageBox.Children.Add(stageSub);
             d.Children.Add(stageBox);
 
-            countBox.Background = new SolidColorBrush(Color.FromArgb(0xD0, 0, 0, 0));
-            countBox.CornerRadius = new CornerRadius(12);
-            countBox.Padding = new Thickness(28, 14, 28, 14);
+            Theme.Glass(countBox, 26);
+            countBox.Padding = new Thickness(30, 12, 30, 14);
             countBox.HorizontalAlignment = HorizontalAlignment.Center;
             countBox.VerticalAlignment = VerticalAlignment.Bottom;
             countBox.Margin = new Thickness(0, 0, 0, 340);
@@ -184,19 +201,18 @@ namespace SeleneBrowser
             d.Children.Add(countBox);
 
             StackPanel relStack = new StackPanel();
-            TextBlock relHead = Theme.Text("Up next", 32, Theme.Ink);
-            relHead.Margin = new Thickness(14, 6, 0, 8);
+            TextBlock relHead = Theme.Title("Up next", 30);
+            relHead.Margin = new Thickness(18, 8, 0, 10);
             relStack.Children.Add(relHead);
-            relStatus.Margin = new Thickness(14, 8, 0, 0);
+            relStatus.Margin = new Thickness(18, 8, 0, 0);
             relStack.Children.Add(relStatus);
             relScroll.Content = relList;
-            relScroll.MaxHeight = 900;
+            relScroll.MaxHeight = 820;
             relStack.Children.Add(relScroll);
-            relatedPanel.Width = 660;
-            relatedPanel.Margin = new Thickness(0, 50, 50, 50);
-            relatedPanel.Padding = new Thickness(14);
-            relatedPanel.CornerRadius = new CornerRadius(14);
-            relatedPanel.Background = Theme.Panel;
+            relatedPanel.Width = 680;
+            relatedPanel.Margin = new Thickness(0, 50, 50, 100);   // (the hints stay readable under it)
+            relatedPanel.Padding = new Thickness(16, 20, 16, 16);
+            Theme.Glass(relatedPanel, 28);
             relatedPanel.HorizontalAlignment = HorizontalAlignment.Right;
             relatedPanel.VerticalAlignment = VerticalAlignment.Stretch;
             relatedPanel.Child = relStack;
@@ -219,7 +235,8 @@ namespace SeleneBrowser
             LinearGradientBrush g = new LinearGradientBrush();
             g.StartPoint = new Point(0, 0);
             g.EndPoint = new Point(0, 1);
-            Color solid = Color.FromArgb(0xE0, 0, 0, 0), clear = Color.FromArgb(0, 0, 0, 0);
+            Color scrim = Theme.ScrimColor;
+            Color solid = Color.FromArgb(0xE0, scrim.R, scrim.G, scrim.B), clear = Color.FromArgb(0, scrim.R, scrim.G, scrim.B);
             g.GradientStops.Add(new GradientStop(fromTop ? solid : clear, 0));
             g.GradientStops.Add(new GradientStop(fromTop ? clear : solid, 1));
             return g;
@@ -655,7 +672,7 @@ namespace SeleneBrowser
             UpdateRowFocus();
         }
 
-        private void SetButton(int i, string text) { ((TextBlock)buttons[i].Child).Text = text; }
+        private void SetButton(int i, string text) { Theme.SetLabel(buttons[i], text); }
 
         private void UpdateRowFocus()
         {
@@ -990,27 +1007,40 @@ namespace SeleneBrowser
 
         private Border RelatedRow(VideoItem v)
         {
-            Border row = new Border
-            {
-                Margin = new Thickness(8, 5, 8, 5), Padding = new Thickness(6), BorderThickness = new Thickness(3),
-                BorderBrush = Brushes.Transparent, CornerRadius = new CornerRadius(8), Background = Theme.Key
-            };
-            Grid g = new Grid();
+            // a small card with the same focus ring as the grid's
+            Grid g;
+            Border row = Theme.Card(double.NaN, 125, 12, out g);
+            row.Margin = new Thickness(2, 2, 2, 2);
+            Theme.SetFocusScale(row, 1.015);   // (the list clips its sides)
             g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(200) });
             g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            Image img = new Image { Width = 200, Height = 113, Stretch = Stretch.UniformToFill };
+            Grid pic = new Grid { Width = 200, Height = 113, Background = Theme.InkA(0.06) };
+            Image img = new Image { Stretch = Stretch.UniformToFill };
+            pic.Children.Add(img);
             ThumbCache.Load(string.IsNullOrEmpty(v.Thumbnail) ? Fmt.Thumb(v.Id) : v.Thumbnail, 200, Dispatcher,
                 delegate(System.Windows.Media.Imaging.BitmapImage bi) { img.Source = bi; });
-            g.Children.Add(img);
-            StackPanel tx = new StackPanel { Margin = new Thickness(12, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-            TextBlock title = Theme.Text(v.Title, 22, Theme.Ink);
+            string dur = v.IsLive ? "LIVE" : (v.DurationText.Length > 0 ? v.DurationText : Fmt.Duration(v.Duration));
+            if (dur.Length > 0)
+            {
+                Border chip = Theme.Chip(dur, v.IsLive ? Cards.LiveRed : Theme.ScrimA(0.82), v.IsLive ? Brushes.White : Theme.Ink, 14);
+                chip.Margin = new Thickness(0, 0, 6, 6);
+                chip.HorizontalAlignment = HorizontalAlignment.Right;
+                chip.VerticalAlignment = VerticalAlignment.Bottom;
+                pic.Children.Add(chip);
+            }
+            g.Children.Add(pic);
+            StackPanel tx = new StackPanel { Margin = new Thickness(14, 0, 14, 0), VerticalAlignment = VerticalAlignment.Center };
+            TextBlock title = Theme.Text(v.Title, 20, Theme.Ink);
+            title.FontFamily = Theme.Display;
+            title.FontWeight = FontWeights.SemiBold;
             title.TextWrapping = TextWrapping.Wrap;
-            title.MaxHeight = 90;
+            title.MaxHeight = 54;
             tx.Children.Add(title);
-            tx.Children.Add(Theme.Text(v.Author, 20, Theme.Ink60));
+            TextBlock by = Theme.Text(v.Author, 17, Theme.Ink60);
+            by.Margin = new Thickness(0, 4, 0, 0);
+            tx.Children.Add(by);
             Grid.SetColumn(tx, 1);
             g.Children.Add(tx);
-            row.Child = g;
             return row;
         }
 

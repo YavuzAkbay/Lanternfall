@@ -43,12 +43,13 @@ namespace SeleneBrowser
         private readonly List<ViewState> stack = new List<ViewState>();
         private readonly ViewState[] tabStates = new ViewState[6];
         private readonly Dictionary<string, List<string>> suggestCache = new Dictionary<string, List<string>>();
-        private readonly TextBlock titleText = Theme.Text("", 40, Theme.Ink);
-        private readonly TextBlock subText = Theme.Text("", 22, Theme.Ink60);
-        private readonly TextBlock statusText = Theme.Text("", 22, Theme.Ink60);
-        private readonly TextBlock hintText = Theme.Text("", 22, Theme.Ink60);
-        private readonly TextBlock msgText = Theme.Text("", 30, Theme.Ink);
-        private readonly TextBlock msgSub = Theme.Text("", 24, Theme.Ink60);
+        private static readonly int[] RailIcons = { 0xE88A, 0xE064, 0xE8B6, 0xE889, 0xE05F, 0xE7EF };   // home, subscriptions, search, history, playlist_play, group
+        private readonly TextBlock titleText = Theme.Title("", 44);
+        private readonly TextBlock subText = Theme.Text("", 21, Theme.Ink60);
+        private readonly TextBlock statusText = Theme.Text("", 20, Theme.Ink60);
+        private readonly HintBar hintText = new HintBar(19, HorizontalAlignment.Right);
+        private readonly TextBlock msgText = Theme.Title("", 30);
+        private readonly HintBar msgSub = new HintBar(20, HorizontalAlignment.Center);
         private readonly Ellipse headAvatar = new Ellipse { Width = 80, Height = 80, Margin = new Thickness(0, 0, 20, 0), Visibility = Visibility.Collapsed };
         private readonly Spinner msgSpinner = new Spinner(64);
         private readonly StackPanel msgPanel = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
@@ -56,7 +57,7 @@ namespace SeleneBrowser
         private readonly ScrollViewer gridScroll = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Hidden, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Focusable = false };
         private readonly SmoothScroller scroller;
 
-        private readonly Border shortsChip = Theme.Tile("Shorts: On", 24);
+        private readonly Border shortsChip = Theme.Tile("Shorts: On", 20, 0xE04A, Look.Pill);   // video_library
         private ViewState current;
         private Border focusedBorder;
         private bool railFocus, chipFocus, shortsOn = true;
@@ -635,7 +636,7 @@ namespace SeleneBrowser
 
         private void UpdateChip()
         {
-            ((TextBlock)shortsChip.Child).Text = shortsOn ? "Shorts: On" : "Shorts: Off";
+            Theme.SetLabel(shortsChip, shortsOn ? "Shorts: On" : "Shorts: Off");
             shortsChip.Visibility = ChipVisible ? Visibility.Visible : Visibility.Collapsed;
             if (!ChipVisible) chipFocus = false;
         }
@@ -820,7 +821,7 @@ namespace SeleneBrowser
             Theme.SetFocused(shortsChip, chipFocus && !railFocus);
             for (int i = 0; i < railTiles.Count; i++)
             {
-                railTiles[i].Background = i == activeTab ? Theme.Key : Brushes.Transparent;
+                Theme.SetSelected(railTiles[i], i == activeTab);
                 Theme.SetFocused(railTiles[i], railFocus && i == railIndex);
             }
             UpdateHints();
@@ -873,8 +874,8 @@ namespace SeleneBrowser
         {
             if (h == hints) return;
             hints = h;
-            hintText.Text = h;
-            pHint.Text = h;
+            hintText.Show(h);
+            pHint.Show(h);
             if (PropertyChanged != null) PropertyChanged(this, new PropertyChangedEventArgs("Hints"));
         }
 
@@ -897,32 +898,36 @@ namespace SeleneBrowser
             design.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(340) });
             design.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             design.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            design.RowDefinitions.Add(new RowDefinition { Height = new GridLength(56) });
+            design.RowDefinitions.Add(new RowDefinition { Height = new GridLength(72) });
 
-            // rail
+            // rail: a glass column like Selene's side panels, the screen's name over its tabs (icon + word pills)
             StackPanel rail = new StackPanel();
-            TextBlock logo = Theme.Text("YouTube", 40, Theme.Accent);
-            logo.FontWeight = FontWeights.Bold;
-            logo.Margin = new Thickness(40, 36, 0, 30);
-            rail.Children.Add(logo);
+            StackPanel brand = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(44, 44, 0, 34) };
+            FrameworkElement mark = Theme.Icon(0xE63A, 40, Theme.Accent);   // ondemand_video
+            if (mark != null) { mark.Margin = new Thickness(0, 2, 14, 0); brand.Children.Add(mark); }
+            brand.Children.Add(Theme.Title("YouTube", 36));
+            rail.Children.Add(brand);
             for (int i = 0; i < RailNames.Length; i++)
             {
-                Border t = Theme.Tile(RailNames[i], 30);
-                t.Padding = new Thickness(24, 12, 24, 12);
-                t.Margin = new Thickness(24, 5, 24, 5);
-                t.Background = Brushes.Transparent;
-                ((TextBlock)t.Child).HorizontalAlignment = HorizontalAlignment.Left;
+                Border t = Theme.Tile(RailNames[i], 26, RailIcons[i], Look.Ghost);
+                t.Padding = new Thickness(26, 13, 26, 14);
+                t.Margin = new Thickness(24, 4, 24, 4);
+                Theme.AlignLeft(t);
                 railTiles.Add(t);
                 rail.Children.Add(t);
             }
-            design.Children.Add(new Border { Background = Theme.Panel, Child = rail });
+            design.Children.Add(new Border
+            {
+                Background = Theme.GlassA(0.55), BorderBrush = Theme.InkA(0.1), BorderThickness = new Thickness(0, 0, 1, 0), Child = rail
+            });
+            Grid.SetRowSpan(design.Children[design.Children.Count - 1], 2);
 
             // content: header + grid
             Grid content = new Grid();
             content.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             content.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             content.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            Grid head = new Grid { Margin = new Thickness(40, 26, 50, 8) };
+            Grid head = new Grid { Margin = new Thickness(40, 40, 64, 10) };
             head.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             head.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             head.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -936,8 +941,8 @@ namespace SeleneBrowser
             head.Children.Add(statusText);
             content.Children.Add(head);
 
-            shortsChip.Padding = new Thickness(22, 6, 22, 6);
-            shortsChip.Margin = new Thickness(40, 0, 0, 4);
+            shortsChip.Padding = new Thickness(20, 7, 22, 8);
+            shortsChip.Margin = new Thickness(40, 2, 0, 6);
             shortsChip.HorizontalAlignment = HorizontalAlignment.Left;
             shortsChip.Visibility = Visibility.Collapsed;
             Grid.SetRow(shortsChip, 1);
@@ -951,7 +956,7 @@ namespace SeleneBrowser
             msgText.TextAlignment = TextAlignment.Center;
             msgText.MaxWidth = 1000;
             msgText.Margin = new Thickness(0, 18, 0, 6);
-            msgSub.HorizontalAlignment = HorizontalAlignment.Center;
+            msgSub.Margin = new Thickness(0, 10, 0, 0);
             msgPanel.Children.Add(msgText);
             msgPanel.Children.Add(msgSub);
             Grid.SetRow(msgPanel, 2);
@@ -959,9 +964,11 @@ namespace SeleneBrowser
             Grid.SetColumn(content, 1);
             design.Children.Add(content);
 
-            hintText.Margin = new Thickness(40, 0, 40, 0);
+            // the button hints, bottom right as on Selene's screens
+            hintText.Margin = new Thickness(40, 0, 64, 18);
+            hintText.VerticalAlignment = VerticalAlignment.Bottom;
             Grid.SetRow(hintText, 1);
-            Grid.SetColumnSpan(hintText, 2);
+            Grid.SetColumn(hintText, 1);
             design.Children.Add(hintText);
 
             Grid.SetRowSpan(menu, 2);

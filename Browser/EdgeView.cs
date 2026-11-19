@@ -104,8 +104,10 @@ namespace SeleneBrowser
             Content = web;
             try
             {
+                // the theme's backdrop is a gradient: a page loading shows its scrim color, not white
                 var bg = Theme.Background as SolidColorBrush;
-                if (bg != null) web.DefaultBackgroundColor = System.Drawing.Color.FromArgb(255, bg.Color.R, bg.Color.G, bg.Color.B);
+                System.Windows.Media.Color c = bg != null ? bg.Color : Theme.ScrimColor;
+                web.DefaultBackgroundColor = System.Drawing.Color.FromArgb(255, c.R, c.G, c.B);
             }
             catch (Exception ex) { Fail("background", ex); }
             web.CoreWebView2InitializationCompleted += OnInitCompleted;

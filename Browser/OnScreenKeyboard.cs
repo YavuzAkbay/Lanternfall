@@ -53,26 +53,33 @@ namespace SeleneBrowser
             BuildRows();
 
             var stack = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center };
-            title = Theme.Text("", 28, Theme.Ink60);
-            title.Margin = new Thickness(6, 0, 0, 10);
+            title = Theme.Title("", 28);
+            title.Margin = new Thickness(10, 0, 0, 14);
             stack.Children.Add(title);
 
-            var tb = Theme.Text("", 36, Theme.Ink);
+            // the text field: a recessed pill with the caret in the accent
+            var tb = Theme.Text("", 32, Theme.Ink);
             tb.TextTrimming = TextTrimming.None;
             tb.TextWrapping = TextWrapping.Wrap;
             caretRun.Foreground = Theme.Accent;
+            caretRun.FontWeight = FontWeights.Light;
             tb.Inlines.Add(before); tb.Inlines.Add(caretRun); tb.Inlines.Add(after);
+            var field = new StackPanel { Orientation = Orientation.Horizontal };
+            FrameworkElement lens = Theme.Icon(0xE8B6, 32, Theme.Ink60);   // search
+            if (lens != null) { lens.Margin = new Thickness(0, 0, 16, 0); field.Children.Add(lens); }
+            field.Children.Add(tb);
             stack.Children.Add(new Border
             {
-                Background = Theme.Background,
-                BorderBrush = Theme.Ink60,
-                BorderThickness = new Thickness(2),
-                CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(18, 10, 18, 10),
-                MinHeight = 64,
-                Margin = new Thickness(0, 0, 0, 10),
-                Child = tb
+                Background = Theme.ScrimA(0.4),
+                BorderBrush = Theme.InkA(0.22),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(34),
+                Padding = new Thickness(26, 12, 26, 13),
+                MinHeight = 68,
+                Margin = new Thickness(6, 0, 6, 14),
+                Child = field
             });
+            chipPanel.Margin = new Thickness(0, 0, 0, 8);
             stack.Children.Add(chipPanel);
 
             foreach (var r in rows)
@@ -80,32 +87,32 @@ namespace SeleneBrowser
                 var line = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center };
                 foreach (var k in r)
                 {
-                    k.Box = Theme.Tile("", 30);
+                    k.Box = Theme.Tile("", 28, 0, Look.Key);
                     k.Box.Width = k.Width;
-                    k.Box.Height = 72;
+                    k.Box.Height = 70;
                     k.Box.Padding = new Thickness(0);
-                    k.Label = (TextBlock)k.Box.Child;
+                    k.Box.Margin = new Thickness(4);
+                    k.Label = Theme.LabelOf(k.Box);
                     line.Children.Add(k.Box);
                 }
                 stack.Children.Add(line);
             }
-            var hint = Theme.Text(Hints, 22, Theme.Ink60);
-            hint.Margin = new Thickness(6, 12, 0, 0);
-            hint.HorizontalAlignment = HorizontalAlignment.Center;
+            var hint = new HintBar(19, HorizontalAlignment.Center);
+            hint.Show(Hints);
+            hint.Margin = new Thickness(0, 18, 0, 0);
             stack.Children.Add(hint);
 
             var panel = new Border
             {
-                Background = Theme.Panel,
-                CornerRadius = new CornerRadius(14),
-                Padding = new Thickness(30),
+                Padding = new Thickness(34, 30, 34, 26),
                 Child = stack,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center
             };
+            Theme.Glass(panel, 32);
             Content = new Grid
             {
-                Background = new SolidColorBrush(Color.FromArgb(0xCC, 0, 0, 0)),
+                Background = Theme.ScrimA(0.62),
                 Children = { new Viewbox { Stretch = Stretch.Uniform, Margin = new Thickness(40), Child = panel } }
             };
         }
@@ -274,7 +281,7 @@ namespace SeleneBrowser
                 {
                     foreach (var s in (suggest(text) ?? new string[0]).Where(x => !string.IsNullOrEmpty(x)).Take(5))
                     {
-                        var chip = Theme.Tile(s, 24);
+                        var chip = Theme.Tile(s, 22, 0xE889, Look.Pill);   // history
                         chip.MaxWidth = 520;
                         chips.Add(chip); chipText.Add(s); chipPanel.Children.Add(chip);
                     }
@@ -301,8 +308,9 @@ namespace SeleneBrowser
                 {
                     var k = rows[r][c];
                     k.Label.Text = shift ? k.Upper : k.Lower;
+                    Theme.SetToggled(k.Box, k.Kind == Kind.Shift && shift);
+                    Theme.SetSelected(k.Box, k.Kind == Kind.Done);   // the way out stands out a little
                     Theme.SetFocused(k.Box, r == row && c == col);
-                    k.Box.Background = k.Kind == Kind.Shift && shift ? Theme.Ink60 : Theme.Key;
                 }
             for (int i = 0; i < chips.Count; i++) Theme.SetFocused(chips[i], row < 0 && i == col);
         }
