@@ -59,6 +59,7 @@ namespace Selene
                 if (pretend) minutes = 10 / 60.0;
                 if (Showing || minutes <= 0 || (DateTime.Now - lastTouch).TotalMinutes < minutes) return;
                 if (HomeNav.Launching || HomeNav.GameRunning() || HomeNav.ClipIsPlaying || ProgressToast.Busy) return;
+                if (ForkBrand.MediaActive()) { lastTouch = DateTime.Now; return; }   // Lanternfall: the Browser / YouTube is open
                 var main = Application.Current.MainWindow;
                 if (main == null || !main.IsActive || main.WindowState == WindowState.Minimized) return;
                 var host = HomeNav.FindByName(main, "PART_MainHost") as Grid;

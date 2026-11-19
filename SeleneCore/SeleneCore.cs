@@ -504,6 +504,7 @@ namespace Selene
             new Option { Group = "Advanced", Key = "reportchord", Label = "Report with both sticks", About = "Press both sticks at the same time to report a problem with a screenshot." },
             new Option { Group = "Advanced", Key = "legacytasks", Label = "Old administrator tasks", About = "Remove the administrator tasks that older versions of Selene left on this PC.", Action = "Remove", Available = () => LegacyTasks.Any, Note = LegacyTasks.Summary },
             new Option { Group = "Advanced", Key = "fullrate", Label = "Match the screen's refresh rate", About = "Move at 120 or 144 Hz on high refresh rate screens." },
+            new Option { Group = "Advanced", Key = "tapguard", Label = "Catch very quick taps", About = "Playnite can miss a button tap shorter than 16 ms. Selene watches the pad closely and passes on the taps it missed." },
             new Option { Group = "Advanced", Key = "calmmotion", Label = "Calm background motion", About = "Reduce background animation to 30 FPS. Restart Playnite to apply." },
             new Option { Group = "Advanced", Key = "idlecalm", Label = "Calm when idle", About = "Pause the moving background after 45 seconds without input, to save power and GPU. Any press brings it back." },
             new Option { Group = "Advanced", Key = "presence", Label = "Pause when out of view", About = "Pause background motion and trailers while Selene is out of view." },

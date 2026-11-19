@@ -640,11 +640,36 @@ namespace Selene
             return screenRate;
         }
 
+        // true when no other screen on the PC refreshes faster than the one Playnite is on (looked at again every 10 s)
+        private static int fastestRate; private static DateTime fastestAt = DateTime.MinValue;
+        public static bool OnFastestScreen()
+        {
+            int mine = ScreenRate();
+            if (mine <= 0) return true;
+            if ((DateTime.Now - fastestAt).TotalSeconds >= 10)
+            {
+                fastestAt = DateTime.Now; fastestRate = 0;
+                try
+                {
+                    foreach (var screen in System.Windows.Forms.Screen.AllScreens)
+                    {
+                        var dm = new DevMode(); dm.dmSize = (short)System.Runtime.InteropServices.Marshal.SizeOf(typeof(DevMode));
+                        if (EnumDisplaySettings(screen.DeviceName, -1, ref dm)) fastestRate = Math.Max(fastestRate, dm.dmDisplayFrequency);
+                    }
+                }
+                catch { }
+            }
+            return mine >= fastestRate - 1;
+        }
+
         public static void FullRateChanged()
         {
             // in front and in use (pressed lately): the slow-frame watchdog listens too; quiet, neither does (see Poke)
             bool active = RecentlyActive && PlayniteInFront(fullRateWatched ?? Application.Current.MainWindow);
-            Smoothness.Listen(active);
+            // (a frame listener makes WPF draw at the rate of the FASTEST screen on the PC, not the one Playnite is on: a 60 Hz 4K TV
+            // beside a 144 Hz monitor was drawn 144 times a second, 4K each, for 60 it can show. The watchdog only listens on the
+            // fastest screen; on the others it would cost the smoothness it is there to watch.)
+            Smoothness.Listen(active && OnFastestScreen());
             // only worth it above 60 Hz (drawing every frame keeps the GPU a little busy; on a 60 Hz TV there's nothing to gain)
             bool want = active && Features.On("fullrate") && ScreenRate() > 62;
             if (want == fullRateOn) return;

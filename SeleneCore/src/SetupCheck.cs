@@ -77,8 +77,6 @@ namespace Selene
                 About = "Shows each game once, even if you own it on several stores." },
             new AddonInfo { Id = "playnite-gameactivity-plugin", Name = "GameActivity",
                 About = "A history of when and how long you played each game." },
-            new AddonInfo { Id = "UniPlaySong.a1b2c3d4-e5f6-7890-abcd-ef1234567890", Name = "UniPlaySong",
-                About = "Plays each game's music while you browse." },
             new AddonInfo { Id = "PlayniteAudioSwitcher_708b6ec4-bf96-4c0d-bd9d-fe0aa04d6bf1", Name = "Audio Switcher",
                 About = "Switch between TV speakers and headset with the controller." },
         };
@@ -90,6 +88,7 @@ namespace Selene
             new AddonInfo { Id = "NowPlaying_db4e7ade-57fb-426c-8392-60e2347a0209", Name = "Now Playing", About = "handles the running game, which Selene already does" },
             new AddonInfo { Id = "playnite-backgroundchanger-plugin", Name = "BackgroundChanger", About = "changes backgrounds, which Selene's wallpapers already do" },
             // made for the Aniki ReMake theme: with Selene it still runs its own start-up work, sounds and music control
+            new AddonInfo { Id = ForkBrand.MusicAddon, Name = "UniPlaySong", About = "plays background music Lanternfall doesn't use, and keeps its own audio device when Windows switches output" },
             new AddonInfo { Id = "AnikiHelper_96a983a3-3f13-4dce-a474-4052b718bb52", Name = "Aniki Helper", About = "belongs to the Aniki ReMake theme; with Selene it adds start-up work, plays its own alert sounds and fights over the music" },
         };
 

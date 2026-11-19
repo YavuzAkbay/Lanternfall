@@ -25,6 +25,18 @@ namespace Selene
         public const string CorePackage = "LanternfallCore.pext";
         public const string Agent = "Lanternfall/1.0 (Playnite theme; github.com/" + Repo + ")";
 
+        // the Lanternfall Browser add-on sets this AppDomain slot while the Browser or YouTube is open (same process):
+        // the idle screen stays away while you watch
+        public static bool MediaActive()
+        {
+            try { var v = System.AppDomain.CurrentDomain.GetData("Lanternfall.MediaActive"); return v is bool && (bool)v; }
+            catch { return false; }
+        }
+
+        // Lanternfall has no background music: UniPlaySong (which plays it, on an audio device it keeps even when Windows
+        // switches the default output) is listed as a clash instead of a recommended add-on
+        public const string MusicAddon = "UniPlaySong.a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+
         // "Selene", "Selene's", "Selene Core", "SELENE" in shown text. Credits that must keep the original name write it
         // with a zero-width space ("Sel​ene") so they are left alone.
         private static readonly Regex word = new Regex(@"\bSelene\b", RegexOptions.CultureInvariant);

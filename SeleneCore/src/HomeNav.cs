@@ -70,6 +70,7 @@ namespace Selene
             }
             LocalGames.StartRunningWatch();
             Smoothness.Start();
+            PadTapGuard.Start();
             // Every feature remains enabled; optional startup jobs wait for the intro and quiet frames.
             StartupWork.AfterHome("library refresh", () => { if (Features.On("startrefresh")) RefreshLibrary("start"); }, 2500);
             // Nomad Phase 0 dev hook: drop nomad-autoopen.txt in the sandbox config folder to open the browser at startup.
@@ -4054,6 +4055,7 @@ namespace Selene
             try
             {
                 var ke = e.StagingItem.Input as KeyEventArgs;
+                PadTapGuard.Seen(ke);   // (quick taps Playnite's 16 ms look at the pad misses are replayed: it counts the ones that did arrive)
                 if (HandleLaunchBack(ke)) { e.Cancel(); return; }
                 if (heldKey != Key.None && ke != null && ke.Key == heldKey && ke.GetType().Name != "GameControllerInputEventArgs")
                 {
