@@ -84,6 +84,10 @@ $info = @(
     "Source commit: $commit",
     "Local test mode: $([bool]$AllowDirty)",
     "Built: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm')) UTC",
+    # Lanternfall Core's update check reads the Browser line: a release with a newer Browser is offered even when the
+    # theme's version is unchanged (a suffix release such as 1.5.8-1), and then only LanternfallBrowser.pext is installed
+    "Lanternfall Core: $(((Get-Content (Join-Path $root 'SeleneCore\extension.yaml')) -match '^Version:' | Select-Object -First 1).Substring(8).Trim())",
+    "Lanternfall Browser: $(((Get-Content (Join-Path $root 'Browser\extension.yaml')) -match '^Version:' | Select-Object -First 1).Substring(8).Trim())",
     "Compiler: csc.exe $((Get-Item -LiteralPath $csc).VersionInfo.ProductVersion)  sha256 $((Get-FileHash -LiteralPath $csc -Algorithm SHA256).Hash.ToLowerInvariant())",
     "Playnite SDK: $((Get-Item -LiteralPath $sdkDll).VersionInfo.FileVersion)  sha256 $((Get-FileHash -LiteralPath $sdkDll -Algorithm SHA256).Hash.ToLowerInvariant())",
     "Toolbox: $((Get-Item -LiteralPath $toolbox).VersionInfo.FileVersion)  sha256 $((Get-FileHash -LiteralPath $toolbox -Algorithm SHA256).Hash.ToLowerInvariant())",

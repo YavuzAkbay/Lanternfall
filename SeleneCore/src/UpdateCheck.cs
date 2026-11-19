@@ -52,6 +52,7 @@ namespace Selene
                         if (release != null && release.TryGetValue("tag_name", out tag)) newest = Convert.ToString(tag).TrimStart('v');
                         if (release != null && release.TryGetValue("body", out body)) notes = Convert.ToString(body);
                     }
+                    ForkUpdate.Read(newest, notes);   // Lanternfall: does it carry a newer Browser add-on?
                 }
                 catch (Exception ex) { HomeNav.Log("update check: " + ex.Message); }
                 ui.BeginInvoke(new Action(() => done(newest, notes)));
@@ -80,7 +81,7 @@ namespace Selene
             if (!pretend && !IsNewer(newest)) return;
             Available = newest; Notes = notes; Preview = pretend;
             if (!pretend && newest == told) return;   // (told once; the menu's Update item stays)
-            ProgressToast.ShowNote("Selene " + newest, "Update available", 0xE923 /* update */, true);   // (before any task's card; the menu's Update item carries the dot)
+            ProgressToast.ShowNote(ForkUpdate.Name("Selene " + newest), "Update available", 0xE923 /* update */, true);   // (before any task's card; the menu's Update item carries the dot)
         }
 
         // Selene settings > Check for updates: looks now; the Update screen when there's one, else a note
@@ -99,7 +100,7 @@ namespace Selene
         private static bool IsNewer(string newest)
         {
             Version a, b;
-            return Version.TryParse(newest.Split('-')[0], out a) && Version.TryParse((Brand.Version ?? "0").Split('-')[0], out b) && a > b;
+            return Version.TryParse(newest.Split('-')[0], out a) && Version.TryParse((Brand.Version ?? "0").Split('-')[0], out b) && a > b || ForkUpdate.BrowserNewer;   // (Lanternfall: or a newer Browser add-on)
         }
     }
 }

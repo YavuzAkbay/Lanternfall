@@ -16,8 +16,8 @@ namespace Selene
     public class UpdateScreen : Screen
     {
         private const string Release = ForkBrand.RepoUrl + "/releases/download/v";   // Lanternfall's releases
-        private static readonly string[] Files = { ForkBrand.ThemePackage, ForkBrand.CorePackage, ForkBrand.BrowserPackage };
-        private static readonly double[] Weights = { 0.94, 0.03, 0.03 };   // each file's share of the bar (the theme is nearly all of it)
+        private static string[] Files { get { return ForkUpdate.Packages(new[] { ForkBrand.ThemePackage, ForkBrand.CorePackage, ForkBrand.BrowserPackage }); } }   // (Lanternfall: the Browser alone for a Browser-only update)
+        private static double[] Weights { get { return ForkUpdate.Weights(new[] { 0.94, 0.03, 0.03 }); } }   // each file's share of the bar (the theme is nearly all of it)
         private const double BarW = 620;
 
         private readonly Func<Screen> back;
@@ -42,8 +42,8 @@ namespace Selene
             var mark = Brand.Mark(84, true);
             mark.HorizontalAlignment = HorizontalAlignment.Center;
             col.Children.Add(mark);
-            col.Children.Add(new TextBlock { Text = "Selene " + version, FontSize = 48, FontFamily = Ui.Display, FontWeight = FontWeights.SemiBold, Foreground = Ink.Brush("SeleneInkColor"), HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 18, 0, 0) });
-            col.Children.Add(new TextBlock { Text = UpdateCheck.Preview ? "A preview of the update screen (this is what people on an older version see)." : "A new version is ready. You have " + Brand.Version + ".", FontSize = 19, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.6), HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 6, 0, 0) });
+            col.Children.Add(new TextBlock { Text = ForkUpdate.Name("Selene " + version), FontSize = 48, FontFamily = Ui.Display, FontWeight = FontWeights.SemiBold, Foreground = Ink.Brush("SeleneInkColor"), HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 18, 0, 0) });
+            col.Children.Add(new TextBlock { Text = UpdateCheck.Preview ? "A preview of the update screen (this is what people on an older version see)." : "A new version is ready. You have " + ForkUpdate.Have(Brand.Version) + ".", FontSize = 19, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.6), HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 6, 0, 0) });
 
             // what's new: the release notes as plain words, fading out at the foot when long
             var notes = new TextBlock { Text = Plain(UpdateCheck.Notes), FontSize = 17, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.85), TextWrapping = TextWrapping.Wrap, LineHeight = 26 };
@@ -118,7 +118,7 @@ namespace Selene
                 case 2:
                     status.Text = UpdateCheck.Preview
                         ? "Downloaded. (A preview: nothing was handed to Playnite, so nothing changes.)"
-                        : "Ready. Selene " + version + " goes in when Playnite restarts.";
+                        : "Ready. " + ForkUpdate.Name("Selene " + version) + " goes in when Playnite restarts.";
                     prompts.Children.Add(Ui.Prompts(false, Ui.Prompt("B", "Later")));
                     prompts.Children.Add(Ui.Prompts(true, Ui.Prompt("A", "Restart Playnite")));
                     break;

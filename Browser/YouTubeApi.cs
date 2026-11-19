@@ -881,32 +881,52 @@ namespace SeleneBrowser
             return true;
         }
 
+        /// <summary>The web route alone (no app client, no Invidious): for tools\update-youtubejs.ps1's playback check.</summary>
+        public static Result<StreamInfo> GetStreamsViaWeb(string videoId)
+        {
+            string err = "";
+            webProblem = null;
+            StreamInfo si = TryWeb(videoId, ref err);
+            if (si != null) return Result<StreamInfo>.Success(si);
+            return Result<StreamInfo>.Fail(webProblem ?? (err.Length > 0 ? err : "no playable streams"));
+        }
+
+        [ThreadStatic] static string webProblem;   // why TryWeb gave nothing (the log has it too)
+
+        static StreamInfo WebProblem(string videoId, string msg, bool warn)
+        {
+            webProblem = msg;
+            Playnite.SDK.ILogger log = Playnite.SDK.LogManager.GetLogger();
+            string line = "SeleneBrowser: YouTube " + videoId + " web route: " + msg;
+            if (warn) log.Warn(line); else log.Info(line);
+            return null;
+        }
+
         static StreamInfo TryWeb(string videoId, ref string err)
         {
-            Playnite.SDK.ILogger log = Playnite.SDK.LogManager.GetLogger();
             try
             {
-                if (!YouTubeWeb.Available) return null;
+                if (!YouTubeWeb.Available) return WebProblem(videoId, "unavailable (no WebView2 runtime or ytweb files)", true);
                 System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
                 string why;
                 string json = YouTubeWeb.Resolve(videoId, 40000, out why);
-                if (json == null) { log.Warn("SeleneBrowser: YouTube " + videoId + " web route: " + why); return null; }
+                if (json == null) return WebProblem(videoId, why, true);
                 object root = Jx.Parse(json);
                 string status = Jx.Str(root, "playabilityStatus", "status");
                 if (status != "OK")
                 {
                     string reason = Jx.Str(root, "playabilityStatus", "reason");
-                    log.Info("SeleneBrowser: YouTube " + videoId + " web route: " + status + " " + reason);
                     if (reason.Length > 0 && status != "LOGIN_REQUIRED") err = reason;   // a real reason (private, removed...) beats the bot notice
-                    return null;
+                    return WebProblem(videoId, status + " " + reason, false);
                 }
                 StreamInfo si = ParseInnerTubeStreams(root, videoId);
                 si.Source = "web";
-                log.Info("SeleneBrowser: YouTube " + videoId + " web route: " + si.Video.Count + " video / " + si.Audio.Count + " audio formats in " + sw.ElapsedMilliseconds + " ms");
-                if (si.IsLive || si.Video.Count == 0 || si.Audio.Count == 0) return null;
+                Playnite.SDK.LogManager.GetLogger().Info("SeleneBrowser: YouTube " + videoId + " web route: " + si.Video.Count + " video / " + si.Audio.Count + " audio formats in " + sw.ElapsedMilliseconds + " ms");
+                if (si.IsLive) return WebProblem(videoId, "live (left to the live routes)", false);
+                if (si.Video.Count == 0 || si.Audio.Count == 0) return WebProblem(videoId, "no stream urls (" + si.Video.Count + " video, " + si.Audio.Count + " audio)", true);
                 return si;
             }
-            catch (Exception e) { log.Warn("SeleneBrowser: YouTube " + videoId + " web route: " + e.Message); return null; }
+            catch (Exception e) { return WebProblem(videoId, e.Message, true); }
         }
 
         static readonly Regex MimeRx = new Regex("^\\s*([^;\\s]+)\\s*(?:;\\s*codecs=\"([^\"]*)\")?", RegexOptions.Compiled);

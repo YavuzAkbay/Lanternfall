@@ -29,6 +29,7 @@ tools\test.ps1 [-SkipBuild]           # build + every suite + python + node test
 tools\tests\bugs.ps1                  # one suite (also: check, interaction, library, security, backgroundchanger)
 python -m unittest discover -s tools/tests -p "test_*.py" -v     # release-tool tests
 node --test tools/tests/release-notify.test.cjs                  # release-notification tests
+tools\update-youtubejs.ps1 [-Version x.y.z] [-TestOnly]          # update the bundled YouTube.js; real-playback check, rolls back on failure (network)
 ```
 
 Suites are `tools\tests\<name>.ps1` + `<Name>.Check.cs`: each csc-compiles a small console exe and exits nonzero on failure (`bugs`/`interaction`/`library`/`backgroundchanger` link the built `SeleneCore.dll`, so build first; `check` and `security` compile selected source files directly). There is no per-test filter; to run one case, edit/narrow the `.Check.cs` or call the suite exe. A new `src/*.cs` file used by `check.ps1` must be added to its hand-written source list.
@@ -61,6 +62,17 @@ The fork must keep merging upstream Selene fixes (`tools\sync-upstream.ps1`, dai
 - **Do not rename Selene identifiers** (namespaces, `SeleneCore`, `Selene*` resource keys, file names). Branding is applied through `ForkBrand.cs` (name, lantern mark, `Repo` slug) hooked into `Lang.Apply/T`; links to GitHub should use `ForkBrand.Repo`, and the crescent logo must not be drawn (Selene's name/logo are not licensed to the fork).
 - The Lanternfall version tracks the Selene version it is based on; tags are `v<version>`. Core is 1.5.x, Browser has its own version (`Browser/extension.yaml`). Release steps are in `docs/releasing.md` (`python tools/release.py <version>`); never publish a release or push to `main` without the maintainer's say-so.
 - Never run `git stash` here — uncommitted Browser work often lives in the tree. `.gitignore` excludes `dist/`, `bin/`, `obj/`, `Browser/build/`, `.claude/` and `CLAUDE.local.md` (this `CLAUDE.md` is tracked in a public repo).
+
+## When the maintainer says "check for updates" (or similar)
+
+Check every outside source Lanternfall depends on, report what is new, and change nothing that would ship without asking:
+
+1. **YouTube.js and YouTube playback** (the YouTube web route, `Browser/lib/ytweb`): run `tools\update-youtubejs.ps1` (needs the network, takes a few minutes). It always checks real playback: it keeps a newer YouTube.js only if videos play with it, otherwise it restores the old copy and says whether that one still plays; already on the newest, it just checks. Report the outcome. A kept new version ships only with a raised `Version` in `Browser/extension.yaml` and a release. A failure even with the newest YouTube.js means YouTube changed something beyond it: `Browser/ytweb/resolver.js` or `YouTubeApi.GetStreamsSync` needs a fix.
+2. **Selene upstream**: `git fetch upstream`, then `git log --oneline HEAD..upstream/main` to list what Selene has that Lanternfall lacks. Merge only if the maintainer agrees, with `tools\sync-upstream.ps1 -NoCommit` so the result can be reviewed.
+
+Never commit, push or release as part of this; summarize and let the maintainer decide.
+
+**Shipping a Browser-only fix** (a new YouTube.js, a YouTube change): raise `Version` in `Browser/extension.yaml` (it must go up, or nobody is offered it), keep the theme/Core version, and release it as a suffix release (`1.5.8-1`, `-2`, ...). The in-app update check (`SeleneCore/src/ForkUpdate.cs`, hooked into Selene's `UpdateCheck`/`UpdateScreen`/`MenuScreen`) offers a release whose Browser is newer than the installed one even when the theme version is unchanged, and then installs only `LanternfallBrowser.pext`. It reads the release's Browser version from the `Lanternfall Browser: x.y.z` line that `tools\package.ps1` writes into `BUILDINFO.txt`, falling back to "Lanternfall Browser x.y.z" in the release notes, so keep naming it there too. A release with a newer theme version is offered as the full update (all three files), as in Selene.
 
 ## Environment gotchas
 

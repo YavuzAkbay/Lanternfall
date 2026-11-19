@@ -4,6 +4,16 @@ Selene (theme) and Selene Core (add-on) share one version number and are release
 
 ## Unreleased
 
+## 1.5.8-2 - 2026-11-19 (Lanternfall Core 1.5.8; Lanternfall Browser 0.4.2)
+
+- Browser fixes reach you on their own: Menu > Update now also offers a release that only brings a newer Lanternfall Browser (such as a YouTube fix), and then installs just the Browser. Needs this Lanternfall Core, installed once by hand.
+- Lanternfall Browser 0.4.2: when YouTube's web route fails, the log says why.
+- For maintainers: `tools/update-youtubejs.ps1` updates the bundled YouTube.js and keeps it only if real videos play with it; release files now name their Browser version in BUILDINFO.txt.
+
+## 1.5.8-1 - 2026-11-19 (Lanternfall Browser 0.4.1)
+
+- YouTube plays again when it refuses the plain app client: the Browser asks the way YouTube's own site does (a hidden Edge page mints the proof tokens, as FreeTube does) before falling back to Invidious. Expired Invidious links are skipped, dubbed tracks are no longer mixed into the original audio, and the update screen downloads the Browser too.
+
 ## 1.5.8 - 2026-11-19 (Lanternfall; Lanternfall Browser 0.4.0)
 
 - Quick button taps register: Playnite looks at the controller every 16 ms and could miss a tap shorter than that (fast mashing, or a Bluetooth pad). Lanternfall Core now watches the pad more closely and passes on the taps Playnite missed. Advanced > Catch very quick taps turns it off.

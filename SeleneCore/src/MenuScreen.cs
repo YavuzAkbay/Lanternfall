@@ -130,7 +130,7 @@ namespace Selene
             items.Add(new Item { Icon = Ui.Icon(0xe627), Label = "Update library", Run = UpdateLibrary });   // (always: games added while Playnite runs need it too, #101)
             items.Add(new Item { Icon = Ui.Icon(0xe30c), Label = "Desktop mode", Run = () => Later(() => PlayniteMenu.Main("SwitchToDesktopCommand")) });
             // Update, where Setup check was (that one is in Selene settings > Advanced now): a newer Selene found opens it, else it looks
-            items.Add(new Item { Icon = Ui.Icon(0xe923), Label = "Update", Sub = UpdateCheck.Available != null ? "Selene " + UpdateCheck.Available : null, Badge = UpdateCheck.Available != null,
+            items.Add(new Item { Icon = Ui.Icon(0xe923), Label = "Update", Sub = UpdateCheck.Available != null ? ForkUpdate.Name("Selene " + UpdateCheck.Available) : null, Badge = UpdateCheck.Available != null,
                 Run = () => { if (UpdateCheck.Available != null) LoginScene.Show(new UpdateScreen(() => new MenuScreen(true)), 1); else UpdateCheck.CheckNow(() => new MenuScreen(true)); } });
 
             index = items.FindIndex(i => i.Label == "Power");   // opens on Power, in the middle

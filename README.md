@@ -42,9 +42,16 @@ The Browser and YouTube are Spotlight cards: switch them off in **Settings → S
 Playnite 10 or newer, Windows 10 / 11, a controller recommended. The browser uses Microsoft Edge WebView2, which
 Windows 10 / 11 already include.
 
-**Updating.** Lanternfall offers new versions of the theme and Lanternfall Core from its menu when they move to a new
-Selene version. Releases tagged with a suffix (like `1.5.7-3`) and Lanternfall Browser updates are installed by hand:
-download the files the release notes name and open them as in step 2.
+**Updating.** Lanternfall offers new versions from its menu (**Menu → Update**, with a notification once a day): the
+theme, Lanternfall Core and Lanternfall Browser together when they move to a new Selene version, and the Browser alone
+when a release only brings a newer Lanternfall Browser. Other releases tagged with a suffix (like `1.5.7-3`) are
+installed by hand: download the files the release notes name and open them as in step 2.
+
+**If YouTube stops playing.** YouTube changes its site from time to time to keep apps other than its own out; FreeTube
+and every other such app run into the same thing. Lanternfall gets videos the way FreeTube does, and when YouTube
+changes something, the fix comes in a new Lanternfall Browser release: there is nothing to change on your side or in
+the settings. Lanternfall offers it under **Menu → Update** (or look in the [releases](../../releases) for a newer
+`LanternfallBrowser.pext`). Nothing newer yet? Report it (**Menu → Report a problem**); fixes usually follow within days.
 
 Found a problem or have an idea? Use **Menu → Report a problem**, or open an [issue](../../issues).
 
@@ -54,6 +61,7 @@ Found a problem or have an idea? Use **Menu → Report a problem**, or open an [
 tools\build.ps1        # Lanternfall Core, with the C# compiler that ships with Windows
 Browser\build.ps1      # Lanternfall Browser
 tools\package.ps1      # the three release files in dist\
+tools\update-youtubejs.ps1   # when YouTube breaks: newest YouTube.js, kept only if real playback passes
 ```
 
 A portable Playnite next to the repo (`..\Sandbox\Playnite`) is a safe place to try it without touching your own:
