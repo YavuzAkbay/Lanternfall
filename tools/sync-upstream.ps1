@@ -12,7 +12,8 @@ param([switch]$NoCommit, [switch]$CI, [string]$From = 'upstream/main')
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
 Set-Location $repo
-function Invoke-Git { & git @args; if ($LASTEXITCODE -ne 0) { throw "git $($args -join ' ') failed" } }
+# (git reports progress on stderr: Windows PowerShell would take that for an error, so only the exit code counts)
+function Invoke-Git { $eap = $ErrorActionPreference; $ErrorActionPreference = 'Continue'; try { & git @args 2>&1 | ForEach-Object { "$_" } } finally { $ErrorActionPreference = $eap }; if ($LASTEXITCODE -ne 0) { throw "git $($args -join ' ') failed" } }
 
 # paths Lanternfall doesn't carry (the Selene logo and pictures may not be reused; the issue bots are Selene's own)
 $removed = @('^docs/readme/', '^docs/screenshots/', '^docs/logo/selene-', '^docs/logo/social-preview', '^tools/art/selene-',
@@ -24,12 +25,12 @@ if (-not (& git remote | Where-Object { $_ -eq 'upstream' })) { Invoke-Git remot
 if (@(& git status --porcelain).Count -gt 0) { throw 'The working tree has uncommitted changes: commit or stash them first.' }
 if ($From -eq 'upstream/main') { Invoke-Git fetch upstream --tags --quiet }
 $behind = [int](& git rev-list --count "HEAD..$From")
-if ($behind -eq 0) { '"Already up to date with Selene ($From)."'; return }
+if ($behind -eq 0) { "Already up to date with Selene ($From)."; return }
 $theirVersion = ((& git show "${From}:theme/theme.yaml") -match '^Version:' | Select-Object -First 1).Substring(8).Trim()
 "Selene has $behind new commit(s), version $theirVersion. Merging..."
 & git log --oneline "HEAD..$From" | Select-Object -First 30
 
-& git merge $From --no-ff --no-commit -m "Merge Selene $theirVersion from upstream" 2>&1 | Out-Null
+try { Invoke-Git merge $From --no-ff --no-commit -m "Merge Selene $theirVersion from upstream" | Out-Null } catch { }   # (conflicts: settled below)
 $conflicts = @(& git diff --name-only --diff-filter=U)
 
 foreach ($path in $conflicts) {
