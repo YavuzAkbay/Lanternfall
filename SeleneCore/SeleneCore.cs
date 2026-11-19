@@ -367,6 +367,8 @@ namespace Selene
             new Option { Group = "Spotlight", Key = "capturesfolders", Label = "Captures folders", About = "Add a folder with your screenshots and clips. Pick one that's listed to remove it.", Action = "Add", Note = () => SelenePaths.CapturesFolders.Count == 0 ? "Steam, Videos and NVIDIA folders only" : string.Join(" · ", SelenePaths.CapturesFolders) },
             new Option { Group = "Spotlight", Key = "cardsurprise", Label = "Surprise me card", About = "Let Selene pick a game for you." },
             new Option { Group = "Spotlight", Key = "cardstore", Label = "Store card", About = "Show the Store card on Spotlight." },
+            new Option { Group = "Spotlight", Key = "cardbrowser", Label = "Browser card", About = "Nomad sandbox: show the Browser card on Spotlight (needs the Selene Browser add-on).", DefaultOn = true },
+            new Option { Group = "Spotlight", Key = "cardyoutube", Label = "YouTube card", About = "Open a controller-friendly YouTube (Invidious) in the browser overlay.", DefaultOn = true },
             new Option { Group = "Spotlight", Key = "cardnews", Label = "News card", About = "Show headlines from the news feeds you follow." },
             new Option { Group = "Spotlight", Key = "cardpictures", Label = "Pictures under cards", About = "Show recent captures, recently played games and suggestions under the cards." },
             new Option { Group = "Spotlight", Key = "steadyhold", Label = "Steady hold scrolling", About = "Holding left or right moves through games at a steady pace the row can keep up with." },

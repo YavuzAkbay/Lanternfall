@@ -238,6 +238,7 @@ namespace Selene
                 if (step[1].StartsWith("pad:")) DevPad(step[1].Substring(4), true);   // a real controller press, through Playnite's input path
                 else if (step[1].StartsWith("padup:")) DevPad(step[1].Substring(6), false);   // and its release
                 else if (step[1] == "menu") SeleneShell.OpenMenu();
+                else if (step[1].StartsWith("nomad:")) HomeNav.DevNomad(step[1].Substring(6));   // nomad:browser / nomad:youtube / nomad:close
                 else if (step[1].StartsWith("shot:")) HomeNav.DevShot(step[1].Substring(5));
                 else if (step[1] == "blank") HomeNav.DevBlank();
                 else if (step[1] == "fakequit") HomeNav.BeginQuit();

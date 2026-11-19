@@ -1,4 +1,4 @@
-// console-style Left/Right for the "SeleneGameRow" list on the old theme's Welcome Hub.
+﻿// console-style Left/Right for the "SeleneGameRow" list on the old theme's Welcome Hub.
 // the old theme plugin handles every Left/Right on the hub itself (nearest focusable element, else next page),
 // which skips tiles and jumps pages. A Window class handler runs before the old theme plugin's instance handler,
 // so for focus inside SeleneGameRow we move exactly one visible tile, keep it at the left edge, and mark
@@ -63,10 +63,31 @@ namespace Selene
             if (installed) return;
             installed = true;
             InputHints.Changed += Ui.PublishPrompts;
+            if (Application.Current != null)
+            {
+                Application.Current.Resources["SeleneBrowserOverlayVis"] = Visibility.Collapsed;
+                Application.Current.Resources["SeleneYouTubeOverlayVis"] = Visibility.Collapsed;
+            }
             LocalGames.StartRunningWatch();
             Smoothness.Start();
             // Every feature remains enabled; optional startup jobs wait for the intro and quiet frames.
             StartupWork.AfterHome("library refresh", () => { if (Features.On("startrefresh")) RefreshLibrary("start"); }, 2500);
+            // Nomad Phase 0 dev hook: drop nomad-autoopen.txt in the sandbox config folder to open the browser at startup.
+            StartupWork.AfterHome("nomad autoopen", () =>
+            {
+                try
+                {
+                    var hook = System.IO.Path.Combine(SelenePaths.PlayniteConfig, "nomad-autoopen.txt");
+                    if (System.IO.File.Exists(hook))
+                    {
+                        // file content "youtube" opens the YouTube screen, anything else the browser
+                        bool yt = System.IO.File.ReadAllText(hook).Trim().Equals("youtube", StringComparison.OrdinalIgnoreCase);
+                        Log("nomad autoopen: opening " + (yt ? "youtube" : "browser") + " overlay");
+                        if (yt) OpenYouTubeOverlay(); else OpenBrowserOverlay();
+                    }
+                }
+                catch (Exception ex) { Log("nomad autoopen: " + ex.Message); }
+            }, 6000);
             EventManager.RegisterClassHandler(typeof(Window), Keyboard.PreviewKeyDownEvent, new KeyEventHandler(OnPreviewKeyDown));
             EventManager.RegisterClassHandler(typeof(Button), Button.ClickEvent, new RoutedEventHandler(OnAchievementsClick));
             EventManager.RegisterClassHandler(typeof(Window), Keyboard.PreviewGotKeyboardFocusEvent, new KeyboardFocusChangedEventHandler(OnWindowPreviewGotFocus));
@@ -136,6 +157,29 @@ namespace Selene
                 if (LoginScene.IsActive) return;
                 // a window over Playnite (an add-on's dialog) is active: its keys are its own, nothing on the home or the page moves
                 if (DialogUp()) return;
+                // Nomad browser: while the overlay is up, swallow navigation keys so neither
+                // Selene nor Playnite moves the home row. Browser input is sent as JavaScript
+                // commands from OnPreProcessInput, so no key needs to reach the page.
+                if (YouTubeOverlayUp() || BrowserOverlayUp())
+                {
+                    // The surfaces take the pad in OnPreProcessInput. Keyboard copies of pad presses (and a real
+                    // keyboard's navigation keys) must not also move WPF focus, scroll lists or press buttons behind.
+                    // A real keyboard still works as a pad: arrows / Enter / Escape / Backspace map to D-pad / A / B.
+                    var navKey = e.Key == Key.System ? e.SystemKey : e.Key;
+                    string asButton = navKey == Key.Left ? "DPadLeft" : navKey == Key.Right ? "DPadRight" : navKey == Key.Up ? "DPadUp"
+                        : navKey == Key.Down ? "DPadDown" : navKey == Key.Enter ? "A" : navKey == Key.Escape || navKey == Key.Back ? "B"
+                        : navKey == Key.PageUp ? "TriggerLeft" : navKey == Key.PageDown ? "TriggerRight" : null;
+                    bool navigation = asButton != null || navKey == Key.Space || navKey == Key.Home || navKey == Key.End || navKey == Key.Tab;
+                    if (!navigation) return;
+                    e.Handled = true;
+                    if (asButton == null || Ui.KeyIsPadCopy() || Ui.PressFromPad || e.GetType().Name == "GameControllerInputEventArgs") return;
+                    bool yt = YouTubeOverlayUp();
+                    if (!SurfaceHandlePad(yt ? YouTubeSurface() : BrowserSurface(), asButton))
+                    {
+                        if (yt) CloseYouTubeOverlay(); else CloseBrowserOverlay();
+                    }
+                    return;
+                }
                 // the keyboard copy of a pad press Selene already handled (it moved things a second time)
                 if (Ui.KeyIsPadCopy(e.Key == Key.Left ? "DPadLeft" : e.Key == Key.Right ? "DPadRight" : e.Key == Key.Up ? "DPadUp" : e.Key == Key.Down ? "DPadDown" : null) && (e.Key == Key.Left || e.Key == Key.Right || e.Key == Key.Up || e.Key == Key.Down || e.Key == Key.Enter || e.Key == Key.Escape)) { e.Handled = true; return; }
                 // the cards are still flying in: nothing moves yet
@@ -3840,6 +3884,8 @@ namespace Selene
 
         private static void RunCard(ListBox row, string name)
         {
+            if (name == "browser") { Log("card browser -> overlay"); OpenBrowserOverlay(); return; }
+            if (name == "youtube") { Log("card youtube -> screen"); OpenYouTubeOverlay(); return; }
             var scope = VisualTreeHelper.GetParent(VisualTreeHelper.GetParent(row));
             var proxy = scope != null ? FindByName(scope, "SeleneNav_" + name) as System.Windows.Controls.Primitives.ButtonBase : null;
             // the proxies sit higher up than the row's own panels: the whole window then
@@ -4075,6 +4121,22 @@ namespace Selene
                 if (button == null) return;
                 var pressed = button.GetValue(ke, null).ToString();
                 fromPad = true;
+                // Nomad sandbox: the browser overlay owns the pad while it is up. B / Back / Start close it;
+                // everything else passes through as simulated keys to the embedded browser.
+                // Nomad: the Browser / YouTube overlays own the pad while up. Every press goes to the surface's
+                // HandlePad(button); false means "nothing left to go back to" and closes the overlay.
+                if (YouTubeOverlayUp())
+                {
+                    e.Cancel();
+                    if (!SurfaceHandlePad(YouTubeSurface(), Ui.Normalize(pressed))) CloseYouTubeOverlay();
+                    return;
+                }
+                if (BrowserOverlayUp())
+                {
+                    e.Cancel();
+                    if (!SurfaceHandlePad(BrowserSurface(), Ui.Normalize(pressed))) CloseBrowserOverlay();
+                    return;
+                }
                 // the same press arriving twice (one pad seen as two devices, or stick and d-pad together) moved two
                 // items at a time: a second identical direction within a moment is dropped
                 var same = Ui.Normalize(pressed);
@@ -5995,10 +6057,134 @@ namespace Selene
             new System.Collections.Generic.KeyValuePair<string, string>("nav:news", "cardnews"),
             new System.Collections.Generic.KeyValuePair<string, string>("nav:achievements", "cardachievements"),
             new System.Collections.Generic.KeyValuePair<string, string>("nav:store", "cardstore"),   // (#59: could not be hidden)
+            new System.Collections.Generic.KeyValuePair<string, string>("nav:browser", "cardbrowser"),   // Nomad sandbox
+            new System.Collections.Generic.KeyValuePair<string, string>("nav:youtube", "cardyoutube"),
         };
 
         // the cards in the theme's order (a card switched back on goes back in at its place, then the saved order applies)
-        private static readonly string[] DefaultCards = { "nav:captures", "nav:activity", "nav:achievements", "nav:surprise", "nav:news", "nav:store", "nav:library" };
+        private static readonly string[] DefaultCards = { "nav:captures", "nav:activity", "nav:achievements", "nav:surprise", "nav:news", "nav:store", "nav:browser", "nav:youtube", "nav:library" };
+
+        // ---- Nomad: Browser and YouTube overlays (the theme owns the visuals; the SeleneBrowser add-on's surfaces own the pad) ----
+        // Contract with the surfaces (SeleneBrowser.BrowserControl / YouTubeControl), all reached by reflection:
+        //   bool HandlePad(string button)  false = nothing left to go back to: close the overlay
+        //   void OnShown() / void OnHidden()
+        private const string BrowserOverlayName = "SeleneBrowserOverlay";
+        private const string BrowserControlName = "SeleneBrowser_BrowserSurface";
+        private const string YouTubeOverlayName = "SeleneYouTubeOverlay";
+        private const string YouTubeControlName = "SeleneBrowser_YouTubeSurface";
+        private static DateTime nomadClosedAt = DateTime.MinValue;
+
+        private static bool OverlayUp(string name)
+        {
+            var w = Application.Current != null ? Application.Current.MainWindow : null;
+            var overlay = w == null ? null : FindByName(w, name) as FrameworkElement;
+            return overlay != null && overlay.Visibility == Visibility.Visible;
+        }
+
+        private static object Surface(string name)
+        {
+            var w = Application.Current != null ? Application.Current.MainWindow : null;
+            var c = w == null ? null : FindByName(w, name) as ContentControl;
+            return c == null ? null : c.Content;
+        }
+
+        private static bool BrowserOverlayUp() { return OverlayUp(BrowserOverlayName); }
+        private static bool YouTubeOverlayUp() { return OverlayUp(YouTubeOverlayName); }
+        private static object BrowserSurface() { return Surface(BrowserControlName); }
+        private static object YouTubeSurface() { return Surface(YouTubeControlName); }
+
+        // true = the surface used the press; a missing add-on closes on B / Back / Start so the overlay can never trap the pad
+        private static bool SurfaceHandlePad(object surface, string button)
+        {
+            if (surface == null) return !(button == "B" || button == "Back" || button == "Start");
+            try
+            {
+                var m = surface.GetType().GetMethod("HandlePad", new[] { typeof(string) });
+                if (m == null) { Log("nomad: surface has no HandlePad"); return !(button == "B" || button == "Back" || button == "Start"); }
+                var r = m.Invoke(surface, new object[] { button });
+                return !(r is bool) || (bool)r;
+            }
+            catch (Exception ex) { Log("nomad: HandlePad " + button + ": " + (ex.InnerException ?? ex).Message); return true; }
+        }
+
+        private static void SurfaceCall(object surface, string method)
+        {
+            if (surface == null) return;
+            try
+            {
+                var m = surface.GetType().GetMethod(method, Type.EmptyTypes);
+                if (m != null) m.Invoke(surface, null);
+            }
+            catch (Exception ex) { Log("nomad: " + method + ": " + (ex.InnerException ?? ex).Message); }
+        }
+
+        // the A that closed an overlay (or its keyboard copy) must not reopen it from the card behind
+        private static bool NomadJustClosed() { return (DateTime.Now - nomadClosedAt).TotalMilliseconds < 450; }
+
+        private static void ShowOverlay(string resourceKey, object surface)
+        {
+            if (Application.Current == null) return;
+            var callers = new System.Diagnostics.StackTrace(1, false).GetFrames();
+            Log("nomad: open " + resourceKey + " asked for by: " + string.Join(" < ", (callers ?? new System.Diagnostics.StackFrame[0]).Take(6)
+                .Select(f => f.GetMethod() == null ? "?" : f.GetMethod().DeclaringType.Name + "." + f.GetMethod().Name)));
+            Application.Current.Resources[resourceKey] = Visibility.Visible;
+            // the surface is laid out once visible: OnShown after the first frame
+            Application.Current.Dispatcher.BeginInvoke(new Action(delegate { SurfaceCall(surface, "OnShown"); }), System.Windows.Threading.DispatcherPriority.Loaded);
+            Ui.Confirm();
+        }
+
+        private static void HideOverlay(string resourceKey, object surface)
+        {
+            SurfaceCall(surface, "OnHidden");
+            if (Application.Current != null) Application.Current.Resources[resourceKey] = Visibility.Collapsed;
+            nomadClosedAt = DateTime.Now;
+            FocusRowSoon(120);   // back on the card it was opened from
+            Ui.Back();
+        }
+
+        private static void OpenBrowserOverlay()
+        {
+            if (NomadJustClosed()) return;
+            if (YouTubeOverlayUp()) HideOverlay("SeleneYouTubeOverlayVis", YouTubeSurface());
+            if (BrowserSurface() == null) Log("browser: SeleneBrowser add-on surface not found (is the add-on enabled?)");
+            ShowOverlay("SeleneBrowserOverlayVis", BrowserSurface());
+        }
+
+        private static void OpenYouTubeOverlay()
+        {
+            if (NomadJustClosed()) return;
+            if (BrowserOverlayUp()) HideOverlay("SeleneBrowserOverlayVis", BrowserSurface());
+            if (YouTubeSurface() == null) Log("youtube: SeleneBrowser add-on surface not found (is the add-on enabled?)");
+            ShowOverlay("SeleneYouTubeOverlayVis", YouTubeSurface());
+        }
+
+        // dev keys (%TEMP%\selene-dev-keys): open or close the overlays without walking the row
+        public static void DevNomad(string what)
+        {
+            nomadClosedAt = DateTime.MinValue;
+            if (what.StartsWith("url:"))   // nomad:url:<address> - the browser opens on that page
+            {
+                if (!BrowserOverlayUp()) OpenBrowserOverlay();
+                var s = BrowserSurface();
+                var nav = s == null ? null : s.GetType().GetMethod("Navigate", new[] { typeof(string) });
+                if (nav != null) nav.Invoke(s, new object[] { what.Substring(4) });
+                return;
+            }
+            if (what.StartsWith("ytplay:"))   // nomad:ytplay:<videoId> - the YouTube screen plays that video
+            {
+                if (!YouTubeOverlayUp()) OpenYouTubeOverlay();
+                var y = YouTubeSurface();
+                var play = y == null ? null : y.GetType().GetMethod("DevPlay", new[] { typeof(string) });
+                if (play != null) play.Invoke(y, new object[] { what.Substring(7) });
+                return;
+            }
+            if (what == "browser") OpenBrowserOverlay();
+            else if (what == "youtube") OpenYouTubeOverlay();
+            else { if (BrowserOverlayUp()) CloseBrowserOverlay(); if (YouTubeOverlayUp()) CloseYouTubeOverlay(); }
+        }
+
+        private static void CloseYouTubeOverlay() { Log("youtube: close overlay"); HideOverlay("SeleneYouTubeOverlayVis", YouTubeSurface()); }
+        private static void CloseBrowserOverlay() { Log("browser: close overlay"); HideOverlay("SeleneBrowserOverlayVis", BrowserSurface()); }
 
         // a card switched on or off in Selene settings: the row follows now (it only dropped cards when Spotlight opened, and
         // a card switched back on never came back until Playnite restarted)
@@ -7241,7 +7427,7 @@ namespace Selene
             var bmp = new System.Windows.Media.Imaging.BitmapImage();
             bmp.BeginInit();
             bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;  // decoded here, ready on the first frame
-            if (decodeWidth > 0) bmp.DecodePixelWidth = decodeWidth;
+            if (decodeWidth > 0) bmp.DecodePixelWidth = PixelSize.Width(decodeWidth);   // (layout units -> real pixels)
             bmp.UriSource = new Uri(path);
             bmp.EndInit();
             bmp.Freeze();

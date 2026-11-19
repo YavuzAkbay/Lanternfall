@@ -507,6 +507,9 @@
                                 <ButtonEx x:Name="SeleneNav_surprise" Visibility="Collapsed" Focusable="False" IsTabStop="False"/>
                                 <ButtonEx x:Name="SeleneNav_news" Visibility="Collapsed" Focusable="False" IsTabStop="False"/>
                                 <ButtonEx x:Name="SeleneNav_achievements" Visibility="Collapsed" Focusable="False" IsTabStop="False"/>
+                                <!-- Nomad sandbox: the Browser card's proxy (Selene Core runs its command) -->
+                                <ButtonEx x:Name="SeleneNav_browser" Visibility="Collapsed" Focusable="False" IsTabStop="False"/>
+                                <ButtonEx x:Name="SeleneNav_youtube" Visibility="Collapsed" Focusable="False" IsTabStop="False"/>
 
                                 <Grid Margin="0,120,0,0">
                                     <Grid.RowDefinitions>
@@ -705,6 +708,16 @@
                                                                     <Setter TargetName="CardIcon" Property="Visibility" Value="Visible"/>
                                                                     <Setter TargetName="CardIcon" Property="Text" Value="&#xEA23;"/>
                                                                 </DataTrigger>
+                                                                <DataTrigger Binding="{Binding}" Value="nav:browser">
+                                                                    <Setter TargetName="CardFace" Property="Visibility" Value="Visible"/>
+                                                                    <Setter TargetName="CardIcon" Property="Visibility" Value="Visible"/>
+                                                                    <Setter TargetName="CardIcon" Property="Text" Value="&#xE894;"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding}" Value="nav:youtube">
+                                                                    <Setter TargetName="CardFace" Property="Visibility" Value="Visible"/>
+                                                                    <Setter TargetName="CardIcon" Property="Visibility" Value="Visible"/>
+                                                                    <Setter TargetName="CardIcon" Property="Text" Value="&#xF06A;"/>
+                                                                </DataTrigger>
                                                             </ControlTemplate.Triggers>
                                                         </ControlTemplate>
                                                     </Setter.Value>
@@ -772,6 +785,8 @@
                                                         <sys:String>nav:surprise</sys:String>
                                                         <sys:String>nav:news</sys:String>
                                                         <sys:String>nav:store</sys:String>
+                                                        <sys:String>nav:browser</sys:String>
+                                                        <sys:String>nav:youtube</sys:String>
                                                         <sys:String>nav:library</sys:String>
                                                         <CollectionContainer Collection="{Binding Source={StaticResource SeleneGames}}"/>
                                                     </CompositeCollection>
@@ -797,6 +812,12 @@
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding SelectedItem, ElementName=SeleneGameRow}" Value="nav:store">
                                                                     <Setter Property="Text" Value="Store"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding SelectedItem, ElementName=SeleneGameRow}" Value="nav:browser">
+                                                                    <Setter Property="Text" Value="Browser"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding SelectedItem, ElementName=SeleneGameRow}" Value="nav:youtube">
+                                                                    <Setter Property="Text" Value="YouTube"/>
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding SelectedItem, ElementName=SeleneGameRow}" Value="nav:activity">
                                                                     <Setter Property="Text" Value="Activity"/>
@@ -1560,6 +1581,33 @@
                                                Text="Playnite's menu still opens from here (the Start / Menu button on a controller) to pick another theme meanwhile."/>
                                 </StackPanel>
                             </Grid>
+                        </Grid>
+
+                        <!-- ================= NOMAD BROWSER OVERLAY ================= -->
+                        <Grid x:Name="SeleneBrowserOverlay" Visibility="{DynamicResource SeleneBrowserOverlayVis}"
+                              Panel.ZIndex="20" Background="#F0080B12" SnapsToDevicePixels="True" UseLayoutRounding="True">
+                            <!-- Selene Browser's fullscreen control (top bar, page, hints): Playnite fills Content when the add-on is enabled -->
+                            <ContentControl x:Name="SeleneBrowser_BrowserSurface" Margin="0"
+                                            SnapsToDevicePixels="True" UseLayoutRounding="True"/>
+                            <TextBlock Text="The SeleneBrowser add-on is not enabled.   B  Close" FontFamily="{DynamicResource FontMain}" FontSize="26"
+                                       Foreground="{DynamicResource SeleneInk60Brush}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ElementName=SeleneBrowser_BrowserSurface, Path=Content}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+
+                        <!-- ================= NOMAD YOUTUBE SCREEN ================= -->
+                        <Grid x:Name="SeleneYouTubeOverlay" Visibility="{DynamicResource SeleneYouTubeOverlayVis}"
+                              Panel.ZIndex="21" Background="#F0080B12" SnapsToDevicePixels="True" UseLayoutRounding="True">
+                            <ContentControl x:Name="SeleneBrowser_YouTubeSurface" Margin="0" SnapsToDevicePixels="True" UseLayoutRounding="True"/>
                         </Grid>
 
                         <GameDetails x:Name="PART_ElemGameDetails" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
