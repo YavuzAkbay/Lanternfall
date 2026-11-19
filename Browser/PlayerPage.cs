@@ -87,6 +87,46 @@ var CFG = /*NOMAD_CFG*/;
     return at(0);
   }
 
+  // Recovery of a critical error while (or before) playing: up to 3 attempts at 1 s, 3 s, 6 s. A network/streaming/media error first
+  // tries shaka's retryStreaming(); an expired url (403/404/410) or a later attempt reloads the manifest at the current position with
+  // fresh=1 (the server fetches new googlevideo urls). The counter resets after 30 s of smooth playback. S.err is set only when
+  // recovery fails and the picture is not moving.
+  var rec = { n: 0, busy: false, t: -1, at: 0, smooth: 0 };
+  function moving(){ return rec.at && Date.now() - rec.at < 3500 && !video.paused; }
+  function failPlayback(msg){
+    if (moving()) return;
+    S.err = msg || 'Could not keep playing this video.';
+  }
+  setInterval(function(){
+    var t = video.currentTime, now = Date.now();
+    if (!video.paused && t !== rec.t && !video.seeking) {
+      rec.at = now;
+      if (!rec.smooth) rec.smooth = now; else if (now - rec.smooth > 30000) rec.n = 0;
+    } else if (!video.paused && !S.buffering) rec.smooth = 0;
+    rec.t = t;
+  }, 1000);
+  function freshUrl(){ return S.url + (S.url.indexOf('?') < 0 ? '?' : '&') + 'fresh=1&_=' + Date.now(); }
+  function recover(d){
+    d = d || {};
+    var cat = d.category, retryable = cat === 1 || cat === 3 || cat === 4 || cat === 5 || !d.code;
+    if (!player || !S.url || !retryable || CFG.live) { failPlayback(); return; }
+    if (rec.busy) return;
+    if (rec.n >= 3) { failPlayback(); return; }
+    var status = d.data && d.data.length > 1 ? d.data[1] : 0, expired = status === 403 || status === 404 || status === 410;
+    var delay = [1000, 3000, 6000][rec.n++], t = video.currentTime || CFG.start || 0;
+    rec.busy = true;
+    setTimeout(function(){
+      try {
+        if (!expired && rec.n === 1 && cat !== 4 && S.ready && player.retryStreaming && player.retryStreaming()) { rec.busy = false; return; }
+      } catch (x) {}
+      S.buffering = true;
+      player.load(freshUrl(), t > 0 ? t : null).then(function(){
+        rec.busy = false; S.ready = true; S.err = ''; applyCap();
+        if (wantPlay) { var p = video.play(); if (p && p.catch) p.catch(function(){}); }
+      }, function(){ rec.busy = false; recover(d); });
+    }, delay);
+  }
+
   function init(){
     if (CFG.error) return;
     if (!window.shaka) { S.err = 'Could not load the player library. Check your internet connection.'; return; }
@@ -101,13 +141,16 @@ var CFG = /*NOMAD_CFG*/;
         abr: { enabled: true, defaultBandwidthEstimate: 25000000 },
         streaming: { bufferingGoal: 45, rebufferingGoal: 2, bufferBehind: 30, retryParameters: { maxAttempts: 4, baseDelay: 800, backoffFactor: 2 } }
       });
+      // only CRITICAL (severity 2) errors matter; recoverable ones (1) are retried by shaka itself and must not touch the UI
       player.addEventListener('error', function(e){
         var d = e.detail || {};
-        S.err = 'Playback error ' + (d.code || '') + (d.message ? ' - ' + d.message : '');
+        S.dbg = 'shaka ' + d.code + ' sev=' + d.severity; try { console.log('shaka error', d.code, d.severity, d.category, d.data); } catch (x) {}
+        if (d.severity !== 2) return;
+        recover(d);
       });
       player.addEventListener('buffering', function(e){ S.buffering = !!e.buffering; });
       player.addEventListener('trackschanged', applyCap);
-      return pickManifest().then(function(url){ return player.load(url, CFG.start > 0 ? CFG.start : null); });
+      return pickManifest().then(function(url){ S.url = url; return player.load(url, CFG.start > 0 ? CFG.start : null); });
     }).then(function(){
       S.ready = true;
       applyCap();
@@ -118,9 +161,17 @@ var CFG = /*NOMAD_CFG*/;
       if (p && p.catch) p.catch(function(){});
     }).catch(function(e){
       var d = (e && e.detail) || e || {};
-      S.err = 'Could not load the video' + (d.code ? ' (error ' + d.code + ')' : '') + '.';
+      try { console.log('shaka load error', d.code, d.category); } catch (x) {}
+      if (S.url && (d.category === 1 || d.category === 4) && rec.n < 3) { recover(d); return; }
+      S.err = 'Could not load the video.';
     });
   }
+  video.addEventListener('error', function(){
+    if (CFG.seg || CFG.live) return;
+    var er = video.error;
+    S.dbg = 'video error ' + (er ? er.code : '?');
+    if (S.ready) recover({ category: 3, code: 3000 });
+  });
 
   video.addEventListener('waiting', function(){ S.buffering = true; });
   video.addEventListener('playing', function(){ S.buffering = false; });
@@ -204,7 +255,7 @@ var CFG = /*NOMAD_CFG*/;
       if (!data || !data.fatal) return;
       if (data.type === Hls.ErrorTypes.NETWORK_ERROR && ++hlsNetRetries <= 6) { setTimeout(function(){ try { hls.startLoad(); } catch (e) {} }, 1500); return; }
       if (data.type === Hls.ErrorTypes.MEDIA_ERROR && ++hlsMediaRetries <= 3) { try { hls.recoverMediaError(); } catch (e) {} return; }
-      S.err = 'Live playback error' + (data.details ? ' - ' + data.details : '');
+      S.err = 'Could not keep playing this live stream.'; S.dbg = 'hls ' + data.details;
     });
     hls.attachMedia(video);
     hls.loadSource(location.origin + CFG.hls);
@@ -716,7 +767,7 @@ var CFG = /*NOMAD_CFG*/;
     });
     video.addEventListener('error', function(){
       var er = video.error;
-      if (er && !S.err) S.err = 'Live playback error' + (er.message ? ' - ' + er.message : (er.code ? ' (' + er.code + ')' : ''));
+      if (er && !S.err) { S.err = 'Could not keep playing this live stream.'; S.dbg = 'video error ' + er.code; }
     });
     setInterval(segTick, 250);
   }

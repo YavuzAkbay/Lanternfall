@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -91,6 +92,10 @@ namespace SeleneBrowser
         private double dispT;
         private long seekHoldUntil, lastInput, lastSeekPress, loadStartedAt, startCheckAt;
         private int startCheckToken = -1, startCheckRound;
+        private long lastAdvanceAt;            // when the playback time last moved (an error is final only if it has not for 8 s)
+        private double lastPollT = -1, resumeFrom;
+        private string resumeId;               // a retry of this video starts at resumeFrom, not at the saved position
+        private int autoRetries;               // fresh-manifest restarts done by the poll for this video (one allowed)
 
         // ------------------------------------------------------------------ layout
 
@@ -265,6 +270,11 @@ namespace SeleneBrowser
         {
             if (list == null || index < 0 || index >= list.Count) return;
             if (playing) FinishCurrent();
+            double resume = resumeId != null && resumeId == list[index].Id && resumeFrom > 1 ? resumeFrom : 0;
+            resumeId = null;
+            autoRetries = 0;
+            lastAdvanceAt = clock.ElapsedMilliseconds;
+            lastPollT = -1;
             queue = list;
             qi = index;
             nowPlaying = list[index];
@@ -298,7 +308,7 @@ namespace SeleneBrowser
                 try
                 {
                     r = t.IsFaulted || t.IsCanceled ? Result<StreamInfo>.Fail("Could not load this video. Please try again.") : t.Result;
-                    if (r.Ok) { pos = NomadStore.GetPosition(id); fts = FreeTubeData.LoadSettings(); }
+                    if (r.Ok) { pos = resume > 0 ? resume : NomadStore.GetPosition(id); fts = FreeTubeData.LoadSettings(); }
                 }
                 catch (Exception ex)
                 {
@@ -348,6 +358,7 @@ namespace SeleneBrowser
                 return;
             }
             loadStartedAt = clock.ElapsedMilliseconds;
+            SetMemoryLevel(false);
             pvUrl = LocalServer.PlayerUrl(nowPlaying.Id, pos, max, fts.UseSponsorBlock);
             pageReqToken = playToken;
             pv.Navigate(pvUrl);
@@ -403,6 +414,7 @@ namespace SeleneBrowser
 
         private void SetError(string msg)
         {
+            if (nowPlaying != null && !liveMode && dispT > 1) { resumeId = nowPlaying.Id; resumeFrom = dispT; }   // A retries from here
             stage = Stage.Error;
             stageError = msg;
             ShowBar();
@@ -421,7 +433,7 @@ namespace SeleneBrowser
             CloseRelated();
             picker.Close();
             logger.Info("SeleneBrowser: YouTube back to the list (player stopped)");
-            if (pv != null) { pv.ExecuteScript("window.nomad&&(window.nomad.stop||window.nomad.pause)();"); pv.Navigate("about:blank"); }
+            if (pv != null) { pv.ExecuteScript("window.nomad&&(window.nomad.stop||window.nomad.pause)();"); pv.Navigate("about:blank"); SetMemoryLevel(true); }
             playerLayer.Visibility = Visibility.Collapsed;
             browseBox.Visibility = Visibility.Visible;
             if (current.Kind == CardKind.Video && nowPlaying != null)
@@ -439,6 +451,67 @@ namespace SeleneBrowser
                 }
             }
             UpdateHints();
+        }
+
+        // The player's WebView2 is a big process tree: asks Edge to trim it while idle (Low) and back to Normal when playing.
+        // Reflection: the core lives in EdgeView's private field and the property needs a recent runtime.
+        private void SetMemoryLevel(bool low)
+        {
+            try
+            {
+                if (pv == null) return;
+                FieldInfo f = pv.GetType().GetField("core", BindingFlags.Instance | BindingFlags.NonPublic);
+                object core = f != null ? f.GetValue(pv) : null;
+                if (core == null) return;
+                PropertyInfo p = core.GetType().GetProperty("MemoryUsageTargetLevel");
+                if (p != null) p.SetValue(core, Enum.Parse(p.PropertyType, low ? "Low" : "Normal"), null);
+            }
+            catch { }
+        }
+
+        // Leaving YouTube entirely: stop the video, dispose the player's WebView2 (re-created on the next play), close the
+        // overlay window and drop the stream / thumbnail caches. Timers are already stopped by the caller.
+        private void ReleasePlayer()
+        {
+            try
+            {
+                if (playing) ExitPlayer();
+                polling = false;   // an evaluation on the disposed view never calls back
+                if (overlayWin != null) overlayWin.Close();
+                if (pv != null)
+                {
+                    IPageView old = pv;
+                    pv = null;
+                    loadedToken = -1;
+                    try { old.LoadEnd -= OnPlayerLoadEnd; } catch { }
+                    try { pvHost.Children.Remove(old.Element); } catch { }
+                    DisposeObj(old);
+                    DisposeObj(old.Element);
+                    try
+                    {
+                        FieldInfo wf = old.GetType().GetField("web", BindingFlags.Instance | BindingFlags.NonPublic);
+                        if (wf != null) DisposeObj(wf.GetValue(old));
+                    }
+                    catch { }
+                    logger.Info("SeleneBrowser: YouTube player view disposed");
+                }
+                LocalServer.TrimCaches();
+                ThumbCache.Trim();
+            }
+            catch (Exception ex) { logger.Error(ex, "SeleneBrowser: YouTube release"); }
+        }
+
+        private static void DisposeObj(object o)
+        {
+            try
+            {
+                if (o == null) return;
+                IDisposable d = o as IDisposable;
+                if (d != null) { d.Dispose(); return; }
+                MethodInfo m = o.GetType().GetMethod("Dispose", Type.EmptyTypes);   // IPageView.Dispose, if it has one
+                if (m != null) m.Invoke(o, null);
+            }
+            catch { }
         }
 
         // Called when the overlay is hidden: pause, save, keep the page (no auto resume).
@@ -520,8 +593,26 @@ namespace SeleneBrowser
                 logger.Info("SeleneBrowser: YouTube rendition " + s.Height + "p (" + (pv != null && PageViews.IsEdge(pv) ? "Edge" : "CEF") + ")");
             }
             if (s.Live && !liveMode) { liveMode = true; if (nowPlaying != null) nowPlaying.IsLive = true; }   // the page knows best
+            if (!s.Paused && Math.Abs(s.T - lastPollT) > 0.05) lastAdvanceAt = clock.ElapsedMilliseconds;
+            lastPollT = s.T;
             if (clock.ElapsedMilliseconds > seekHoldUntil) dispT = s.T;
-            if (s.Error.Length > 0) { SetError("Playback problem: " + s.Error); return; }
+            bool movingNow = clock.ElapsedMilliseconds - lastAdvanceAt < 8000;
+            if (s.Error.Length > 0 && stage == Stage.Loading && !s.Ready) { SetError(s.Error); return; }
+            // the page reports a final error only after its own recovery failed: still act only if the picture really stopped
+            if (s.Error.Length > 0 && !movingNow)
+            {
+                if (autoRetries < 1 && nowPlaying != null && !liveMode)
+                {
+                    int n = autoRetries + 1;
+                    resumeId = nowPlaying.Id; resumeFrom = dispT;
+                    logger.Info("SeleneBrowser: YouTube playback stopped (" + s.Dbg + "), restarting with fresh streams");
+                    Play(queue, qi);
+                    autoRetries = n;
+                    return;
+                }
+                SetError("Couldn’t keep playing this video. Press A to try again.");
+                return;
+            }
             if (s.Ready && stage == Stage.Loading)
             {
                 stage = Stage.Playing;

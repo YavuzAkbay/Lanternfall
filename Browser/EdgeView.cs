@@ -31,13 +31,16 @@ namespace SeleneBrowser
         private string pendingUrl;
         private double zoomLevel;
         private bool initFailed;
+        private readonly bool windowed;
+        private bool disposed;
+        private static int live;   // views alive; the shared environment is dropped with the last one
 
         /// <summary>Raised once when WebView2 could not start; the host switches to another engine.</summary>
         public event Action InitFailed;
 
         private void SetFailed()
         {
-            if (initFailed) return;
+            if (initFailed || disposed) return;
             initFailed = true;
             var h = InitFailed;
             if (h != null) h();
@@ -88,9 +91,21 @@ namespace SeleneBrowser
                 if (envTask == null)
                 {
                     EnsureLoaderPath();
+                    string udf = Path.Combine(SeleneBrowserPlugin.DataDir, "webview2");
                     var options = new CoreWebView2EnvironmentOptions();
                     options.AdditionalBrowserArguments = "--autoplay-policy=no-user-gesture-required";
-                    envTask = CoreWebView2Environment.CreateAsync(null, Path.Combine(SeleneBrowserPlugin.DataDir, "webview2"), options);
+                    try { options.AreBrowserExtensionsEnabled = true; AdBlock.StartExtensionFetch(); }   // uBlock Origin Lite, best effort
+                    catch (Exception ex) { logger.Warn("SeleneBrowser: extensions option: " + ex.Message); }
+                    var ui = TaskScheduler.FromCurrentSynchronizationContext();
+                    // an older runtime that rejects the extensions option: retry plain
+                    envTask = CoreWebView2Environment.CreateAsync(null, udf, options).ContinueWith(delegate(Task<CoreWebView2Environment> t)
+                    {
+                        if (!t.IsFaulted) return t;
+                        logger.Warn("SeleneBrowser: WebView2 environment with extensions failed, retrying: " + t.Exception.GetBaseException().Message);
+                        var plain = new CoreWebView2EnvironmentOptions();
+                        plain.AdditionalBrowserArguments = "--autoplay-policy=no-user-gesture-required";
+                        return CoreWebView2Environment.CreateAsync(null, udf, plain);
+                    }, ui).Unwrap();
                 }
                 return envTask;
             }
@@ -103,6 +118,8 @@ namespace SeleneBrowser
         public EdgeView(bool windowed)
         {
             Focusable = false;
+            this.windowed = windowed;
+            live++;
             if (windowed) web = new WebView2();
             else web = new WebView2CompositionControl();
             Content = web;
@@ -120,6 +137,7 @@ namespace SeleneBrowser
                 var ui = TaskScheduler.FromCurrentSynchronizationContext();
                 GetEnvironment().ContinueWith(delegate(Task<CoreWebView2Environment> t)
                 {
+                    if (disposed) return;
                     if (t.IsFaulted || t.IsCanceled)
                     {
                         SetFailed();
@@ -147,7 +165,10 @@ namespace SeleneBrowser
                 core.NewWindowRequested += delegate(object o, CoreWebView2NewWindowRequestedEventArgs a)
                 {
                     a.Handled = true;
-                    if (!string.IsNullOrEmpty(a.Uri)) Navigate(a.Uri);
+                    string nu = a.Uri;
+                    // an extension (uBOL onboarding page) must not take over the page
+                    if (!string.IsNullOrEmpty(nu) && !nu.StartsWith("extension://", StringComparison.OrdinalIgnoreCase)
+                        && !nu.StartsWith("chrome-extension://", StringComparison.OrdinalIgnoreCase)) Navigate(nu);
                 };
                 core.DownloadStarting += delegate(object o, CoreWebView2DownloadStartingEventArgs a) { a.Cancel = true; };
                 core.PermissionRequested += delegate(object o, CoreWebView2PermissionRequestedEventArgs a)
@@ -169,6 +190,7 @@ namespace SeleneBrowser
                     if (on != pageFullScreen) { pageFullScreen = on; RaiseFullScreen(); }
                 };
                 core.NavigationStarting += delegate { if (pageFullScreen) { pageFullScreen = false; RaiseFullScreen(); } };
+                if (!windowed) { AdBlock.Attach(core); AdBlock.InstallExtension(core); }   // (the video player has no ads)
                 if (zoomLevel != 0) web.ZoomFactor = Math.Pow(1.2, zoomLevel);
                 if (!string.IsNullOrEmpty(pendingUrl)) { string u = pendingUrl; pendingUrl = null; core.Navigate(u); }
             }
@@ -368,6 +390,46 @@ namespace SeleneBrowser
             if (core == null) return;
             try { core.CookieManager.DeleteAllCookies(); }
             catch (Exception ex) { Fail("ClearCookies", ex); }
+        }
+
+        // ----- lifetime -----
+
+        /// <summary>Low memory target while hidden (WebView2 trims caches), normal when shown.</summary>
+        public void SetIdle(bool idle)
+        {
+            if (core == null || disposed) return;
+            try { core.MemoryUsageTargetLevel = idle ? CoreWebView2MemoryUsageTargetLevel.Low : CoreWebView2MemoryUsageTargetLevel.Normal; }
+            catch (Exception ex) { Fail("SetIdle", ex); }
+            // hidden: nothing may keep making sound (embedded players in iframes, audio elements); shown again: normal
+            try { core.IsMuted = idle; }
+            catch (Exception ex) { Fail("SetIdle mute", ex); }
+        }
+
+        /// <summary>Frees the WebView2 (its renderer processes go away). Afterwards the view is an inert, not-ready stub.</summary>
+        public void Dispose()
+        {
+            if (disposed) return;
+            string url = Address;
+            disposed = true;
+            pendingUrl = url;
+            try
+            {
+                web.CoreWebView2InitializationCompleted -= OnInitCompleted;
+                Content = null;
+                core = null;
+                var d = web as IDisposable;
+                if (d != null) d.Dispose();
+            }
+            catch (Exception ex) { Fail("Dispose", ex); }
+            lock (envLock)
+            {
+                if (--live <= 0)
+                {
+                    live = 0;
+                    envTask = null;   // lets the browser process exit; the next view makes a new environment
+                    GC.Collect();
+                }
+            }
         }
 
         // ----- helpers -----

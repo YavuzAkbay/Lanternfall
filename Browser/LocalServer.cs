@@ -79,6 +79,13 @@ namespace SeleneBrowser
             }
         }
 
+        /// <summary>Drops the stream/token caches (YouTube closed) but keeps the server running for other users.</summary>
+        public static void TrimCaches()
+        {
+            lock (lk) { tokens.Clear(); cache.Clear(); hlsMap.Clear(); }
+            lock (refreshLk) lastRefresh.Clear();
+        }
+
         /// <summary>URL to load in the CEF view. maxHeight 0 = no cap. Streams are fetched lazily when the page loads.</summary>
         public static string PlayerUrl(string videoId, double startSeconds, int maxHeight, bool sponsorBlock)
         {
@@ -194,7 +201,8 @@ namespace SeleneBrowser
             lock (lk)
             {
                 CacheEntry ce;
-                if (!force && cache.TryGetValue(videoId, out ce) && (DateTime.UtcNow - ce.At).TotalMinutes < (ce.Info.IsLive ? 10 : 90))
+                // a forced refresh is throttled: several retries within 20 s share one fetch
+                if (cache.TryGetValue(videoId, out ce) && (force ? (DateTime.UtcNow - ce.At).TotalSeconds < 20 : (DateTime.UtcNow - ce.At).TotalMinutes < (ce.Info.IsLive ? 10 : 90)))
                     return Result<StreamInfo>.Success(ce.Info);
             }
             Result<StreamInfo> r = YouTubeApi.GetStreamsSync(videoId);
@@ -219,7 +227,7 @@ namespace SeleneBrowser
                 CacheEntry old;
                 if (cache.TryGetValue(si.VideoId, out old)) foreach (string t in old.Tokens) tokens.Remove(t);
                 cache[si.VideoId] = ce;
-                if (cache.Count > 40)
+                if (cache.Count > 12)
                 {
                     string oldest = null; DateTime ot = DateTime.MaxValue;
                     foreach (KeyValuePair<string, CacheEntry> kv in cache) if (kv.Value.At < ot) { ot = kv.Value.At; oldest = kv.Key; }
@@ -467,7 +475,7 @@ namespace SeleneBrowser
             if (p.StartsWith("/manifest/", StringComparison.Ordinal) && p.EndsWith(".mpd", StringComparison.Ordinal))
             {
                 string id = p.Substring(10, p.Length - 14);
-                Result<StreamInfo> sr = GetCached(id, false);
+                Result<StreamInfo> sr = GetCached(id, r.Q["fresh"] == "1");   // fresh=1: the page's recovery asks for new urls (old ones expire / 403)
                 if (!sr.Ok) { SendText(ns, 502, "text/plain", sr.Error, head, keep); return keep; }
                 string mpd;
                 string mc = r.Q["c"] ?? "";

@@ -33,7 +33,7 @@ namespace SeleneBrowser
         public long Time { get; set; }
     }
 
-    public class BrowserControl : PluginUserControl, INotifyPropertyChanged
+    public partial class BrowserControl : PluginUserControl, INotifyPropertyChanged
     {
         private static readonly ILogger logger = LogManager.GetLogger();
         private enum Mode { Focus, Cursor, Bar, Menu }
@@ -76,6 +76,9 @@ namespace SeleneBrowser
 
         private Mode mode = Mode.Focus;
         private bool shown;
+        private bool viewDisposed;
+        private string resumeUrl;
+        private readonly DispatcherTimer disposeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(45) };
         private int barIndex;
         private int menuIndex;
         private double zoom;
@@ -106,9 +109,7 @@ namespace SeleneBrowser
         {
             bool fs = view.IsFullScreen;
             WakePointer();   // (shown again on leaving fullscreen; the idle timer starts over on entering it)
-            var vis = fs ? Visibility.Collapsed : Visibility.Visible;
-            if (topBar != null) topBar.Visibility = vis;
-            hintText.Visibility = vis;
+            ApplyBars();   // top bar / hints: hidden in fullscreen or while the auto-hide has stepped aside
             if (fs && mode == Mode.Bar) EnterFocus(false);
             // left fullscreen: put the highlight back once the player has shrunk to its place in the page
             if (!fs && mode == Mode.Focus) { After(250, delegate { Script("show()"); }); After(700, delegate { Script("show()"); }); }
@@ -124,7 +125,7 @@ namespace SeleneBrowser
             if (edge != null) edge.InitFailed += OnEdgeInitFailed;
         }
 
-        private void OnViewAddressChanged(string url) { UpdateAddress(); }
+        private void OnViewAddressChanged(string url) { UpdateAddress(); BarsNewPage(url); }
 
         // WebView2 was installed but would not start (broken runtime, policy...): carry on with the CEF engine
         private void OnEdgeInitFailed()
@@ -156,10 +157,19 @@ namespace SeleneBrowser
             history = LoadList(HistoryFile);
             Focusable = false;
             Content = BuildLayout();
+            InitExtras();
 
             HookView();
             poll.Tick += OnPollTick;
-            Unloaded += delegate { poll.Stop(); };
+            // closed for good (hidden / unloaded for a while): free the page engine; Loaded / OnShown bring it back
+            disposeTimer.Tick += delegate { DisposeView(); };
+            Unloaded += delegate { Park(); };
+            Loaded += delegate
+            {
+                disposeTimer.Stop();
+                EnsureView();
+                if (!shown) disposeTimer.Start();   // re-attached but not shown: still free the engine soon
+            };
             GoHome();
             UpdateHints();
         }
@@ -177,7 +187,7 @@ namespace SeleneBrowser
                     if (!keyboard.IsOpen) UpdateHints();   // Done / Cancel: back to the page's hints
                     return true;   // B on the keyboard cancels it, never closes the browser
                 }
-                if (mode == Mode.Menu) return HandleMenu(button);
+                if (mode == Mode.Menu) return settings.IsOpen ? HandleSettings(button) : HandleMenu(button);
                 if (mode == Mode.Bar) return HandleBar(button);
                 return HandlePage(button);
             }
@@ -190,18 +200,75 @@ namespace SeleneBrowser
 
         public void OnShown()
         {
+            disposeTimer.Stop();
+            EnsureView();
+            view.SetIdle(false);
+            Presence.Enter("browser");
             shown = true;
             lastTick = clock.ElapsedMilliseconds;
             poll.Start();
+            BarsStart();
             InjectShim();
             UpdateHints();
         }
 
-        public void OnHidden()
+        public void OnHidden() { Park(); }
+
+        // hidden or unloaded: pause media, trim memory, and drop the engine if nobody comes back soon
+        private void Park()
         {
             shown = false;
+            BarsStop();
             poll.Stop();
-            view.ExecuteScript("document.querySelectorAll('video,audio').forEach(function(m){try{m.pause()}catch(e){}})");
+            Presence.Leave("browser");
+            if (!viewDisposed)
+            {
+                // leave element fullscreen (top bar / hints must be back when the browser reopens)
+                view.ExecuteScript("window.__nomadExitFs&&window.__nomadExitFs()");
+                view.ExecuteScript("document.querySelectorAll('video,audio').forEach(function(m){try{m.pause()}catch(e){}})");
+                view.SetIdle(true);
+            }
+            disposeTimer.Stop();
+            disposeTimer.Start();
+        }
+
+        private void DisposeView()
+        {
+            disposeTimer.Stop();
+            if (shown || viewDisposed) return;
+            try
+            {
+                string a = IsHome ? null : view.Address;
+                resumeUrl = string.IsNullOrEmpty(a) ? null : a;   // the page the user left is restored on return
+                view.LoadEnd -= OnLoadEnd;
+                view.AddressChanged -= OnViewAddressChanged;
+                view.TitleChanged -= OnTitleChanged;
+                view.FullScreenChanged -= OnFullScreenChanged;
+                var oldEdge = view as EdgeView;
+                if (oldEdge != null) oldEdge.InitFailed -= OnEdgeInitFailed;
+                page.Children.Remove(view.Element);
+                view.Dispose();
+                viewDisposed = true;
+            }
+            catch (Exception ex) { logger.Error(ex, "SeleneBrowser: dispose view"); }
+        }
+
+        // a fresh page engine after DisposeView
+        private void EnsureView()
+        {
+            if (!viewDisposed) return;
+            try
+            {
+                view = CreateView();
+                viewDisposed = false;
+                page.Children.Insert(0, view.Element);
+                HookView();
+                string u = resumeUrl;
+                resumeUrl = null;
+                if (u != null) view.Navigate(u); else GoHome();
+                OnFullScreenChanged(null, EventArgs.Empty);   // top bar / hints visible again
+            }
+            catch (Exception ex) { logger.Error(ex, "SeleneBrowser: recreate view"); }
         }
 
         public void Navigate(string url)
@@ -311,6 +378,7 @@ namespace SeleneBrowser
 
         private void ScrollPage(int dir)
         {
+            BarsScrolled(dir, 240);
             double wheel = -dir * 240;
             if (mode == Mode.Cursor) { view.Wheel(cursor.X, cursor.Y, (int)wheel); return; }
             view.EvaluateAsync("window.__nomadNav?window.__nomadNav.info():null", delegate(string json)
@@ -345,6 +413,7 @@ namespace SeleneBrowser
             WakePointer();
             if (mode == Mode.Focus) EnterCursor();
             held += dt;
+            BarsMoved(dt);
             double speed = 1100 * mag * mag * (1 + Math.Min(held, 1.2) * 1.5) * dt;
             cursor = new Point(
                 Math.Max(0, Math.Min(page.ActualWidth - 1, cursor.X + pad.RightX * speed)),
@@ -394,7 +463,13 @@ namespace SeleneBrowser
             lastEdge = now;
             double push = Math.Max(Math.Abs(pad.RightX), Math.Abs(pad.RightY));
             int step = (int)(40 + 160 * push * push);   // 40..200 wheel units every 40 ms
-            view.Wheel(cursor.X, cursor.Y, dy * step, dx * step);
+            if (dy != 0) BarsScrolled(-dy, step);
+            // the wheel goes a little inside the page, in the cursor's column/row: right at the edge it lands on a fixed header
+            // or bottom bar, and on sites that scroll an inner panel (kick.com) a wheel there scrolls nothing
+            double wx = cursor.X, wy = cursor.Y;
+            if (dy != 0) wy = page.ActualHeight * (dy > 0 ? 0.3 : 0.7);
+            if (dx != 0) wx = page.ActualWidth * (dx > 0 ? 0.3 : 0.7);
+            view.Wheel(wx, wy, dy * step, dx * step);
         }
 
         private void EnterCursor()
@@ -444,6 +519,8 @@ namespace SeleneBrowser
 
         private void EnterBar()
         {
+            if (view.IsFullScreen) return;   // the bar is hidden in fullscreen (B leaves fullscreen first)
+            BarsShow();
             mode = Mode.Bar;
             cursorLayer.Visibility = Visibility.Collapsed;
             Script("hide()");
@@ -469,6 +546,7 @@ namespace SeleneBrowser
 
         private void EditAddress()
         {
+            BarsShow();
             string initial = IsHome ? "" : view.Address;
             Func<string, IEnumerable<string>> suggest = delegate(string t)
             {
@@ -489,6 +567,7 @@ namespace SeleneBrowser
 
         private void OpenMenu()
         {
+            BarsShow();
             var bm = FindBookmark(view.Address);
             menuItems.Clear();
             if (!IsHome && view.Address.Length > 0)
@@ -500,6 +579,7 @@ namespace SeleneBrowser
             menuItems.Add(new MenuEntry { Label = "Zoom in", Run = delegate { ZoomBy(ZoomStep); return true; } });
             menuItems.Add(new MenuEntry { Label = "Zoom out", Run = delegate { ZoomBy(-ZoomStep); return true; } });
             menuItems.Add(new MenuEntry { Label = "Reset zoom", Run = delegate { ZoomBy(-zoom); return true; } });
+            menuItems.Add(new MenuEntry { Label = "Settings", Run = delegate { OpenSettings(); return true; } });
             menuItems.Add(new MenuEntry { Label = "Clear history and cookies", Run = delegate { ClearData(); return true; } });
             menuItems.Add(new MenuEntry { Label = "Close browser", Run = delegate { return false; } });
             menuList.Children.Clear();
@@ -527,6 +607,7 @@ namespace SeleneBrowser
             if (label == "Zoom in") return 0xE8FF;
             if (label == "Zoom out") return 0xE900;
             if (label == "Reset zoom") return 0xE3BC;                 // crop_free (fit)
+            if (label == "Settings") return 0xE8B8;                   // settings
             if (label.StartsWith("Clear")) return 0xE872;              // delete
             if (label.StartsWith("Close")) return 0xE5CD;              // close
             return 0;
@@ -757,7 +838,7 @@ namespace SeleneBrowser
         {
             string h;
             if (keyboard.IsOpen) h = OnScreenKeyboard.Hints;
-            else if (mode == Mode.Menu) h = "D-pad Select    A Choose    B Close";
+            else if (mode == Mode.Menu) h = settings != null && settings.IsOpen ? "D-pad Select    A Switch on/off    B Back" : "D-pad Select    A Choose    B Close";
             else if (mode == Mode.Bar) h = "D-pad Select    A Open    Y / B Back to page";
             else if (mode == Mode.Cursor) h = "R-stick Move    A Click    LT/RT Scroll    D-pad Focus mode    B Back    Y Top bar    Start Menu";
             else h = "D-pad Move    A Select    B Back    X Reload    Y Top bar    LB/RB History    LT/RT Scroll    R-stick Cursor    L3/R3 Zoom    Start Menu";

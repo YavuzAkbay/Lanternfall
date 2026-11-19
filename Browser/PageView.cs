@@ -38,6 +38,11 @@ namespace SeleneBrowser
         void SetZoomLevel(double level);
         void ClearCookies();
 
+        /// <summary>Hidden (true): trim memory; shown again (false): back to normal.</summary>
+        void SetIdle(bool idle);
+        /// <summary>Frees the engine; the view is an inert stub afterwards.</summary>
+        void Dispose();
+
         event Action<string> LoadEnd;
         event Action<string> AddressChanged;
         event Action<string> TitleChanged;

@@ -19,6 +19,7 @@ function css(){
     'width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;min-width:0!important;min-height:0!important;' +
     'margin:0!important;padding:0!important;border:0!important;z-index:2147483647!important;background:#000!important;transform:none!important}' +
     'video[data-nomad-fs]{object-fit:contain!important}' +
+    '[data-nomad-fs]:popover-open{inset:0!important;overflow:hidden!important;color:inherit}[data-nomad-fs]::backdrop{background:#000}' +
     'html[data-nomad-fs-root],html[data-nomad-fs-root] body{overflow:hidden!important}';
   (document.head || document.documentElement).appendChild(styleTag);
 }
@@ -30,17 +31,36 @@ function fire(el){
   try { (el || document).dispatchEvent(new Event('fullscreenchange', { bubbles: true })); } catch (e) {}
   try { (el || document).dispatchEvent(new Event('webkitfullscreenchange', { bubbles: true })); } catch (e) {}
 }
+// the browser's top layer (a manual popover), like real fullscreen: a z-index alone stays under the page's header, sidebar
+// and chat whenever an ancestor makes its own stacking context (kick.com's player does)
+var hadPop = null;
+function topLayer(el, on){
+  try {
+    if (!el.showPopover) return;
+    if (on) {
+      hadPop = el.getAttribute('popover');
+      if (hadPop === null) el.setAttribute('popover', 'manual');
+      if (!el.matches(':popover-open')) el.showPopover();
+    } else {
+      if (el.matches(':popover-open')) el.hidePopover();
+      if (hadPop === null) el.removeAttribute('popover');
+      hadPop = null;
+    }
+  } catch (e) {}
+}
 function enter(el){
   if (!el || fsEl === el) return Promise.resolve();
   if (fsEl) leave(true);
   css(); fsEl = el;
   el.setAttribute('data-nomad-fs', ''); document.documentElement.setAttribute('data-nomad-fs-root', '');
+  topLayer(el, true);
   tell(true); fire(el);
   return Promise.resolve();
 }
 function leave(quiet){
   var el = fsEl; if (!el) return Promise.resolve();
   fsEl = null;
+  topLayer(el, false);
   el.removeAttribute('data-nomad-fs'); document.documentElement.removeAttribute('data-nomad-fs-root');
   if (!quiet) { tell(false); fire(el); }
   return Promise.resolve();

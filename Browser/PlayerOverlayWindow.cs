@@ -39,6 +39,7 @@ namespace SeleneBrowser
             if (win == null || owner != o)
             {
                 if (win != null) { win.Content = null; win.Close(); }
+                bool wire = owner != o;
                 owner = o;
                 win = new Window
                 {
@@ -53,13 +54,24 @@ namespace SeleneBrowser
                     int ex = GetWindowLong(h, GWL_EXSTYLE);
                     SetWindowLong(h, GWL_EXSTYLE, ex | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_LAYERED);
                 };
-                o.LocationChanged += delegate { if (win != null && win.IsVisible) Place(); };
-                o.SizeChanged += delegate { if (win != null && win.IsVisible) Place(); };
-                o.Closed += delegate { if (win != null) { win.Content = null; win.Close(); win = null; } };
+                if (wire)
+                {
+                    o.LocationChanged += delegate { if (win != null && win.IsVisible) Place(); };
+                    o.SizeChanged += delegate { if (win != null && win.IsVisible) Place(); };
+                    o.Closed += delegate { if (win != null) { win.Content = null; win.Close(); win = null; } };
+                }
             }
             last = Rect.Empty;
             Place();
             if (!win.IsVisible) win.Show();
+        }
+
+        /// <summary>Closes the window (YouTube left); the next Show() builds a new one.</summary>
+        public void Close()
+        {
+            if (win == null) return;
+            try { win.Content = null; win.Close(); } catch { }
+            win = null;
         }
 
         private void Hide()

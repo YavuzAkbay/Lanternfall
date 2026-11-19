@@ -79,7 +79,7 @@ namespace SeleneBrowser
             Content = BuildLayout();
             current = TabState(0);
             ShowState(current);
-            Unloaded += delegate { StopAllTimers(); };
+            Unloaded += delegate { Presence.Leave("youtube"); StopAllTimers(); ReleasePlayer(); };
             UpdateHints();
         }
 
@@ -112,6 +112,7 @@ namespace SeleneBrowser
             try
             {
                 shown = true;
+                Presence.Enter("youtube");   // no idle screen / display sleep while YouTube is up
                 if (!initialized) InitialLoad();
                 else Task.Run(delegate { WatchedIds.Rebuild(false); });
                 if (playing) StartPlayerTimers();
@@ -125,8 +126,10 @@ namespace SeleneBrowser
             try
             {
                 shown = false;
+                Presence.Leave("youtube");
                 PauseForHide();
                 StopAllTimers();
+                ReleasePlayer();
             }
             catch (Exception ex) { logger.Error(ex, "SeleneBrowser: YouTube OnHidden"); }
         }

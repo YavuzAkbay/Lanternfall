@@ -78,12 +78,15 @@ namespace SeleneBrowser
                     waiting.TryGetValue(key, out cbs);
                     waiting.Remove(key);
                     if (bmp == null || cbs == null) return;
-                    if (cache.Count > 500) cache.Clear();
+                    if (cache.Count > 160) cache.Clear();   // 360 px thumbs are ~0.3 MB decoded
                     cache[key] = bmp;
                     foreach (Action<BitmapImage> cb in cbs) { try { cb(bmp); } catch { } }
                 }));
             });
         }
+
+        /// <summary>Forgets the decoded images (YouTube closed); cards still showing one keep their own reference.</summary>
+        public static void Trim() { cache.Clear(); }
 
         private static void StartWorkers()
         {

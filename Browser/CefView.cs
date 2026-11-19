@@ -222,6 +222,18 @@ namespace SeleneBrowser
             catch (Exception ex) { Fail("ClearCookies", ex); }
         }
 
+        public void SetIdle(bool idle) { }
+
+        /// <summary>Disposes the chromium element; later calls are no-ops.</summary>
+        public void Dispose()
+        {
+            var c = chromium as IDisposable;
+            chromium = null;
+            Content = null;
+            try { if (c != null) c.Dispose(); }
+            catch (Exception ex) { Fail("Dispose", ex); }
+        }
+
         // ----- reflection plumbing -----
 
         private object Host()

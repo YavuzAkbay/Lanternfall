@@ -7,7 +7,7 @@ if (-not (Test-Path -LiteralPath $sdk)) { $sdk = Join-Path $root '..\..\Sandbox\
 $out = Join-Path $root 'build'
 New-Item -ItemType Directory -Force $out | Out-Null
 $refs = @('System.dll', 'System.Core.dll', 'System.Xaml.dll', 'System.Web.dll', 'System.Web.Extensions.dll', 'System.Xml.dll', 'System.Drawing.dll', 'System.Xml.Linq.dll',
-          'System.Net.Http.dll', 'Microsoft.CSharp.dll',
+          'System.Net.Http.dll', 'Microsoft.CSharp.dll', 'System.IO.Compression.dll', 'System.IO.Compression.FileSystem.dll',
           (Join-Path $root 'lib\webview2\Microsoft.Web.WebView2.Core.dll'), (Join-Path $root 'lib\webview2\Microsoft.Web.WebView2.Wpf.dll'),
           "$fw\WPF\WindowsBase.dll", "$fw\WPF\PresentationCore.dll", "$fw\WPF\PresentationFramework.dll", $sdk) |
         ForEach-Object { "/r:$_" }
