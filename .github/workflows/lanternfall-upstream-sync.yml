@@ -1,0 +1,74 @@
+name: Selene updates
+# Once a day (or from the Actions tab), checks Selene (mattxslv/Selene) for new commits. If they merge cleanly with
+# tools/sync-upstream.ps1's rules and still compile, it opens (or refreshes) a pull request "Merge Selene <version>".
+# If they conflict, it opens an issue instead: run tools\sync-upstream.ps1 on your PC and finish the merge there.
+
+on:
+  schedule:
+    - cron: "23 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "8.0.x"
+      - name: Merge Selene's changes
+        id: merge
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/mattxslv/Selene.git
+          git fetch upstream --quiet
+          if ([int](git rev-list --count HEAD..upstream/main) -eq 0) { "state=current" >> $env:GITHUB_OUTPUT; exit 0 }
+          $version = ((git show upstream/main:theme/theme.yaml) -match '^Version:' | Select-Object -First 1).Substring(8).Trim()
+          "version=$version" >> $env:GITHUB_OUTPUT
+          git switch -C sync/selene
+          ./tools/sync-upstream.ps1 -CI *>&1 | Tee-Object -FilePath sync.log
+          if ($LASTEXITCODE -eq 2) { "state=conflict" >> $env:GITHUB_OUTPUT; exit 0 }
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          "state=merged" >> $env:GITHUB_OUTPUT
+      - name: Compile check
+        if: steps.merge.outputs.state == 'merged'
+        run: dotnet build tools/linux-check -c Release -nologo
+      - name: Selene's checks
+        if: steps.merge.outputs.state == 'merged'
+        shell: pwsh
+        run: ./tools/tests/security.ps1
+      - name: Open the pull request
+        if: steps.merge.outputs.state == 'merged'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git push --force origin sync/selene
+          title="Merge Selene ${{ steps.merge.outputs.version }}"
+          body=$'Selene has new changes. They merged cleanly with the fork\'s rules (see tools/sync-upstream.ps1), compile, and pass Selene\'s checks.\n\nBefore merging: try it in the sandbox (tools\\sandbox\\test-overlays.ps1) if the changes touch HomeNav, Main.xaml or Lang.\n\n```\n'"$(tail -n 60 sync.log)"$'\n```'
+          if gh pr view sync/selene --json state -q .state 2>/dev/null | grep -q OPEN; then
+            gh pr edit sync/selene --title "$title" --body "$body"
+          else
+            gh pr create --head sync/selene --base "${{ github.event.repository.default_branch }}" --title "$title" --body "$body"
+          fi
+      - name: Report a conflict
+        if: steps.merge.outputs.state == 'conflict'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Selene ${{ steps.merge.outputs.version }} needs a manual merge"
+          body=$'Selene has new changes that touch the same lines as Lanternfall. On your PC:\n\n```powershell\ngit pull\npowershell -File tools\\sync-upstream.ps1\n```\n\nIt merges what it can and lists the files to finish by hand.\n\n```\n'"$(tail -n 60 sync.log)"$'\n```'
+          existing=$(gh issue list --state open --search "in:title \"$title\"" --json number -q '.[0].number')
+          if [ -n "$existing" ]; then gh issue comment "$existing" --body "$body"; else gh issue create --title "$title" --body "$body"; fi
