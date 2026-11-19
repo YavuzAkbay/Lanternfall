@@ -46,4 +46,4 @@ those at `ForkBrand` like the others.
 
 Keep Lanternfall's version the same as the Selene version it is based on (the script takes Selene's version on every
 merge), and tag releases `v<version>`, for example `v1.5.7`. The update check in Lanternfall Core looks at this repo's
-latest release and downloads `Lanternfall.pthm` and `LanternfallCore.pext` from it.
+latest release and downloads `Lanternfall.pthm`, `LanternfallCore.pext` and `LanternfallBrowser.pext` from it.

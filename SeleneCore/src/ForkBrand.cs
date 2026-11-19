@@ -23,14 +23,28 @@ namespace Selene
         public const string ReportService = "";
         public const string ThemePackage = "Lanternfall.pthm";
         public const string CorePackage = "LanternfallCore.pext";
+        public const string BrowserPackage = "LanternfallBrowser.pext";
         public const string Agent = "Lanternfall/1.0 (Playnite theme; github.com/" + Repo + ")";
 
-        // the Lanternfall Browser add-on sets this AppDomain slot while the Browser or YouTube is open (same process):
-        // the idle screen stays away while you watch
+        // true while the Browser or YouTube is open: the idle screen stays away while you watch or read. The Lanternfall
+        // Browser add-on sets an AppDomain slot (same process), but an older add-on doesn't, so the overlays' own
+        // visibility (HomeNav shows them through these resources) counts too.
         public static bool MediaActive()
         {
-            try { var v = System.AppDomain.CurrentDomain.GetData("Lanternfall.MediaActive"); return v is bool && (bool)v; }
-            catch { return false; }
+            try { var v = System.AppDomain.CurrentDomain.GetData("Lanternfall.MediaActive"); if (v is bool && (bool)v) return true; }
+            catch { }
+            try
+            {
+                var app = System.Windows.Application.Current;
+                if (app == null) return false;
+                foreach (var key in new[] { "SeleneBrowserOverlayVis", "SeleneYouTubeOverlayVis" })
+                {
+                    var vis = app.Resources[key];
+                    if (vis is System.Windows.Visibility && (System.Windows.Visibility)vis == System.Windows.Visibility.Visible) return true;
+                }
+            }
+            catch { }
+            return false;
         }
 
         // Lanternfall has no background music: UniPlaySong (which plays it, on an audio device it keeps even when Windows

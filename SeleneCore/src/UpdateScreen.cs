@@ -9,14 +9,15 @@ using System.Windows.Media.Animation;
 
 namespace Selene
 {
-    // A newer Selene, installed with one press: what's new (the release's notes), then A downloads the theme and the add-on
-    // from the GitHub release and hands both to Playnite's own installer (the same one opening the files would use), and
+    // A newer Selene, installed with one press: what's new (the release's notes), then A downloads the theme and both add-ons
+    // (Core and Browser) from the GitHub release and hands both to Playnite's own installer (the same one opening the files would use), and
     // Playnite puts them in when it restarts. Settings and profiles stay. In the developer preview everything happens but the
     // handing over.
     public class UpdateScreen : Screen
     {
         private const string Release = ForkBrand.RepoUrl + "/releases/download/v";   // Lanternfall's releases
-        private static readonly string[] Files = { ForkBrand.ThemePackage, ForkBrand.CorePackage };
+        private static readonly string[] Files = { ForkBrand.ThemePackage, ForkBrand.CorePackage, ForkBrand.BrowserPackage };
+        private static readonly double[] Weights = { 0.94, 0.03, 0.03 };   // each file's share of the bar (the theme is nearly all of it)
         private const double BarW = 620;
 
         private readonly Func<Screen> back;
@@ -134,7 +135,7 @@ namespace Selene
             fill.BeginAnimation(FrameworkElement.WidthProperty, new DoubleAnimation(BarW * Math.Max(0, Math.Min(1, share)), TimeSpan.FromMilliseconds(220)) { EasingFunction = Ui.Out() });
         }
 
-        // both files, one after the other, the bar across both (the theme is nearly all of it)
+        // the three files, one after the other, the bar across all (the theme is nearly all of it)
         private void Download()
         {
             ShowState(1);
@@ -158,7 +159,8 @@ namespace Selene
                 web.DownloadProgressChanged += (s, e) =>
                 {
                     double part = e.TotalBytesToReceive > 0 ? (double)e.BytesReceived / e.TotalBytesToReceive : 0;
-                    double share = at == 0 ? part * 0.97 : 0.97 + part * 0.03;   // (the theme first: almost all the size)
+                    double share = part * Weights[at];
+                    for (int i = 0; i < at; i++) share += Weights[i];
                     Progress(share);
                     status.Text = "Downloading…  " + (int)(share * 100) + "%";
                 };
@@ -175,7 +177,7 @@ namespace Selene
             next();
         }
 
-        // both packages to Playnite's install queue (checked by Playnite first); it installs them on its next start
+        // all packages to Playnite's install queue (checked by Playnite first); it installs them on its next start
         private void Install(string folder)
         {
             Progress(1);

@@ -64,7 +64,7 @@ $addons = @(Get-ChildItem $dist -Filter 'LanternfallCore_*.pext')
 if ($addons.Count -ne 1) { throw 'Expected exactly one add-on package' }
 $pext = $addons[0].FullName
 Test-SeleneCorePackage -Package $pext -Stage $stage -Localization (Join-Path $root 'SeleneCore\Localization')
-# fixed names for GitHub releases: Lanternfall Core's update screen downloads Lanternfall.pthm and LanternfallCore.pext
+# fixed names for GitHub releases: Lanternfall Core's update screen downloads Lanternfall.pthm, LanternfallCore.pext and LanternfallBrowser.pext
 Get-ChildItem $dist -Filter 'Lanternfall_*.pthm' | Copy-Item -Destination (Join-Path $dist 'Lanternfall.pthm')
 Get-ChildItem $dist -Filter 'LanternfallCore_*.pext' | Copy-Item -Destination (Join-Path $dist 'LanternfallCore.pext')
 $browsers = @(Get-ChildItem $dist -Filter 'LanternfallBrowser_*.pext')

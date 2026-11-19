@@ -202,7 +202,9 @@ namespace SeleneBrowser
             {
                 CacheEntry ce;
                 // a forced refresh is throttled: several retries within 20 s share one fetch
-                if (cache.TryGetValue(videoId, out ce) && (force ? (DateTime.UtcNow - ce.At).TotalSeconds < 20 : (DateTime.UtcNow - ce.At).TotalMinutes < (ce.Info.IsLive ? 10 : 90)))
+                // (and never once its stream urls are about to expire: those only answer 403)
+                if (cache.TryGetValue(videoId, out ce) && (force ? (DateTime.UtcNow - ce.At).TotalSeconds < 20 : (DateTime.UtcNow - ce.At).TotalMinutes < (ce.Info.IsLive ? 10 : 90))
+                    && (ce.Info.IsLive || !YouTubeApi.UrlsExpireSoon(ce.Info, 300)))
                     return Result<StreamInfo>.Success(ce.Info);
             }
             Result<StreamInfo> r = YouTubeApi.GetStreamsSync(videoId);

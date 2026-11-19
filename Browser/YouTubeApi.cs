@@ -683,7 +683,38 @@ namespace SeleneBrowser
         // an Invidious instance that reports a live stream without its HLS manifest is skipped
         static bool AcceptStreamBody(string body)
         {
-            return !LiveNowRx.IsMatch(body) || HlsUrlRx.IsMatch(body);
+            if (LiveNowRx.IsMatch(body) && !HlsUrlRx.IsMatch(body)) return false;
+            // some instances answer from their own cache with stream urls that have already expired (every request then
+            // gets 403 and retries hit the same cache): such an answer counts as a failed instance, the next one is asked
+            return ExpiresAt(body) > UnixNow() + 600;
+        }
+
+        static readonly Regex ExpireRx = new Regex("[?&;]expire=(\\d{9,11})|\\\\u0026expire=(\\d{9,11})|/expire/(\\d{9,11})", RegexOptions.Compiled);
+
+        static long UnixNow() { return (long)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds; }
+
+        /// <summary>The earliest "expire" stamp (unix seconds) of the stream urls in text; long.MaxValue when there is none.</summary>
+        static long ExpiresAt(string text)
+        {
+            long min = long.MaxValue;
+            if (string.IsNullOrEmpty(text)) return min;
+            foreach (Match m in ExpireRx.Matches(text))
+            {
+                string g = m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Success ? m.Groups[2].Value : m.Groups[3].Value;
+                long v;
+                if (long.TryParse(g, out v) && v < min) min = v;
+            }
+            return min;
+        }
+
+        /// <summary>True when one of the video's stream urls expires within marginSeconds (or already has).</summary>
+        public static bool UrlsExpireSoon(StreamInfo si, int marginSeconds)
+        {
+            if (si == null) return false;
+            long min = long.MaxValue, now = UnixNow();
+            foreach (List<StreamFormat> list in new[] { si.Video, si.Audio, si.Muxed })
+                if (list != null) foreach (StreamFormat f in list) { long e = ExpiresAt(f.Url); if (e < min) min = e; }
+            return min < now + marginSeconds;
         }
 
         const string IosVersion = "20.10.4";
@@ -786,6 +817,13 @@ namespace SeleneBrowser
                 StreamInfo ios = TryIosLive(videoId);
                 if (ios != null) return Result<StreamInfo>.Success(ios);
             }
+            if (itLive == null)
+            {
+                // YouTube's own web route (BotGuard tokens in a hidden WebView2, as FreeTube does): before Invidious, whose
+                // instances are few and sometimes serve expired links
+                StreamInfo web = TryWeb(videoId, ref err);
+                if (web != null) return Result<StreamInfo>.Success(web);
+            }
             try
             {
                 // ANDROID_VR answers LOGIN_REQUIRED for live streams, so the Invidious lookup also covers them (liveNow + hlsUrl)
@@ -803,7 +841,72 @@ namespace SeleneBrowser
             catch { }
             if (itLive != null && itLive.HlsUrl.Length > 0) return Result<StreamInfo>.Success(itLive);
             if (itLive != null) return Result<StreamInfo>.Fail("This live stream could not be loaded right now.");
+            // YouTube's own "Sign in to confirm you're not a bot" means it refuses this connection for now (and no Invidious
+            // instance had working links either): say that plainly
+            if (err.IndexOf("not a bot", StringComparison.OrdinalIgnoreCase) >= 0)
+                err = "YouTube isn't letting this video play here right now. Please try again later.";
             return Result<StreamInfo>.Fail(err.Length > 0 ? err : "No playable streams were returned.");
+        }
+
+        static readonly Regex XtagsRx = new Regex("[?&]xtags=([^&]*)", RegexOptions.Compiled);
+
+        // An audio format: false = leave it out. The "stable volume" copy (xtags drc=1) of each track is dropped (it would sit
+        // beside the normal one under the same itag). A format without audioTrack info (Invidious leaves it out) gets its
+        // language from the url's xtags ("acont=original:lang=en-US"), so dubbed tracks are not mixed into the original one.
+        static bool TagAudio(StreamFormat f)
+        {
+            Match m = XtagsRx.Match(f.Url ?? "");
+            string xt = m.Success ? Uri.UnescapeDataString(m.Groups[1].Value) : "";
+            string acont = "", lang = "";
+            bool drc = false;
+            foreach (string part in xt.Split(':'))
+            {
+                int eq = part.IndexOf('=');
+                if (eq <= 0) continue;
+                string k = part.Substring(0, eq), v = part.Substring(eq + 1);
+                if (k == "drc" && v == "1") drc = true;
+                else if (k == "acont") acont = v;
+                else if (k == "lang") lang = v;
+            }
+            if (drc) return false;
+            if (f.AudioTrackId.Length == 0 && lang.Length > 0)
+            {
+                bool original = acont == "original";
+                f.AudioTrackId = lang + (original ? ".4" : acont.StartsWith("dubbed-auto", StringComparison.Ordinal) ? ".10" : ".3");
+                string name = lang;
+                try { name = new System.Globalization.CultureInfo(lang).EnglishName; } catch { }
+                f.AudioTrackName = name + (original ? " (original)" : acont.StartsWith("dubbed-auto", StringComparison.Ordinal) ? " (auto-dubbed)" : "");
+                f.IsDefaultAudio = original;
+            }
+            return true;
+        }
+
+        static StreamInfo TryWeb(string videoId, ref string err)
+        {
+            Playnite.SDK.ILogger log = Playnite.SDK.LogManager.GetLogger();
+            try
+            {
+                if (!YouTubeWeb.Available) return null;
+                System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+                string why;
+                string json = YouTubeWeb.Resolve(videoId, 40000, out why);
+                if (json == null) { log.Warn("SeleneBrowser: YouTube " + videoId + " web route: " + why); return null; }
+                object root = Jx.Parse(json);
+                string status = Jx.Str(root, "playabilityStatus", "status");
+                if (status != "OK")
+                {
+                    string reason = Jx.Str(root, "playabilityStatus", "reason");
+                    log.Info("SeleneBrowser: YouTube " + videoId + " web route: " + status + " " + reason);
+                    if (reason.Length > 0 && status != "LOGIN_REQUIRED") err = reason;   // a real reason (private, removed...) beats the bot notice
+                    return null;
+                }
+                StreamInfo si = ParseInnerTubeStreams(root, videoId);
+                si.Source = "web";
+                log.Info("SeleneBrowser: YouTube " + videoId + " web route: " + si.Video.Count + " video / " + si.Audio.Count + " audio formats in " + sw.ElapsedMilliseconds + " ms");
+                if (si.IsLive || si.Video.Count == 0 || si.Audio.Count == 0) return null;
+                return si;
+            }
+            catch (Exception e) { log.Warn("SeleneBrowser: YouTube " + videoId + " web route: " + e.Message); return null; }
         }
 
         static readonly Regex MimeRx = new Regex("^\\s*([^;\\s]+)\\s*(?:;\\s*codecs=\"([^\"]*)\")?", RegexOptions.Compiled);
@@ -845,6 +948,7 @@ namespace SeleneBrowser
                 f.AudioTrackId = Jx.Str(o, "audioTrack", "id");
                 f.AudioTrackName = Jx.Str(o, "audioTrack", "displayName");
                 f.IsDefaultAudio = Jx.Bool(o, "audioTrack", "audioIsDefault");
+                if (!f.IsVideo && !TagAudio(f)) continue;
                 if (f.IsVideo) si.Video.Add(f); else si.Audio.Add(f);
             }
             foreach (object o in Jx.L(Jx.Get(root, "streamingData", "formats")))
@@ -904,6 +1008,7 @@ namespace SeleneBrowser
                 f.AudioTrackId = Jx.Str(o, "audioTrack", "id");
                 f.AudioTrackName = Jx.Str(o, "audioTrack", "displayName");
                 f.IsDefaultAudio = Jx.Bool(o, "audioTrack", "audioIsDefault");
+                if (!f.IsVideo && !TagAudio(f)) continue;
                 if (f.IsVideo) si.Video.Add(f); else si.Audio.Add(f);
             }
             foreach (object o in Jx.L(Jx.Get(root, "captions")))

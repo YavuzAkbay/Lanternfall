@@ -14,6 +14,11 @@ own", that is Selene's work, reused under its MIT License.
 - FreeTube (https://github.com/FreeTubeApp/FreeTube, AGPL-3.0): only its data files are read, read-only; no FreeTube code is used.
 - SponsorBlock (https://sponsor.ajay.app): segment data is fetched from its public API; the data is CC BY-NC-SA 4.0.
 - Invidious (https://invidious.io) public instances are used as a fallback for streams; no Invidious code is used.
+- YouTube.js 18.3.0 (https://github.com/LuanRT/YouTube.js, MIT License, Copyright (c) 2021 LuanRT): its browser bundle is
+  shipped unchanged as `Browser/lib/ytweb/youtubei.js` (`Browser/lib/ytweb/LICENSE-youtubei.txt`) for the YouTube web route.
+- BgUtils (https://github.com/LuanRT/BgUtils, MIT License, Copyright (c) 2024 LuanRT): `Browser/ytweb/resolver.js` contains a
+  small port of its BotGuard client and token minter. Using YouTube's own BotGuard tokens when YouTube refuses app clients
+  follows FreeTube's approach; no FreeTube code is used.
 
 ## Lanternfall's lettering
 The "LANTERNFALL" lettering in `docs/logo` is set in Lato (already in `theme/Fonts`, SIL Open Font License 1.1).

@@ -55,7 +55,7 @@ namespace SeleneBrowser
 
         // ----- availability / environment -----
 
-        private static void EnsureLoaderPath()
+        internal static void EnsureLoaderPath()
         {
             lock (envLock)
             {
