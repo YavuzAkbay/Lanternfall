@@ -1,6 +1,6 @@
-Id: SeleneCore_cd424c29-97f4-4dd0-aa66-4d8e01cc8724
-Name: Selene Core
-Author: Matthew Silva
+Id: LanternfallCore_d9f97137-a577-4324-bcdf-dbe64e4c21d2
+Name: Lanternfall Core
+Author: Lanternfall contributors (based on Selene by Matthew Silva)
 Version: 1.5.7
 Module: SeleneCore.dll
 Type: GenericPlugin

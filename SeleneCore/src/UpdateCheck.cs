@@ -14,7 +14,7 @@ namespace Selene
     // screen does everything but hand the files to Playnite (a preview).
     public static class UpdateCheck
     {
-        private const string Latest = "https://api.github.com/repos/mattxslv/Selene/releases/latest";
+        private const string Latest = "https://api.github.com/repos/" + ForkBrand.Repo + "/releases/latest";   // Lanternfall's releases
         private static string StateFile { get { return Path.Combine(SelenePaths.DataFolder, "update-check.txt"); } }   // "<checked at ticks> <last version told>"
 
         // the newer version found (null: none), its release notes, and whether it's the developer preview

@@ -16,7 +16,7 @@ namespace Selene
     // and frozen, handed back on the UI thread. Anything that goes wrong just means no picture.
     public static class StoreImages
     {
-        private const string Agent = "Selene/1.0 (Playnite theme; github.com/mattxslv/Selene)";
+        private const string Agent = ForkBrand.Agent;
         private const int MemoryMax = 120;
         private static readonly Dictionary<string, ImageSource> memory = new Dictionary<string, ImageSource>();
         private static readonly LinkedList<string> order = new LinkedList<string>();

@@ -165,7 +165,7 @@ namespace Selene
 
         public static void Track(TextBlock text)
         {
-            if (text == null || (!Active && collectFile == null)) return;
+            if (text == null || (!Active && collectFile == null && !ForkBrand.Mentions(text.Text))) return;   // (Lanternfall: the name in English too)
             if (BindingOperations.GetBindingExpressionBase(text, TextBlock.TextProperty) != null) return;
             var state = states.GetOrCreateValue(text);
             if (!state.Watching)
@@ -200,13 +200,13 @@ namespace Selene
         public static string T(string english)
         {
             string translated;
-            return english != null && table != null && table.TryGetValue(english, out translated) ? translated : english;
+            return ForkBrand.Text(english != null && table != null && table.TryGetValue(english, out translated) ? translated : english);
         }
 
         // a TextBlock as it loads: its English text swapped for the translation (texts that are bound stay Playnite's)
         public static void Apply(TextBlock t)
         {
-            if (t == null || (table == null && collectFile == null)) return;
+            if (t == null || (table == null && collectFile == null && !ForkBrand.Mentions(t.Text))) return;
             var state = states.GetOrCreateValue(t);
             if (state.Updating) return;
             var text = t.Text == state.Translated ? state.Original : t.Text;
@@ -222,7 +222,9 @@ namespace Selene
                 catch (Exception ex) { if (written >= 0) { written = -1; HomeNav.Log("language: can't write a phrase to " + collectFile + ": " + ex.Message); } }
             }
             string translated;
-            if (table != null && table.TryGetValue(text, out translated))
+            if (table == null || !table.TryGetValue(text, out translated)) translated = text;
+            translated = ForkBrand.Text(translated);   // Lanternfall: the fork's name wherever Selene's is shown
+            if (translated != text)
             {
                 state.Original = text; state.Translated = translated;
                 state.Updating = true;

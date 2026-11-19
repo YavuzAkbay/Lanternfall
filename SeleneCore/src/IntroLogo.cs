@@ -102,17 +102,11 @@ namespace Selene
             haloBrush.GradientStops.Add(new GradientStop(Color.FromArgb(0x61, glyph.R, glyph.G, glyph.B), 0.3));
             haloBrush.GradientStops.Add(new GradientStop(Color.FromArgb(0x1F, glyph.R, glyph.G, glyph.B), 0.65));
             haloBrush.GradientStops.Add(new GradientStop(Color.FromArgb(0, glyph.R, glyph.G, glyph.B), 1));
-            var halo = new Ellipse { Width = 64, Height = 64, Fill = haloBrush, RenderTransformOrigin = new Point(0.5, 0.5) };
-            Canvas.SetLeft(halo, 4); Canvas.SetTop(halo, -14);
+            // Lanternfall: the fork's lantern (ForkBrand) instead of Selene's crescent crown, the halo on its flame
+            var halo = new Ellipse { Width = ForkBrand.HaloSize, Height = ForkBrand.HaloSize, Fill = haloBrush, RenderTransformOrigin = new Point(0.5, 0.5) };
+            Canvas.SetLeft(halo, ForkBrand.HaloX - ForkBrand.HaloSize / 2); Canvas.SetTop(halo, ForkBrand.HaloY - ForkBrand.HaloSize / 2);
             canvas.Children.Add(halo);
-            var inkBrush = new SolidColorBrush(ink);
-            canvas.Children.Add(new Path { Data = Geometry.Parse("M 9.109,20.577 A 31,31 0 1 0 62.891,20.577 A 27,27 0 1 1 9.109,20.577 Z"), Fill = inkBrush });
-            var ring = new Ellipse { Width = 18, Height = 18, Stroke = inkBrush, StrokeThickness = 3.2 };
-            Canvas.SetLeft(ring, 27); Canvas.SetTop(ring, 9);
-            canvas.Children.Add(ring);
-            var dot = new Ellipse { Width = 6.4, Height = 6.4, Fill = inkBrush };
-            Canvas.SetLeft(dot, 32.8); Canvas.SetTop(dot, 14.8);
-            canvas.Children.Add(dot);
+            ForkBrand.DrawMark(canvas, new SolidColorBrush(ink));
             root.Children.Add(view);
 
             // rise in: fade and lift

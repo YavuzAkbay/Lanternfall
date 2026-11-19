@@ -20,12 +20,12 @@ namespace Selene
     public class ReportScreen : Screen
     {
         public override bool MenuOnStart { get { return false; } }   // (Start is its own here)
-        private const string Service = "https://selene-report.mattxslv.workers.dev";
-        private const string Form = "https://github.com/mattxslv/Selene/issues/new?template=bug_report.yml";
+        private const string Service = ForkBrand.ReportService;   // Lanternfall: none (Selene's goes to its author)
+        private const string Form = ForkBrand.RepoUrl + "/issues/new?template=bug_report.yml";
 
         // the last one isn't a problem: an idea goes to GitHub Discussions (Ideas), where others can vote for it, with no logs
         private const string IdeaKind = "I have an idea";
-        private const string IdeaForm = "https://github.com/mattxslv/Selene/discussions/new?category=ideas";
+        private const string IdeaForm = ForkBrand.RepoUrl + "/discussions/new?category=ideas";
         private static readonly string[] Kinds = { "Something doesn't work", "Something looks wrong", "Selene froze or closed", "Controller or navigation", "Sound or music", "Other", IdeaKind };
         private static readonly int[] KindIcons = { 0xe868 /* bug */, 0xe3ad /* broken image */, 0xeb3b /* frozen */, 0xea28 /* controller */, 0xe050 /* sound */, 0xe5d3 /* more */, 0xe90f /* lightbulb */ };
         private bool Idea { get { return Kinds[kind] == IdeaKind; } }
@@ -391,6 +391,7 @@ namespace Selene
         {
             try { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12; } catch { }
             var js = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
+            if (string.IsNullOrEmpty(Service)) throw new WebException("no report service");   // (Lanternfall: GitHub's form instead)
             var request = (HttpWebRequest)WebRequest.Create(Service + path);
             request.UserAgent = "Selene/" + Brand.Version;
             request.Timeout = 20000;

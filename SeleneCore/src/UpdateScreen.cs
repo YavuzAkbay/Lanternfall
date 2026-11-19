@@ -15,8 +15,8 @@ namespace Selene
     // handing over.
     public class UpdateScreen : Screen
     {
-        private const string Release = "https://github.com/mattxslv/Selene/releases/download/v";
-        private static readonly string[] Files = { "Selene.pthm", "SeleneCore.pext" };
+        private const string Release = ForkBrand.RepoUrl + "/releases/download/v";   // Lanternfall's releases
+        private static readonly string[] Files = { ForkBrand.ThemePackage, ForkBrand.CorePackage };
         private const double BarW = 620;
 
         private readonly Func<Screen> back;

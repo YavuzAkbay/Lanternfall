@@ -39,7 +39,7 @@ namespace Selene
     // as they come); the last good copy is kept on disk so the page shows something offline.
     public static class StoreData
     {
-        private const string Agent = "Selene/1.0 (Playnite theme; github.com/mattxslv/Selene)";
+        private const string Agent = ForkBrand.Agent;
         private static readonly Dictionary<string, List<StoreItem>> lists = new Dictionary<string, List<StoreItem>>();
         private static DateTime loadedAt = DateTime.MinValue;
         private static bool loading;

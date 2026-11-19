@@ -12,11 +12,11 @@ namespace Selene
     // Selene Core: the companion add-on of the Selene fullscreen theme. Does nothing with any other theme.
     public class SeleneCorePlugin : GenericPlugin
     {
-        public const string ThemeId = "Selene_a98e0027-fa6a-4f5e-a087-bad8d69f2443";
+        public const string ThemeId = "Lanternfall_1ca6f8dc-492b-44d1-918a-871145f81695";   // Lanternfall's own theme id (Selene's: Selene_a98e0027-fa6a-4f5e-a087-bad8d69f2443)
         private static readonly ILogger logger = LogManager.GetLogger();
         private readonly SeleneSettingsViewModel settings;
 
-        public override Guid Id { get { return Guid.Parse("cd424c29-97f4-4dd0-aa66-4d8e01cc8724"); } }
+        public override Guid Id { get { return Guid.Parse("d9f97137-a577-4324-bcdf-dbe64e4c21d2"); } }
 
         public SeleneCorePlugin(IPlayniteAPI api) : base(api)
         {
@@ -367,8 +367,8 @@ namespace Selene
             new Option { Group = "Spotlight", Key = "capturesfolders", Label = "Captures folders", About = "Add a folder with your screenshots and clips. Pick one that's listed to remove it.", Action = "Add", Note = () => SelenePaths.CapturesFolders.Count == 0 ? "Steam, Videos and NVIDIA folders only" : string.Join(" · ", SelenePaths.CapturesFolders) },
             new Option { Group = "Spotlight", Key = "cardsurprise", Label = "Surprise me card", About = "Let Selene pick a game for you." },
             new Option { Group = "Spotlight", Key = "cardstore", Label = "Store card", About = "Show the Store card on Spotlight." },
-            new Option { Group = "Spotlight", Key = "cardbrowser", Label = "Browser card", About = "Nomad sandbox: show the Browser card on Spotlight (needs the Selene Browser add-on).", DefaultOn = true },
-            new Option { Group = "Spotlight", Key = "cardyoutube", Label = "YouTube card", About = "Open a controller-friendly YouTube (Invidious) in the browser overlay.", DefaultOn = true },
+            new Option { Group = "Spotlight", Key = "cardbrowser", Label = "Browser card", About = "Show the Browser card on Spotlight: the web with your controller (needs the Lanternfall Browser add-on).", DefaultOn = true },
+            new Option { Group = "Spotlight", Key = "cardyoutube", Label = "YouTube card", About = "Show the YouTube card on Spotlight: YouTube for the couch, no account and no ads (needs the Lanternfall Browser add-on).", DefaultOn = true },
             new Option { Group = "Spotlight", Key = "cardnews", Label = "News card", About = "Show headlines from the news feeds you follow." },
             new Option { Group = "Spotlight", Key = "cardpictures", Label = "Pictures under cards", About = "Show recent captures, recently played games and suggestions under the cards." },
             new Option { Group = "Spotlight", Key = "steadyhold", Label = "Steady hold scrolling", About = "Holding left or right moves through games at a steady pace the row can keep up with." },

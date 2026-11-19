@@ -1589,7 +1589,7 @@
                             <!-- Selene Browser's fullscreen control (top bar, page, hints): Playnite fills Content when the add-on is enabled -->
                             <ContentControl x:Name="SeleneBrowser_BrowserSurface" Margin="0"
                                             SnapsToDevicePixels="True" UseLayoutRounding="True"/>
-                            <TextBlock Text="The SeleneBrowser add-on is not enabled.   B  Close" FontFamily="{DynamicResource FontMain}" FontSize="26"
+                            <TextBlock Text="The Lanternfall Browser add-on is not enabled.   B  Close" FontFamily="{DynamicResource FontMain}" FontSize="26"
                                        Foreground="{DynamicResource SeleneInk60Brush}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">

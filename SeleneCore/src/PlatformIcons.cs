@@ -44,10 +44,7 @@ namespace Selene
 
         // Selene's mark (the crescent with the ringed full moon above it, as in the logo), for games from no store ("Local").
         // Even-odd fill: the ring is an outer circle minus an inner one, the dot sits inside it.
-        private const string Crescent = "F0 M 9.109,20.577 A 31,31 0 1 0 62.891,20.577 A 27,27 0 1 1 9.109,20.577 Z "
-            + "M 46.6,18 A 10.6,10.6 0 1 0 25.4,18 A 10.6,10.6 0 1 0 46.6,18 Z "
-            + "M 43.4,18 A 7.4,7.4 0 1 0 28.6,18 A 7.4,7.4 0 1 0 43.4,18 Z "
-            + "M 39.2,18 A 3.2,3.2 0 1 0 32.8,18 A 3.2,3.2 0 1 0 39.2,18 Z";
+        private const string Crescent = ForkBrand.MarkPath;   // Lanternfall: the fork's lantern instead of Selene's crescent
 
         // a store's logo by its name ("Steam", "Epic Games", "GOG Galaxy"...), null when there's none
         public static Geometry For(string name)
