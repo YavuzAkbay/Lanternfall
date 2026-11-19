@@ -9,7 +9,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Selene;
 
-public class FakeUps { public string DefaultMusicPath { get; set; } public int DefaultMusicSourceOption { get; set; } public string SelectedBundledPreset { get; set; } public FakeUps() { DefaultMusicPath = ""; DefaultMusicSourceOption = 2; SelectedBundledPreset = "tunetank-dark-ambient-soundscape-music.mp3"; } }
+public class FakeUps { public string DefaultMusicPath { get; set; } public int DefaultMusicSourceOption { get; set; } public string SelectedBundledPreset { get; set; } public bool EnableDefaultMusic { get; set; } public FakeUps() { EnableDefaultMusic = true; DefaultMusicPath = ""; DefaultMusicSourceOption = 2; SelectedBundledPreset = "tunetank-dark-ambient-soundscape-music.mp3"; } }
 class BugsCheck
 {
     public class SingleItemSelectionWindow : Window { }
@@ -236,6 +236,14 @@ class BugsCheck
             var oldNameUps = new FakeUps { DefaultMusicPath = Path.Combine(musicDir, "user", "Selene background default.mp3"), DefaultMusicSourceOption = 0 }; File.WriteAllBytes(oldNameUps.DefaultMusicPath, new byte[] { 9 });
             Assert((bool)useDefault.Invoke(null, new object[] { oldNameUps, musicSource, musicTarget }) && oldNameUps.DefaultMusicPath == musicTarget && !File.Exists(Path.Combine(musicDir, "user", "Selene background default.mp3")), "The old file name moves over to Selene OST");
             Features.Remember("selene-default-music", "");
+            // Lanternfall: no background music; the Selene OST path is cleared and ambient music switched off
+            var quietSwitch = typeof(ForkQuiet).GetMethod("SwitchOffAmbient", BindingFlags.Static | BindingFlags.NonPublic);
+            var quietClear = typeof(ForkQuiet).GetMethod("ClearSeleneTrack", BindingFlags.Static | BindingFlags.NonPublic);
+            var quietUps = new FakeUps { DefaultMusicPath = @"C:\Data\Music\Selene OST.mp3", DefaultMusicSourceOption = 0 };
+            Assert((bool)quietClear.Invoke(null, new object[] { quietUps }) && quietUps.DefaultMusicPath == "" && (bool)quietSwitch.Invoke(null, new object[] { quietUps }) && !quietUps.EnableDefaultMusic, "Lanternfall: the Selene OST path is cleared and ambient music goes off");
+            Assert(!(bool)quietSwitch.Invoke(null, new object[] { quietUps }) && !(bool)quietClear.Invoke(null, new object[] { quietUps }), "Lanternfall: already quiet, nothing to save again");
+            var ownMusic = new FakeUps { DefaultMusicPath = @"D:\my music\mine.mp3" };
+            Assert(!(bool)quietClear.Invoke(null, new object[] { ownMusic }) && ownMusic.DefaultMusicPath == @"D:\my music\mine.mp3", "Lanternfall: a default file the user chose stays");
             var presetVisible = typeof(HomeNav).GetMethod("PresetVisible", BindingFlags.Static | BindingFlags.NonPublic);
             var preset = new Playnite.SDK.Models.FilterPreset { Name = "Desktop-only", ShowInFullscreeQuickSelection = false };
             Features.Set("fullscreenpresets", true);

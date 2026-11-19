@@ -4,6 +4,11 @@ Selene (theme) and Selene Core (add-on) share one version number and are release
 
 ## Unreleased
 
+## 1.5.9 - 2026-11-19 (Lanternfall Core 1.5.9; Lanternfall Browser 0.4.2)
+
+- No more background music, for everyone: 1.5.8-3 removed the "Selene OST" track but kept the version number 1.5.8, so Lanternfall's update check never offered it. This release has a new version number, so Menu > Update offers it. Lanternfall Core also deletes leftover copies of the old track (an update unpacks over the old theme folder and never removed it), and the one-time switch-off of UniPlaySong's Ambient music is only counted once UniPlaySong's settings were really read (it looks again for a minute after start, instead of giving up).
+- Ambient music, game songs and Spotify as ambient stay opt-in under Sound & music.
+
 ## 1.5.8-3 - 2026-11-19 (Lanternfall Core 1.5.8; Lanternfall Browser 0.4.2)
 
 - No more background music: the "Selene OST" track is gone from the theme, and Lanternfall Core takes back what Selene had set up in UniPlaySong for it (its default-music file) and switches UniPlaySong's Ambient music off, once. Sound & music > Ambient music brings it back if you want it. Interface sounds are unchanged.
