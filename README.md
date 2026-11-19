@@ -22,7 +22,8 @@
   and buttons, the right stick drives a cursor, and an on-screen keyboard appears for every text field and the address
   bar. Bookmarks, recent pages, zoom, and video sites play in real fullscreen (Microsoft Edge WebView2).
 - **YouTube.** A TV-style YouTube screen with no account and no ads: subscriptions, search with suggestions, history,
-  playlists, channels and livestreams, and a player with quality, speed, captions and audio tracks. It can import your
+  playlists, channels and livestreams, and a player with quality up to 4K at 60 fps (AV1 where your graphics card
+  decodes it), speed, captions and audio tracks. It can import your
   [FreeTube](https://freetubeapp.io) subscriptions, history and settings (read-only) and skips sponsor segments with
   [SponsorBlock](https://sponsor.ajay.app) when FreeTube has it on.
 - **Profiles, store, captures, achievements and activity**, each a controller-friendly screen of its own.
@@ -39,7 +40,11 @@ The Browser and YouTube are Spotlight cards: switch them off in **Settings → S
 3. Fullscreen mode → **Menu → Playnite settings → Appearance → Theme → Lanternfall**.
 
 Playnite 10 or newer, Windows 10 / 11, a controller recommended. The browser uses Microsoft Edge WebView2, which
-Windows 10 / 11 already include. Lanternfall checks this repository for updates and offers them from its menu.
+Windows 10 / 11 already include.
+
+**Updating.** Lanternfall offers new versions of the theme and Lanternfall Core from its menu when they move to a new
+Selene version. Releases tagged with a suffix (like `1.5.7-3`) and Lanternfall Browser updates are installed by hand:
+download the files the release notes name and open them as in step 2.
 
 Found a problem or have an idea? Use **Menu → Report a problem**, or open an [issue](../../issues).
 
