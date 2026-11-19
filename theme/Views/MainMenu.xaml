@@ -21,7 +21,7 @@
     <DataTemplate x:Key="MainMenuHeaderTemplate">
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="20,30,40,30">
             <TextBlock Text="&#xE708;" FontFamily="Segoe MDL2 Assets" FontSize="30" Foreground="{DynamicResource GlyphBrush}" VerticalAlignment="Center"/>
-            <TextBlock Text="Selene" FontSize="34" Style="{DynamicResource TextBlockBaseStyle}" VerticalAlignment="Center"
+            <TextBlock Text="Lanternfall" FontSize="34" Style="{DynamicResource TextBlockBaseStyle}" VerticalAlignment="Center"
                        Margin="16,0,0,0"/>
         </StackPanel>
     </DataTemplate>

@@ -1571,11 +1571,11 @@
                                             </BeginStoryboard>
                                         </EventTrigger>
                                     </StackPanel.Triggers>
-                                    <TextBlock Text="Selene Core isn't running" FontFamily="{StaticResource FontMain}" FontSize="42" FontWeight="SemiBold"
+                                    <TextBlock Text="Lanternfall Core isn't running" FontFamily="{StaticResource FontMain}" FontSize="42" FontWeight="SemiBold"
                                                Foreground="{DynamicResource SeleneInkBrush}" TextAlignment="Center" TextWrapping="Wrap"/>
                                     <TextBlock FontFamily="{StaticResource FontMain}" FontSize="23" Foreground="{DynamicResource SeleneInkBrush}" Opacity="0.85"
                                                TextAlignment="Center" TextWrapping="Wrap" Margin="0,22,0,0" LineHeight="34"
-                                               Text="Selene is this theme plus its add-on, Selene Core. Install SeleneCore.pext from github.com/mattxslv/Selene/releases (open the file, or drag it onto Playnite's window), then restart Playnite. If it is installed already, make sure it is enabled under Add-ons."/>
+                                               Text="Lanternfall is this theme plus its add-on, Lanternfall Core. Install LanternfallCore.pext from Lanternfall's releases on GitHub (open the file, or drag it onto Playnite's window), then restart Playnite. If it is installed already, make sure it is enabled under Add-ons."/>
                                     <TextBlock FontFamily="{StaticResource FontMain}" FontSize="19" Foreground="{DynamicResource SeleneInkBrush}" Opacity="0.6"
                                                TextAlignment="Center" TextWrapping="Wrap" Margin="0,22,0,0"
                                                Text="Playnite's menu still opens from here (the Start / Menu button on a controller) to pick another theme meanwhile."/>
