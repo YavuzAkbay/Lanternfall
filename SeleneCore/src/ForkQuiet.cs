@@ -18,6 +18,7 @@ namespace Selene
             try
             {
                 RemoveOldTrack();
+                EnsureSilentTrack();
                 if (!MusicLevel.Installed()) return;   // nothing to quiet yet: try again once the music add-on is there
                 if (!Quiet()) Retry();
             }
@@ -84,6 +85,33 @@ namespace Selene
             var name = System.IO.Path.GetFileName(current);
             if (!string.Equals(name, "Selene OST.mp3", StringComparison.OrdinalIgnoreCase) && !string.Equals(name, "Selene background default.mp3", StringComparison.OrdinalIgnoreCase)) return false;
             prop.SetValue(settings, "", null);
+            return true;
+        }
+
+        // Playnite plays background.mp3 of its own Default theme, at the volume of its settings, whenever the active theme has none
+        // (under the Browser and YouTube as well). The theme ships a silent one; it is put back here if it was deleted, so Playnite
+        // never falls back to its own track. Only in the Lanternfall theme's folder: another theme's Audio folder is left alone.
+        private static void EnsureSilentTrack()
+        {
+            try
+            {
+                var dir = SelenePaths.ThemeDir;
+                if (string.IsNullOrEmpty(dir) || System.IO.Path.GetFileName(dir.TrimEnd('\\', '/')).IndexOf("Lanternfall", StringComparison.OrdinalIgnoreCase) != 0) return;
+                var file = SelenePaths.ThemeFile("Audio", "background.mp3");
+                if (WriteSilentTrack(file)) HomeNav.Log("quiet ambient: silent background.mp3 put back in the theme");
+            }
+            catch (Exception ex) { HomeNav.Log("quiet ambient: silent track: " + (ex.InnerException ?? ex).Message); }
+        }
+
+        // true: written (it was missing). 192 frames of MPEG-1 Layer III, 44.1 kHz, 128 kbit/s, all zero: about 5 s of silence
+        internal static bool WriteSilentTrack(string file)
+        {
+            if (System.IO.File.Exists(file)) return false;
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(file));
+            var frame = new byte[417];
+            frame[0] = 0xFF; frame[1] = 0xFB; frame[2] = 0x90; frame[3] = 0x00;
+            using (var stream = System.IO.File.Create(file))
+                for (int i = 0; i < 192; i++) stream.Write(frame, 0, frame.Length);
             return true;
         }
 

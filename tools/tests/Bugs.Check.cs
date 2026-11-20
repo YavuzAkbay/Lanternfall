@@ -244,6 +244,14 @@ class BugsCheck
             Assert(!(bool)quietSwitch.Invoke(null, new object[] { quietUps }) && !(bool)quietClear.Invoke(null, new object[] { quietUps }), "Lanternfall: already quiet, nothing to save again");
             var ownMusic = new FakeUps { DefaultMusicPath = @"D:\my music\mine.mp3" };
             Assert(!(bool)quietClear.Invoke(null, new object[] { ownMusic }) && ownMusic.DefaultMusicPath == @"D:\my music\mine.mp3", "Lanternfall: a default file the user chose stays");
+            // Lanternfall: a silent Audio\background.mp3 stands in for Playnite's own background track, and is written again when missing
+            var silentWrite = typeof(ForkQuiet).GetMethod("WriteSilentTrack", BindingFlags.Static | BindingFlags.NonPublic);
+            var silentFile = Path.Combine(Path.GetTempPath(), "lanternfall-silent-test", "Audio", "background.mp3");
+            if (File.Exists(silentFile)) File.Delete(silentFile);
+            Assert((bool)silentWrite.Invoke(null, new object[] { silentFile }) && new FileInfo(silentFile).Length == 192 * 417, "Lanternfall: a missing background.mp3 is written as silence");
+            var shipped = File.ReadAllBytes(silentFile);
+            Assert(shipped[0] == 0xFF && shipped[1] == 0xFB && shipped[417] == 0xFF && shipped[418] == 0xFB && shipped[5] == 0 && shipped[200] == 0, "Lanternfall: the silent track is MPEG frames of zeros");
+            Assert(!(bool)silentWrite.Invoke(null, new object[] { silentFile }), "Lanternfall: an existing background.mp3 is left alone");
             var presetVisible = typeof(HomeNav).GetMethod("PresetVisible", BindingFlags.Static | BindingFlags.NonPublic);
             var preset = new Playnite.SDK.Models.FilterPreset { Name = "Desktop-only", ShowInFullscreeQuickSelection = false };
             Features.Set("fullscreenpresets", true);

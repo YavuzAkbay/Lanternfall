@@ -4,33 +4,27 @@ Selene (theme) and Selene Core (add-on) share one version number and are release
 
 ## Unreleased
 
+## 1.5.10 - 2026-11-20 (Lanternfall Core 1.5.10; Lanternfall Browser 0.4.2)
+
+- The music that started with fullscreen is gone, for real. It was never Selene's track: it was Playnite's own background track (`background.mp3` of Playnite's Default theme), which Playnite plays, at whatever volume is set, whenever the theme has none of its own. It kept playing under the Browser and YouTube too. The theme now ships a silent `Audioackground.mp3`, so Playnite has nothing to play, and Lanternfall Core puts it back if it is ever missing. Interface sounds are unchanged.
+
 ## 1.5.9 - 2026-11-19 (Lanternfall Core 1.5.9; Lanternfall Browser 0.4.2)
 
-- No more background music, for everyone: 1.5.8-3 removed the "Selene OST" track but kept the version number 1.5.8, so Lanternfall's update check never offered it. This release has a new version number, so Menu > Update offers it. Lanternfall Core also deletes leftover copies of the old track (an update unpacks over the old theme folder and never removed it), and the one-time switch-off of UniPlaySong's Ambient music is only counted once UniPlaySong's settings were really read (it looks again for a minute after start, instead of giving up).
-- Ambient music, game songs and Spotify as ambient stay opt-in under Sound & music.
+- A new version number, so Menu > Update offers the removal of the "Selene OST" track (1.5.8 had it under the same number). Lanternfall Core also deletes leftover copies of that track, and switches UniPlaySong's Ambient music off once, after it has really read UniPlaySong's settings.
+- This did not stop Playnite's own background track, which is what most people heard. 1.5.10 does.
 
-## 1.5.8-3 - 2026-11-19 (Lanternfall Core 1.5.8; Lanternfall Browser 0.4.2)
-
-- No more background music: the "Selene OST" track is gone from the theme, and Lanternfall Core takes back what Selene had set up in UniPlaySong for it (its default-music file) and switches UniPlaySong's Ambient music off, once. Sound & music > Ambient music brings it back if you want it. Interface sounds are unchanged.
-- Install `Lanternfall.pthm` and `LanternfallCore.pext` once by hand (the version number is still 1.5.8, so Playnite does not offer them).
-
-## 1.5.8-2 - 2026-11-19 (Lanternfall Core 1.5.8; Lanternfall Browser 0.4.2)
-
-- Browser fixes reach you on their own: Menu > Update now also offers a release that only brings a newer Lanternfall Browser (such as a YouTube fix), and then installs just the Browser. Needs this Lanternfall Core, installed once by hand.
-- Lanternfall Browser 0.4.2: when YouTube's web route fails, the log says why.
-- For maintainers: `tools/update-youtubejs.ps1` updates the bundled YouTube.js and keeps it only if real videos play with it; release files now name their Browser version in BUILDINFO.txt.
-
-## 1.5.8-1 - 2026-11-19 (Lanternfall Browser 0.4.1)
-
-- YouTube plays again when it refuses the plain app client: the Browser asks the way YouTube's own site does (a hidden Edge page mints the proof tokens, as FreeTube does) before falling back to Invidious. Expired Invidious links are skipped, dubbed tracks are no longer mixed into the original audio, and the update screen downloads the Browser too.
-
-## 1.5.8 - 2026-11-19 (Lanternfall; Lanternfall Browser 0.4.0)
+## 1.5.8 - 2026-11-19 (Lanternfall Core 1.5.8; Lanternfall Browser 0.4.2)
 
 - Quick button taps register: Playnite looks at the controller every 16 ms and could miss a tap shorter than that (fast mashing, or a Bluetooth pad). Lanternfall Core now watches the pad more closely and passes on the taps Playnite missed. Advanced > Catch very quick taps turns it off.
 - Smoother home screen on a TV beside a faster monitor: Selene's frame watchdog made WPF draw at the fastest screen's rate (144 times a second on a 60 Hz 4K TV). It now listens only on the fastest screen, so a 60 Hz TV is drawn at 60.
 - The idle screen stays away while the Browser or YouTube is open.
 - UniPlaySong is listed as a clash instead of a recommended add-on (Lanternfall has no background music).
 - Lanternfall Browser 0.4.0: ad blocking with uBlock Origin Lite, a settings panel, a bar that hides itself, fullscreen video in the browser's top layer, less memory while hidden (the browser is freed when you leave it), and YouTube playback that recovers from expired streams.
+- YouTube plays again when it refuses the plain app client: the Browser asks the way YouTube's own site does (a hidden Edge page mints the proof tokens, as FreeTube does) before falling back to Invidious. Expired Invidious links are skipped, dubbed tracks are no longer mixed into the original audio, and the update screen downloads the Browser too.
+- Browser fixes reach you on their own: Menu > Update now also offers a release that only brings a newer Lanternfall Browser (such as a YouTube fix), and then installs just the Browser. Needs this Lanternfall Core, installed once by hand.
+- Lanternfall Browser 0.4.2: when YouTube's web route fails, the log says why.
+- For maintainers: `tools/update-youtubejs.ps1` updates the bundled YouTube.js and keeps it only if real videos play with it; release files now name their Browser version in BUILDINFO.txt.
+- The "Selene OST" track is removed from the theme, and Lanternfall Core takes back what Selene had set up in UniPlaySong for it (its default-music file). Playnite's own background track still played; see 1.5.10.
 
 ## 1.5.7 - 2026-11-09
 
