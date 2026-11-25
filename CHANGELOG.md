@@ -1,0 +1,688 @@
+# Changelog
+
+Selene (theme) and Selene Core (add-on) share one version number and are released together.
+
+## Unreleased
+
+## 1.5.13 - 2026-11-25 (Lanternfall Core 1.5.13; Lanternfall Browser 0.6.0)
+
+- One phone link for everything. Scan a single QR code once (Start menu > Phone link in the Browser or YouTube, or View on any keyboard) and your phone opens one page that follows whatever is on the TV:
+  - A keyboard opens on the TV: a typing box appears on the phone by itself. What you type shows on the TV as you go, and what you type with the pad shows on the phone. This replaces the separate code each keyboard used to show, and it works in Lanternfall's own keyboards too (Find a game, the IGDB search, Add feed).
+  - YouTube is open: pause or play, jump 10 seconds, previous and next, stop. Paste a YouTube link and it plays on the TV, or type words to search YouTube and tap a result.
+  - The Browser is open: a trackpad moves the browser's cursor (drag to move, tap to click, two fingers to scroll), plus Back, Forward, Reload, Start page, scroll, zoom, New tab and Close tab. Paste any link and it opens in the TV's browser, or search the web from the phone.
+  - Anywhere else: a box to send a link to the TV.
+  It stays on your home network, behind a long random address, and nothing goes through the internet. It is off until you open Phone link on the TV, it only answers devices on your home network, it will not start anything while a game is running, and a device that keeps guessing addresses is locked out for a few minutes. Switch it off, or make a new address that cuts every phone off, in the Browser's Settings (Phone link, Reset phone link). Closing Playnite closes it. Needs the phone and the PC on the same Wi-Fi and the same one-time Windows Firewall step as before (Browser settings > Let phones reach this PC). Passwords are still typed on the TV unless you allow them on the phone, because the page is not encrypted.
+- The menu sounds, profile pictures, wallpapers and sample art are now original Lanternfall work instead of the ones that came with Selene, and the old login video is gone. Colors, layout and behavior are the same.
+- A video started from outside (the phone, or a tile on the home row) shows its real title as soon as it loads instead of its video id.
+
+## 1.5.12 - 2026-11-25 (Lanternfall Core 1.5.12; Lanternfall Browser 0.5.0)
+
+- Smooth scrolling in the Browser, with the left stick. The left stick scrolls the page, in all four directions, as far as you push it; the D-pad only moves between links and buttons now. The triggers scroll by how far they are pressed, and the cursor pushed against an edge scrolls too. The page scrolls itself once per painted frame instead of in repeated kicks (which also stalled for a moment after the first one), and it does nothing at all when there is nothing left to scroll that way, so there is no stutter at the top, the bottom or the sides. A panel inside a page (a chat, a list) scrolls first, then the page. Keyboards and controllers the browser cannot read directly keep the D-pad behaviour.
+
+- Browser page tools. Start now opens a shorter menu with the new tools:
+  - All tabs: every tab at once as cards with a picture of the page (A opens, X closes, Y adds a tab).
+  - Find in page: type a word on the keyboard (the phone works too); A and Y step through the matches, X searches again, B ends it.
+  - Page tools: Reader mode shows just the article in big type in your theme's colors (B leaves it), a Phone version of a site for pages that look better that way (remembered per site), and the zoom entries.
+  - A link under the highlight or the cursor gets Open link in new tab and Copy link at the top of the menu.
+  - History lists the pages you visited (A opens one, X removes it). Downloads lists files.
+  - Zoom is remembered per site now: a site you zoomed comes back at that size.
+  - Files can be downloaded. A question on the screen comes first (a page can start a download on its own), programs get a warning, and the file goes to your Downloads folder. Browser settings > Downloads turns it off.
+
+- Type on your phone. On the Browser's and YouTube's on-screen keyboard, View shows a QR code. Scan it with your phone's camera and a page opens with a big text box: what you type shows in the field on the TV as you go (and what you type with the pad shows on the phone), and Done or Cancel on the phone works like Start or B. Handy for passwords, long addresses and pasting a link. It also works in Lanternfall's own keyboards: Find a game, the IGDB search and Add feed (View). It stays on your home network: the page is served by your PC only while the keyboard is open, behind a one-time code, and nothing goes through the internet. Needs the phone and the PC on the same Wi-Fi, and a one-time step in Windows Firewall (Browser settings > Let phones reach this PC; Windows asks for admin permission, so use a mouse or keyboard once). Passwords are still typed on the TV unless you switch Phone keyboard for passwords on, because the phone page is not encrypted. Both switches are in the browser's Settings.
+- The pictures on the small tiles under the home row (game news, YouTube videos, Browser sites) have rounded corners now; they were square.
+
+## 1.5.11-1 - 2026-11-24 (Lanternfall Core 1.5.11; Lanternfall Browser 0.4.7)
+
+- Web pages are readable on a 4K TV. The Browser drew pages at the screen's real pixels, so at Windows' 100% scale a 4K TV showed tiny text (the theme itself already scales to the screen). Pages now start at a size that follows the screen: the same look as on a 1080p screen, but sharp. It never makes a page smaller than before, and ultrawide and 16:10 screens are measured by the tighter side of the screen. L3/R3 zoom works on top of it.
+- Browser settings has a new Page size row (press A to change it): Auto, Auto smaller, Auto larger, Auto largest, or a fixed 100% to 300%. The choice is saved.
+- With the right stick, the cursor starts where the page's highlight was on screens that are not 1080p; it started in the wrong place there before.
+- The Browser and YouTube screens follow the theme you picked (colors and wallpaper, changing live) and are restyled for the couch: a themed start page, a restyled on-screen keyboard, menus and settings, and YouTube with a tab bar on top and five columns.
+
+## 1.5.11 - 2026-11-24 (Lanternfall Core 1.5.11; Lanternfall Browser 0.4.6)
+
+- Covers and square art on the home row are sharper when they are not selected. They were all decoded for the larger, selected size and then shrunk by a cheap filter; each tile now gets a picture at the size it is drawn, the selected one swaps to the larger picture without a flash, and the tiles scale with the high-quality filter.
+
+- The Browser's web pages are sharp again. Fullscreen draws the theme at 1920x1080 and scales it to the screen, and the browser's Edge view was being drawn at that small size and blown up, so text and buttons looked soft next to a normal browser. The pages now run in a native (windowed) Edge view, which draws at the screen's real pixel size, with the browser's own controls in a separate overlay window and the site's layout unchanged. Lanternfall Browser 0.4.4.
+- Signing in with Enter on a keyboard no longer ends in Playnite's "unrecoverable error" box: the home row's selection change that collided with itself is retried.
+- Soft covers on the home row are sharp again: Playnite starts Fullscreen in a 1280 px window before stretching it to the screen, so the first covers were decoded for a 1080p screen and stayed soft on 1440p/4K. Covers already on screen are now decoded again as soon as the real screen scale is known.
+- The Browser and YouTube cards have their own info instead of the game stats (playtime, last played, "Unknown" platform): bookmarks, last page and ad blocking for the Browser; subscriptions, new videos since you last closed YouTube (the feed is refreshed in the background every half hour) and the name of the last video watched for YouTube. Lanternfall Browser fills the numbers (needs its next version with this theme).
+- The area under those two cards is no longer empty: YouTube shows the three newest videos from your subscribed channels (A plays the focused video, and Shorts follow the Shorts switch in the YouTube screen), and the Browser shows your bookmarks first, then recently visited pages (A opens the focused site). Pictures under web cards turns the tiles off. Both need the next Lanternfall Browser version.
+
+## 1.5.10 - 2026-11-20 (Lanternfall Core 1.5.10; Lanternfall Browser 0.4.2)
+
+- The music that started with fullscreen is gone, for real. It was never Selene's track: it was Playnite's own background track (`background.mp3` of Playnite's Default theme), which Playnite plays, at whatever volume is set, whenever the theme has none of its own. It kept playing under the Browser and YouTube too. The theme now ships a silent `Audioackground.mp3`, so Playnite has nothing to play, and Lanternfall Core puts it back if it is ever missing. Interface sounds are unchanged.
+
+## 1.5.9 - 2026-11-19 (Lanternfall Core 1.5.9; Lanternfall Browser 0.4.2)
+
+- A new version number, so Menu > Update offers the removal of the "Selene OST" track (1.5.8 had it under the same number). Lanternfall Core also deletes leftover copies of that track, and switches UniPlaySong's Ambient music off once, after it has really read UniPlaySong's settings.
+- This did not stop Playnite's own background track, which is what most people heard. 1.5.10 does.
+
+## 1.5.8 - 2026-11-19 (Lanternfall Core 1.5.8; Lanternfall Browser 0.4.2)
+
+- Quick button taps register: Playnite looks at the controller every 16 ms and could miss a tap shorter than that (fast mashing, or a Bluetooth pad). Lanternfall Core now watches the pad more closely and passes on the taps Playnite missed. Advanced > Catch very quick taps turns it off.
+- Smoother home screen on a TV beside a faster monitor: Selene's frame watchdog made WPF draw at the fastest screen's rate (144 times a second on a 60 Hz 4K TV). It now listens only on the fastest screen, so a 60 Hz TV is drawn at 60.
+- The idle screen stays away while the Browser or YouTube is open.
+- UniPlaySong is listed as a clash instead of a recommended add-on (Lanternfall has no background music).
+- Lanternfall Browser 0.4.0: ad blocking with uBlock Origin Lite, a settings panel, a bar that hides itself, fullscreen video in the browser's top layer, less memory while hidden (the browser is freed when you leave it), and YouTube playback that recovers from expired streams.
+- YouTube plays again when it refuses the plain app client: the Browser asks the way YouTube's own site does (a hidden Edge page mints the proof tokens, as FreeTube does) before falling back to Invidious. Expired Invidious links are skipped, dubbed tracks are no longer mixed into the original audio, and the update screen downloads the Browser too.
+- Browser fixes reach you on their own: Menu > Update now also offers a release that only brings a newer Lanternfall Browser (such as a YouTube fix), and then installs just the Browser. Needs this Lanternfall Core, installed once by hand.
+- Lanternfall Browser 0.4.2: when YouTube's web route fails, the log says why.
+- For maintainers: `tools/update-youtubejs.ps1` updates the bundled YouTube.js and keeps it only if real videos play with it; release files now name their Browser version in BUILDINFO.txt.
+- The "Selene OST" track is removed from the theme, and Lanternfall Core takes back what Selene had set up in UniPlaySong for it (its default-music file). Playnite's own background track still played; see 1.5.10.
+
+## 1.5.7 - 2026-11-09
+
+- Launch choices use Selene's rounded dialog card and spaced rows. Look > Selene dialogs restores the native layout when off; applies to the next dialog opened.
+
+- Spotlight: an uninstalled game's button says Install and installs it, instead of a Play that did nothing (#167).
+- Spotlight: with screenshots off, no empty loading cards show while you move, and the game's logo, buttons and stats sit lower to fill the space (#165, #166).
+- Spotlight: no more "0 / 0" achievements flashing when you move to a game without achievements (#171).
+- Spotlight: games further along the row no longer show up before the start-up animation reaches them (#172).
+- Activity: covers are shown at their own shape, without black bars (#169).
+- Platform: games whose platform is named after a store (Steam, Epic Games...) show that store's logo, and a plain "PC" shows the Windows logo (#170).
+- Alt+Tab works while a game starts: the loading screen steps back, and Selene no longer pulls the game back to the front after you switch away (#168).
+- Controller battery in the top bar (Look): your DualSense's battery at the top right, from the DualSense Battery Level add-on (#173).
+- Your own wallpapers: pictures in Selene Core's Wallpapers folder (shown on the background screen) appear under Your wallpapers and survive updates (#163).
+- Filter presets as tabs: picking a game outside the current preset tab opens its options without trying to select a missing All games tab (#177; original crash still needs reporter confirmation).
+- Games kept under a Playnite variable like {PlayniteDir} are no longer marked as uninstalled (#178).
+- Launch choices: every option and the title are readable in every color theme, including White (#179).
+- Spotlight: card titles sit in the right place after you switch profile (#183). Start on the first game selects a game at start-up and sign-in; turn it off to keep starting on Store. Applies on the next sign-in or restart.
+- Captures: the video buttons no longer flash when you open a screenshot from a card (#184).
+- French: the profile steps, power and remove prompts, sound menu, achievements card, Store headlines and newer settings are translated (#182). Uses the existing language setting; restart Playnite to apply.
+- Game pages fade in when they open, and closing one back to Spotlight no longer stalls for a moment (#176). Look > Fade game pages turns both off.
+- Spotlight's background changes more softly, and Find a game's keyboard rows rise in one after another (#176).
+- ImageRotater backgrounds show on Spotlight and game pages too, not only in Collection (#185). Look > ImageRotater backgrounds turns it off.
+- Collection > Logo position: put the game's logo and details at the left, as on Spotlight (#185).
+- Rumble on hold: the controller gives a short buzz when holding a button opens Find a game or Selene settings (#180). Turn it off in Advanced.
+- Sort this tab (Start menu): give each Spotlight tab its own order: last played, name, recently added or most played (#154).
+- With profiles, games last played outside Selene (a console, another launcher) show in Recently played (#144). Spotlight > Games played elsewhere.
+- Music in the menu controls Spotify, Deezer or any player through Windows' media keys when Selene's own music isn't playing (#120).
+- Square art: choose PNG or JPG first (Look > Square art format), and Game options > Next square art shows another picture from SteamGridDB (#148).
+
+## 1.5.6 - 2026-11-05
+
+- Background Changer backgrounds (Look, off by default): use the add-on's curated images and rotation on Spotlight, Collection and game pages. Turning it off restores Selene's backgrounds (#140).
+- Battery in the top bar (Look): show the device's battery on laptops and handhelds (#135).
+- Achievements in the top bar (Look): a trophy left of your profile opens the achievements hub. Turn it off to hide it.
+- Screenshots on Spotlight (Spotlight): turn off the picture tile below the game's buttons (#147).
+- Achievements button on Spotlight (Spotlight): open a game's achievements from the trophy beside its buttons (#152).
+- Remember the game in each tab (Spotlight, off by default): keep each filter tab's selection during the session (#123).
+- Playnite's preset tabs now follow the order set in Library Manager instead of A to Z; Spotlight > Use Playnite's preset order turns this off (#150).
+- Fixed: a Playnite preset enabled for fullscreen disappeared from the tabs when it shared a name with one of Selene's, such as Favorites (#146).
+- Fixed: achievements showed a plain trophy instead of their own art with recent versions of Playnite Achievements. Art the add-on only has as a web address downloads with Spotlight's art downloads switch (#149).
+- The closing screen shows the game's logo when it has one, and otherwise its real name instead of its sorting name ("Skate 03"). Look > Logo when a game closes turns the logo off (#151).
+- A game's Platform now shows a real logo: Xbox, PlayStation and Nintendo for consoles and, for PC games, the store they come from (Steam, Epic...) or Windows, instead of the same gamepad for everything. Spotlight > Use game platform metadata off still shows the store and its name (#143).
+- Fixed: More like this on a game's page cut the sides off covers that aren't tall, such as square ones. Look > Keep whole covers in More like this restores the crop (#141).
+- Fixed: the game's sound could keep playing under Selene's music after going back with Guide, when another window such as Explorer had the front for a moment (#137).
+- Fixed: the achievements count under Play on Spotlight flickered when moving between games with and without achievements (#139).
+- Profiles after sleep (Look, off by default): go back to choosing a profile when the PC wakes. It waits if a game is running (#145).
+- Fixed: typing with a keyboard on screens that take text, such as Report a problem or a profile name, lost some letters or opened other things (#155).
+- Sleep from the Power menu closes the menu first, so waking shows Spotlight instead of the menu (#156).
+- Fixed: apps and silent windowed games, such as a browser, stayed hidden behind the loading screen for up to 2 minutes. They now appear after 12 seconds, and Guide no longer brings Playnite back behind the loading screen (#157).
+- Own backgrounds first (Look, off by default): show the background set in Playnite instead of the art Selene downloaded (#153).
+- Loading screen: no black flash as it moves from Selene's window into its own. Games > Smooth loading screen turns this off (#138).
+
+## 1.5.5 - 2026-11-02
+
+- Fixed: games that start through a launcher, start the real game as another program, or ask for administrator rights could end on a black screen after the loading screen, with the game behind Playnite until you clicked it in the taskbar (#110, #128). Selene now shows the game even when its launcher closes or Playnite loses track of it, checks the game really came to the front and tries again, hands it back if a launcher pulls Playnite forward (or Playnite comes back thinking the game ended), and as a last resort steps Playnite aside into the tray so Windows shows the game. When the game closes, Selene comes back on its own. Switch: Games > Make sure the game comes to the front.
+- Fixed: Selene's move and confirm clicks could be heard while playing a game, as the controller still reached Playnite behind it (#111). Those sounds now only play while Selene is on screen.
+- A game's achievements are easier to reach: Game options has an Achievements row, and Playnite Achievements' "View Achievements" under Extensions now opens Selene's achievements screen, which works with a controller (its own window didn't) (#133).
+
+## 1.5.4 - 2026-11-02
+
+- The song in the top bar and the Music card in the menu now show only while a song really plays: not for the default (background) music, and not while a trailer's sound, a loading screen or a capture has paused the music. A Music card you paused from stays, to play it again.
+- Fixed: a long song name in the top bar ran over the filter tabs (All games, Not played yet...); it is now cut short before them.
+
+## 1.5.3 - 2026-11-02
+
+- Music volume and Mute music (Selene settings > Sound & music) now control all music, UniPlaySong's included: before, UniPlaySong kept its own volume, so the start-up and home music played on with both at off. UniPlaySong's own saved volume stays as it is. Mute music is also kept between starts now (Playnite forgot it). Thanks to amogh-w for this and the rest of their Sound & music work (#99).
+- Sound & music is in four sections: Music, Sounds, While you play and Music setup. UniPlaySong's Songs for each game, Ambient music and Night music switches are here too, and Start-up sound, Notification sound and Trailer sound moved in from other groups (your choices carry over) (#99).
+- A Music card in the menu (Start) plays, pauses, skips and restarts UniPlaySong's song, and the top bar can show the song playing (Show what is playing). Both can be turned off (#99).
+- Spotify as ambient music (Sound & music > Music): with UniPlaySong, your Spotify plays on the home, in the menu and on games without a song, following Selene's music volume and mute; Spotify's own volume comes back when you turn it off or close Playnite (#99).
+- Sounds volume can be set to Off. With it Off, or Interface sounds off, Playnite's own move sound goes quiet too (#99).
+- Fixed: songs could get stuck on one track, and a game's song often didn't start on its trailer card (#99).
+- Fixed: with an add-on's own window open (UniPlaySong's song download, for example), the controller also moved Selene's page behind it (#99).
+- Fixed: Find games in Games folders added a game the library already had when that game lives a folder further down; those duplicates are now skipped, and ones already added are hidden (not deleted) (#99).
+
+## 1.5.2 - 2026-11-02
+
+- Report a problem has an "I have an idea" choice: ideas go to Selene's Ideas on GitHub (Discussions), where others can vote for them, without your logs.
+- Dates follow the language Selene shows and the Gregorian calendar: on a Thai PC, Captures, Activity, Achievements, News and the idle screen showed Thai month names inside English text and years like 2569 (#45).
+- Guide back to a game tries harder: when the game's window from the launch is no longer its real screen (a splash or launcher window), Selene finds the game's window and brings that one forward instead of giving up (#66).
+- A game no longer loses its sound after you switch between speakers and headphones: Guide's mute now covers every output, and a game left muted from an earlier session gets its sound back when it starts (#69).
+- French and Simplified Chinese translations are complete, and every phrase Selene shows is now listed in theme\Localization\phrases.txt, ready to translate into any language without walking every screen first (#106, #61).
+- More of Selene works with a mouse or touch screen: the button hints along the bottom of Spotlight and Collection can be clicked, the Store, a store game's page, Game options, Captures, Activity and Achievements react to clicks (the first click picks, the second opens), and right-click (or the mouse's Back button) goes back (#40).
+- Playnite's own settings in Selene's look: the items sit on one panel wide enough for them (the switches on the right were cut off), dropdowns are rounded pills with a rounded list, sliders a thin line with a round knob, and the on-screen keyboard has soft keys without outlines (#44).
+- A game's page no longer wobbles: its screenshot and More like this rows (and the Store's rows) shifted a pixel on every move (#107).
+- New games, games you just played and new favorites show up in Spotlight's row right away (they waited for a filter switch or a restart) (#101, #39).
+- Menu > Update library is always there (it was hidden while Update library at start-up was on) (#101).
+- Close to tray: Exit Playnite in Selene's power menu hides Playnite to the tray instead of quitting (#48). Alt+F4 still quits.
+- Collection's 2:3 covers no longer change Playnite's grid shape for Desktop mode and other themes: your own shape, rows and columns come back there (#105). If an earlier Selene already changed it, set it once in Playnite and it stays.
+- Collection > Cover size: smaller covers fit more across (Playnite's own column setting was overwritten on every visit) (#65).
+- Spotlight > Visible filter tabs: choose 3 to 8 tabs at once, or all of them (#103). Filter tabs can be clicked with the mouse (#40).
+- Translations reach every text: the power menu and some settings rows stayed English the first time they opened (#104).
+- Spotlight's screenshots fade out above the button hints again with the logo intro and Who's playing? both off (they sat hard under the hints).
+- Selene follows the screen's shape: on ultrawide screens (21:9, 32:9) the pictures under Spotlight's cards, Captures, Activity and the screenshot strip use the extra width, and on 16:10 handhelds (Steam Deck, Legion Go) nothing is cut off at the right edge anymore (fewer pictures across instead). The Store's game page stays centered.
+- Advanced > Suggest Performance mode: if Selene keeps running slowly on a PC, it suggests Performance mode once.
+
+## 1.5.1 - 2026-11-01
+
+- Filter tabs show at most five at a time: with more (many Playnite presets), they slide smoothly as you move with LB / RB, and the edge with more tabs fades out (#71).
+- Look > Button hints now hides the hints everywhere (Spotlight and Collection); Collection can still hide only its own. With them off, Collection's covers move down into the free space instead of floating above it (#32).
+- Captures shows AMD Software's screenshots and clips (Videos\Radeon ReLive) (#90).
+- Square tiles and logos looked up by name only take an exact name match: a game with a similar name no longer lends its square (#31).
+- Spotlight > Store card can hide the Store card, like the other cards (#59).
+- Games no longer start silent after an earlier start was interrupted: Selene's quiet launch level could stay saved as the game's volume in Windows (a launcher that hands over to the game, like GOG's DOSBox games), and is now put back to 100% (#86; may also be behind #69).
+- Translated button hints and Play / Details no longer switch back to English now and then (#31).
+- A launcher that waits for you while a game starts (a sign-in, an update prompt) gets the screen after 12 seconds instead of staying behind the loading screen; B still leaves the loading screen at once (#55).
+- Play / Resume and Home find a running game again after B was pressed while it loaded (they did nothing while the game went on starting).
+- With a game loading the PC, LB / RB no longer switch two tabs at once and the button hints no longer flash to keyboard keys while moving.
+- The setup's theme and background previews show the example game (Clair Obscur: Expedition 33) and its row of covers on a new install, before any downloads are allowed (they were empty).
+- A new install's avatar step offers your animated Steam avatar (it came in only after the setup, so the still one was picked), and a profile that picked the still one moves once the animated one is there.
+- Home during a game run as administrator (Genshin Impact, Honkai: Star Rail...): the game is muted and minimized so it stops drawing behind the home, and Home or Resume brings it back (its window came back black). Windows may still refuse to let Selene back over such a game after the first time; Alt+Tab works then. Its process is never frozen.
+- With the controller driving the mouse (Steam Input's desktop layout), moving the pointer no longer also moves Selene's focus highlight.
+- YouTube trailers start after their opening black (a few seconds of black looked like the trailer stalling).
+- SteamGridDB square tiles prefer key art over app icons when no square has more votes (Genshin Impact showed its launcher icon).
+- Selene left on screen untouched no longer keeps the graphics card busy: after 45 seconds without input the moving background (video, dust, light) and the focus ring's spin pause, and any press brings them back (#91: ~10% GPU at 4K before). Switch: Advanced > Calm when idle.
+- Games from launchers Playnite has no library for come into your library on their own: HoYoPlay's Genshin Impact, Honkai: Star Rail and Zenless Zone Zero, Riot's VALORANT and League of Legends (started through the Riot Client), and other Unity or Unreal games registered in Windows' installed apps (store games stay with their own add-ons), as PC (Windows) games. Switch: Advanced > Find launcher games.
+- No "Library update", "Game media downloaded" or "Achievements ready" cards; they show only with Notifications > Progress cards on.
+- Games that aren't on Steam (Genshin Impact, VALORANT...) get their background from IGDB's official artwork at full size, a logo from IGDB or SteamGridDB, and their official trailer from YouTube, 90 seconds of it (Spotlight > Trailers from YouTube), so their song plays with it too.
+- Games start at the resolution of the screen Selene is on: a Unity or Unreal game last played at 1080p on a monitor opens in 4K on a 4K TV (Genshin Impact, Honkai: Star Rail...). Windowed games keep their window. Switch: Games > Match the screen's resolution.
+
+## 1.5.0 - 2026-10-31
+
+- Reduce the media download confirmation to two lines and widen its dialog.
+- Opening a trailer card no longer makes the game's song stop and start again.
+- No red dot on Sound & music or Spotlight for downloads that Games > Download game media owns.
+- While media downloads run, A on Games > Download game media does nothing; Stop is offered once they finish.
+- Spotlight's logo eases to its smaller size as a trailer card opens (it jumped).
+- Download progress stays below 100% while UniPlaySong is still landing songs; Games > Download game media shows art, songs and details as a small stats strip (count and state each), with games that have no song found counted.
+- Game songs come with trailers by default; browsing plays the default music. Sound & music > Game music without trailers turns songs-while-browsing back on.
+- Collection sizes logos by their shape: tall logos (Monster Hunter Wilds, Path of Exile 2) grow instead of looking small next to wide ones (Look > Even logo sizes).
+- First-run setup asks for a SteamGridDB key for square tiles right after the setup check (Paste or Skip; not shown when a key is already available). Skipped, Look > SteamGridDB key keeps a red dot until a key is added.
+- Install all downloads Playnite's own add-ons (the store libraries) from their GitHub releases when playnite.link is the only other source (it served them at ~14 KB/s); Playnite updates them to the newest version later.
+- Xbox and Game Pass games: once the Xbox library is installed, Selene says once where to sign Playnite in to Xbox (Playnite Desktop: Library > Configure integrations > Xbox); the setup check keeps an Xbox sign-in card (Advanced > Xbox sign-in).
+- Collection tiles are 2:3 like the covers, so none lose their top and bottom; this sets Playnite's grid ratio to 2:3 (Collection > 2:3 covers).
+- Games no store installed: with no game folder set, Selene looks in a Games folder at the root of each drive (Advanced > Find games in Games folders).
+- The setup check offers Playnite's library add-ons for the stores installed on this PC (Steam, Epic, GOG, Xbox, EA app, Ubisoft Connect, Battle.net, itch.io), so a fresh Playnite started in fullscreen gets its games with Install all (Advanced > Offer store libraries).
+- Collection: the last cover is no longer cut off at the right edge when it's selected.
+- Who's playing: profile pictures are no longer cut off at the right and bottom edge.
+- No progress cards while downloads, achievement checks and library updates run in the background; one short note when the game media downloads finish (Notifications > Progress cards brings the cards back).
+- Collection: a game without a cover (Control from Epic) no longer shows the cover of the game its tile was reused from; it shows the default cover until its own arrives.
+- Details lookups match a store edition by name too ("Control" is "CONTROL Ultimate Edition" on Steam), so such games get their cover.
+- Your captures on a game's page get their thumbnails (they only came if the Captures screen had made them before).
+- Spotlight > Captures folders: add or remove a folder with your screenshots and clips from Selene settings (Windows' folder picker).
+- Spotlight cards switched on or off in Selene settings leave or come back to the row at once (a card switched off stayed until Spotlight was opened again; one switched back on never returned).
+- The menu has Close <game> for the running game at its start, hidden games too (#67; Games > Close game in the menu).
+- Square tile art from SteamGridDB (Look > Square art from SteamGridDB), downloaded with the art for games without a square picture. Needs a free SteamGridDB key: paste it in Look > SteamGridDB key or on the add-on page, or Selene uses the SteamGridDB metadata add-on's key.
+- Collection shows the same game art as Spotlight (it showed Playnite's background, often a different picture). Collection > Same art as Spotlight restores Playnite's background; applies after restarting Playnite.
+- A background replaced by a sharper download shows sharp right away (the old picture stayed in memory until a restart).
+- Newer Steam games (like 007 First Light) get their cover when details are filled in: Steam keeps their pictures under addresses the old lookup missed. Every game is checked once more, and a cover that arrives shows on its tile right away.
+- Collection covers are decoded at the size they're drawn (they were decoded at 224 px and looked blurry).
+- Spotlight and Collection backgrounds stay sharp on high-DPI screens (a 4K screen at 300% decoded them at 1280 px). Downloaded backgrounds use Steam's double-size art; backgrounds copied earlier from Steam's small cache are fetched once in double size while art downloads are on (Games > Download game media).
+
+- Shorten settings captions, download dialogs and progress messages. Remove redundant action labels from settings rows.
+- Show Selene's default background in previews and game-art gaps. Look > Selene background fallback controls this correction.
+- Suppress extra navigation ticks when opening Details. Sound & music > Quiet details transitions controls this correction.
+
+- Games > Download game media combines missing library art, covers, trailers, screenshots and songs into one explicit opt-in. The previous individual controls are hidden in Selene's settings; Advanced > Combined media downloads restores them. No inherited permission is expanded automatically, and UniPlaySong is still required for game songs.
+- Download progress shows inline in the Games setting. Leaving settings keeps work running; the Games row offers an explicit Stop future downloads confirmation. The bar averages art, songs and details (the song tools' download counts toward songs) and only reaches 100% once all of them are done.
+- Smart-cropped artwork keeps its proportions while a card expands for a trailer, fixing the stretched still image before playback. Look > Keep trailer-card artwork proportional restores the old stretch when off; restart Playnite to refresh already-loaded cards.
+
+- Games with multiple declared play actions wait for Playnite's action chooser before raising Selene's loading cover (#43/#80). Games > Keep launch choices above loading restores the immediate cover when off. Plugin-only action lists and physical controller focus still need confirmation.
+
+- Game songs no longer require an open trailer when Background music is enabled (#37/#47/#88). Sound & music > Game music without trailers restores the previous default-only browsing policy when off. UniPlaySong still controls actual playback, missing-song fallback and hover delay.
+
+- Game options can read and change the signed-in profile's Favorites, matching Spotlight instead of silently changing Playnite's shared flag (#39). Spotlight > Use the same Favorites in game options restores the previous behavior when off. Collection/user-created preset semantics are unchanged in this correction.
+
+- Platform fields now show the game's platform metadata instead of its store/source (#49). Spotlight > Use game platform metadata restores the previous source display when switched off.
+- The Sound panel and its menu caption stay in sync with volume/mute changes while open (#60), with background reads stopped when the panel closes. Sound & music > Keep volume display in sync controls this correction.
+- Activity can show whole covers without cutting off square artwork (#58). Look > Keep whole covers in Activity restores the previous crop when switched off.
+- Spotlight logos stay within their own row while an expanded trailer plays (#46/#95). Look > Keep logos below trailers controls the spacing correction.
+- Picking a language no longer asks to restart Playnite when nothing would change, like English on an English Playnite at first setup (Look > Ask to restart only when the language changes; off asks after every change).
+- The Install all question in setup is short: Install 8 add-ons? with Not now and Install all, without the add-on list and explanation (Advanced > Short add-on question restores them).
+- Selene ships a default background music, "Selene OST" (credited in THIRD-PARTY-NOTICES). When UniPlaySong has no default music file chosen, Selene sets it once (Sound & music > Selene OST as default music). A file you chose stays.
+- When your library has games but Selene has no art for them yet, it asks once: "Get art for your games?" A yes allows covers, backgrounds, logos, screenshots, trailers for games you select, and missing details, and tells you where they come from and are saved. Not now leaves everything off, puts a red dot on Selene settings, and the question stays in Games > Get art for your games until you say yes (Games > Offer to get art for a new library turns the first question off).
+- The Scroll hint on game pages is a round badge with a controller, like the A, B and Y badges (#96). Look > Round game-page button badges restores the wider oval. Keyboard and mouse labels still widen it.
+- Game-page single-button badges use round proportions (#93), and the capture player's progress bar follows the current viewport width (#94). Both corrections have switches under Look.
+- Spotlight can honor Playnite's fullscreen quick-selection visibility for filter presets (#71). Spotlight > Honor fullscreen preset visibility restores the previous all-presets list when switched off; this does not add a new tab-scrolling feature.
+
+- Pause ambient motion and trailer players while minimized, in the tray or behind a running game (Advanced > Pause when out of view). Thanks to kunit1 for the idea (#62). Decorative background motion has an optional calmer cadence; navigation animations retain their timing.
+- Move periodic local-game process scanning off the interface thread, decode covers for their selected size, and bound cached cover pixels as well as entry count. Achievement setup waits while a game is launching/running or Selene is hidden.
+- Add repeatable developer performance scenarios and regression checks.
+
+## 1.4.0 - 2026-10-29
+
+- The admin helper (SeleneHelper.exe) is gone. Older versions set it up through a scheduled task with admin rights, and it had real security problems, so it's out for good. Updating replaces it with a dummy file that does nothing. We never confirmed exactly why some antivirus tools flagged 1.3.1, so if yours still warns about this version, please open an issue.
+- If you used the helper before, go to Selene settings > Advanced > Old administrator tasks to remove the leftover tasks (it asks first). Games that launched through it get their normal Play action back, and the old setup is backed up first.
+- Because of that, Guide can't pause, close or restart games that run as admin anymore. Alt+Tab still works.
+- Big smoothness fix: Selene was stuck at 30 fps on 60 Hz screens (TVs especially). It runs at the full refresh rate now.
+- Scrolling is smoother. Covers load in the background and fade in, and holding left or right in Spotlight moves at a steady pace the row can keep up with (Spotlight > Steady hold scrolling). Quick taps still move right away.
+- Game songs wait until you stop on a game, so holding a direction doesn't freeze for a moment at every game (Sound & music > Songs wait until you stop).
+- The View button switches between Spotlight and Collection instantly. It used to take a couple of seconds on 4K.
+- Less memory: screenshots take a lot less space, and there's Advanced > Reduce memory use if you want to go further.
+- New Look > Performance mode for slower PCs. It turns off the moving background and trailer previews but keeps the animations.
+- Settings are easier to get around: Search finds any setting, Changed shows what you've changed, the big groups have sections, and settings open where you left off.
+- Downloads are opt-in now, including when you update. Trailers, screenshots, logos, songs and missing details each ask first and tell you where they'll be saved. "Games I'm looking at" really only downloads for those games now.
+- Steam art matching is stricter, so sequels and other editions don't steal a game's logo or background anymore. Wrong art from before gets replaced. Your own custom art is left alone.
+- Lots of smaller fixes: music fades instead of cutting off, the left stick doesn't skip two steps, dialogs answer to A and Enter, sharper dialog text, clearer setting names, and notification cards stay up long enough to read.
+- The Controller battery card is gone.
+- Releases now ship with SHA256SUMS so you can check the files.
+
+## 1.3.1 - 2026-10-27
+
+- UniPlaySong stayed silent (or showed Now playing with no sound) in other themes after using Selene: Selene's music hold was saved in the add-on's own settings. It is put back when Playnite closes, and at the next start in any theme, so it also repairs installs already left that way.
+
+## 1.3.0 - 2026-10-27
+
+- News (#14): a News card on Spotlight shows the latest headlines from the RSS and Atom feeds you follow, as picture tiles with the numbers under the headline (new today, this week, sources, latest). Down goes into them, A opens an article in your browser. The full News screen (A on the card) shows the picked article's picture large with its source, headline and the start of its text, a row of picture tiles that glides as you move, and the sources as tabs (LB / RB). "Steam: your games" follows the news and patch notes of the Steam games you play, with their pictures, and is followed with Selene's other suggestions (PC Gamer and more) until you change it; Y on the News screen opens Manage feeds, a card per feed (A turns one on or off, X removes it, the last card adds one) with a row of suggested feeds. Selene settings > Spotlight > News feeds opens the same. Switch: Spotlight, News card.
+- Metadata source per game: Game options > Metadata source picks Steam or IGDB for a game's screenshots, or takes its exact Steam AppID or IGDB id, for the older and emulated games that get matched with a similarly named game. The screenshots are fetched again after each change (a Refresh row does it by hand); that game's Steam art follows the AppID too. Switch: Games, Choose a game's metadata source.
+- Home tiles: a cover that is not square is cropped where the detail is (faces, logos, art) instead of always from the top, so tall covers like Overwatch keep their subject. Switch: Look, Smart cover crop.
+- Game logos with empty space around the lettering (many came from Extra Metadata on a 640 x 360 canvas) showed small, like Monster Hunter Wilds. Every logo is now cut to its lettering once in the background, and a tall logo may grow a little above its usual box. Switch: Look, Fit game logos.
+- B on the loading screen now stops the game too: Playnite had already been told to start it, so it still opened a few seconds later (over the desktop when B came late). The game's processes that started after Play are closed, and Selene fades back in.
+- On the keyboard, Tab on the home or the library works like Start (a tap opens the menu, holding it opens Selene settings) and V like View (a tap switches home and Collection, holding it opens Find a game); the held key no longer repeats and flickers.
+- First setup: moving between the cards plays Selene's tick when Playnite has not loaded its own yet.
+- The session card ("Session ended") is wider and its figures wrap, so a long total is no longer cut off.
+- Quitting Playnite while it was hidden in the tray left its sound muted in Windows' volume mixer, which could carry over to other themes. The mute is lifted on exit.
+- Collection scrolling now uses Spotlight's transform spring as the single animation path instead of layering it over Playnite's per-frame layout animation. Covers and focus rings are cached, edge fades change only at row boundaries, pitch measurement stays near the selected item, and download/metadata work waits for a pause in navigation. Switching between Collection and Spotlight also settles the previous row's spring.
+- Language changes offer Restart now or Later, using Playnite's own restart. First-time Selene setup begins with language selection and remembers that step across a restart. `tools/first-setup.ps1` previews the public packages in a separate portable copy with fresh Selene settings.
+- Button hints update in place for keyboard, mouse and controller input, including Escape/Enter labels and mouse Click hints. Simulated keyboard events from controllers and tiny pointer changes do not switch devices. PageUp/PageDown switch tabs, Tab opens the menu and V opens Collection on the home.
+- Startup performance: build Spotlight's visible tiles with a small initial cache, then restore the full 12/16-tile cache in small batches after the intro. Required setup yields between dispatcher turns; library refresh and optional services start one at a time after the home and quiet frames. Game sorting reads metadata once per game, inactive localization adds no text watchers, and translation scans yield in short batches. Every feature remains enabled.
+- Background sizing: choose Fill, Fit or Stretch under Look. Spotlight, Collection, game details and launch art follow the choice; Fit preserves the full picture.
+- Mouse navigation: click profiles, menu items, settings, choices, dialog answers, on-screen keys and home/detail cards.
+- Games > Focus on Guide can disable Selene's foreground switching for other overlays. Playnite's own Guide focus remains a separate setting under Playnite settings > Input.
+- Localization now revisits text created before startup and watches later text changes. Look > Language adds an explicit choice, with seven starter translations for common navigation/settings and English fallback. User translations overlay the bundled base and regional files.
+- Launch screen customization: art and logo, art only, logo on black, or minimal title; optional art motion and shade levels. Fit backgrounds stay still to preserve the whole image.
+
+## 1.2.3 - 2026-10-27
+
+- Home while playing: the game's picture fades into Selene (it shrinks a little and fades while the home settles in from a slight zoom) instead of a cut to black, and the game no longer flashes back for a moment first: the picture stays until Windows has really put Selene in front (a game run as administrator asks Selene's helper at once). Games in exclusive fullscreen, which can't be pictured, fade from black (switch: Look > Home over a game). Home again goes back to the game with the same animation mirrored (the home recedes while the game's paused picture grows back to full size, then the game takes the screen; the game is already awake under it), even while Selene is still coming up (a second press within 0.6 s was ignored, and one before Windows had handed Selene the screen did nothing), and both ways are quicker. A game run as administrator is now frozen too while you're on the home, like every other offline game: Selene's helper minimizes and suspends it, stays ready while it's frozen so going back is instant, and thaws it if Playnite closes.
+- Home (the Guide button) while a game that runs as administrator is playing brought the screen back for a moment and the game stayed in front; Close game on such a game did nothing. Selene now ships a small helper with admin rights (SeleneHelper.exe, registered once as the scheduled task Selene\Helper in the same Windows prompt that makes the game's no-prompt launcher after its first run); Home and Close game go through it (Games > Games as administrator). A game's first session, before that prompt, leaves Home alone instead of flickering.
+- Quit from the power menu faded to black and Playnite stayed, frozen, until it was ended from Task Manager: it went through Playnite's Exit command, which first closes Playnite's own menu and waits forever on the menu Selene never opens. Quit now leaves the way Alt+F4 does, and it is instant: Selene's screen disappears at once (no dark screen, no "Exiting Playnite" screen) and Playnite finishes closing out of sight. Should Playnite not begin closing within 8 s, Selene comes back; one still closing after 30 s is ended (#27, #26).
+- Back from a game, Playnite could stay black with its sounds playing until Alt+Tab (#24). The loading screen outlived the game: it waited for the game's sound (or up to 2 minutes while a launcher kept the game "running"), so a game closed or crashed while loading left it black over everything, and with Playnite minimized its fade never finished. It now ends within a second of the game closing (8 s if something of the game stays running), closes at once, brings Playnite back and leaves no black window behind. Selene also renews its picture after every game and whenever the display mode changes (a game switching resolution or refresh rate could leave it undrawn), and shows a blank Playnite that is in front.
+- Spotlight on one of Playnite's own filter presets kept its usual last-played order; it now follows the preset's own sorting (Newest by date added, a custom preset by whatever it sorts on) (#23).
+- Trailers that showed no picture or played silent now play (#28): when Windows can't decode a trailer's picture or sound (AV1 or VP9 video, Opus or Vorbis sound, a .webm renamed .mp4, Dolby AC-3 sound that makes Windows refuse the whole file), the missing part comes from Playnite's own browser, or from a copy of the file without the troublesome track; R3 turns that sound on like any other. Only HEVC video on a PC without Windows' HEVC extension, and AC-3 sound, can't play; the log names the file and the format. Spotlight's trailer cards and Collection also play Extra Metadata's short looping trailer (VideoMicrotrailer.mp4, what it downloads by default), and the R3 Trailer sound hint only shows when the trailer has sound.
+- Store currency: Saudi riyal, UAE dirham, Qatari riyal, Kuwaiti dinar, Israeli shekel and Steam's Middle East dollar prices, plus the rand, złoty, franc, krone, hryvnia, tenge, NZ, HK and Taiwan dollars, yuan, dong and the Chilean, Colombian and Peruvian currencies. The game menu's add-on entries failed with "Ambiguous match found" for some script add-ons; fixed.
+
+## 1.2.2 - 2026-10-27
+
+- Sound in the Start menu: Windows' volume (Left / Right, X mutes) and which speakers or headset play (Left / Right switches the default device), in a card over the menu like Power's (switch: Sound & music > Sound in the menu) (#15).
+- A card with the controller's battery as Selene starts and another as it runs low, read as exactly as Windows allows: the pad's own report (DualSense, DualShock 4, Switch Pro: a percentage), Windows' Bluetooth figure (Xbox and 8BitDo pads over Bluetooth), the Xbox adapter's report, XInput's four levels last; a pad on a cable or a 2.4 GHz dongle has nothing to read (switch: Look > Controller battery) (#15).
+- A game's page: captures named the way Game Bar writes them ("Onimusha_ Way of the Sword 10_25_2026 9_45_56 PM") are matched to the game (the short date is stripped, names are compared as a filename carries them), ScreenshotsVisualizer's own index is used when it's installed, and a drive's $RECYCLE.BIN no longer shows as a source (#16).
+- A game's page opened from Collection showed the game before's screenshots until reopened; it shows the right ones, loaded at once (#17).
+- Shade over the art runs from Off to 100% and covers Collection's two gradients as well as Spotlight's; from the menu's settings, Adjust sets it with the home in full view, the shades following the slider as it moves (#18).
+- Collection: switches for the details under the logo and for the button hints along the bottom (#19).
+- Translating: the phrases file goes to the Desktop as you see it (OneDrive's when it's redirected), a translation is also read from Selene Core's data folder (ExtensionsData\cd424c29-...\Localization, which a theme update leaves alone), and the log says which file was looked for, loaded, or couldn't be written (#20).
+- Settings, Advanced: Report a problem comes first; the Check for updates row is gone (the menu's Update item checks on its own).
+- Settings: backing out of a group's options to the groups leaves the list where it was (it jumped to the top), and A goes back to the row left.
+- Spotlight: the name beside the selected card (Achievements, Captures, Activity) sits clear of the card again.
+- Settings: the red dot also marks the option whose work still runs, with where it's at (games to go, achievements checked so far) and a bar of how far it has got, with the percentage; the dots, lines and bars move on while the screen is up.
+- The menu opened from a game's details page shows the page dimmed underneath instead of a black screen.
+- A red dot on the menu's Selene settings while something still runs behind the scenes (songs, trailers or art coming in, the achievements check), and on the settings group that owns it.
+- Logos taken from Steam's own cache are cut to the logo itself (they come on a whole 1280 x 720 canvas, so the logo landed small or off to one side); the ones saved before are cut on the next pass.
+- Spotlight's row runs to both edges of the screen once scrolled (the left end stopped 80 px in while the right ran off the screen), and a tile cut by the edge dissolves at the edge, as in Collection (switch: Spotlight > Row to the edges).
+- Notification cards as a console's: a compact strip (84 px, a 48 px icon, the title at 18 px and the line at 15 px) as wide as its words, between 360 and 520 px; the session card alone stays a panel (560 x 128, its figures on one line).
+- Icons in circles (dialogs, the menu, notification cards, achievements, the report's badge) sit exactly in the middle: centred by the glyph's own outline, not its text box.
+- Back from Setup check, Report a problem or the Store region lands on that row in Selene settings, not on the group list.
+- Collection's row: scrolled to its end, the last cover and its ring sit inside the screen (the last one was cut off); a cover cut by the screen's edge dissolves at the edge; a held stick moves at Spotlight's pace (Playnite's list dropped every other repeat).
+- Music plays again: the hold that keeps UniPlaySong quiet during start-up left its pause on, so the home music and every game's song stayed silent all session.
+- A picked game is reached the way a held stick would get there: from the row's first game, slow over the first slots, quick through the middle, easing down onto it, with the tick along the way. Selene settings > Sound & music > Get game songs shows how many games have a song.
+- Collection: the ring walks along the row and, once only one cover is left beyond it, the row glides instead, so what's next is always in view (Playnite waited for the very edge); the achievements above the covers sit higher, clear of the chosen cover.
+- The avatar picker shows the moving GIFs first.
+- Collection's covers glide from game to game instead of jumping, on the same spring as Spotlight's row (switch: Collection > Gliding row).
+- Steam achievements on a new install: Selene gives Playnite Achievements the Steam account signed in on this PC when it has none (it never fetched a Steam game's achievements without one), then checks every game once.
+- A game with every achievement unlocked gets a little celebration on its Locked tab: a gold medal, sparkles and a line to be proud of (switch: Games > Achievements: celebrate 100%).
+- Collection's covers: as many as fit across the row (about seven on a 1920 px screen), so the row is full and big on any screen. A game's page: the right stick scrolls the description from anywhere on the page, and the hints show RS Scroll. Logos for newer games come from Steam's app info.
+- Game songs without any setup: UniPlaySong needs yt-dlp and ffmpeg to find songs and doesn't bring them, so a new install had none. Selene downloads both once (about 130 MB), points UniPlaySong at them and asks it for a song for every game; new games get theirs from UniPlaySong itself (Selene settings > Sound & music > Get game songs).
+- Leaving a game's page (B) fades back to Spotlight instead of cutting (switch: Look > Soft way back).
+- Selene settings > Sound & music: "Sound volume" is called Interface sounds volume (it was never the music); Clip volume is set in Captures only (Up / Down).
+- A game's page: going down to the screenshots no longer leaves Play lit; the developer reads without its company ending (IO Interactive, not IO Interactive A/S).
+- Backgrounds Selene downloads are cut to the screen's shape (Steam's are wide banners: a game's page showed a blown-up slice of the middle), from Steam's sharper art; logos and backgrounds come from Steam's library cache on your PC first, which has logos the store page doesn't.
+- A game's description scrolls smoothly with the right stick (Playnite's own scroll box eased every move itself and fought it).
+- The trailer fade behind Collection and the Store is Selene's own now (`tools/make_trailer_mask.py`); nothing from the Aniki ReMake theme is left.
+- HowLongToBeat times come in: Selene's lookup went through the add-on's "pick the right game" window, which only exists in desktop mode, so in fullscreen it never found a game. It now uses the add-on's automatic match, for the game you rest on in Spotlight, Collection or its page.
+- New installs look like the screenshots in more places: the game menu, dialogs and Playnite's settings use Selene's font; the closing screen shows the game's art (it was black); the loading screen shows the game's name when it has no logo; Achievements shows covers instead of tiny icons.
+- Sleep sleeps (without the optional helper it could hibernate on PCs with hibernation on).
+- The Background music and HowLongToBeat switches show only when their add-on is there; games in a category named "Handheld" are no longer hidden unless the streaming device switch is set up.
+- Logos and backgrounds without any setup: Selene gets a game's logo and wide background from Steam when it has none, gently in the background for the whole library (Selene settings > Spotlight > Download logos and backgrounds).
+- Selene brings its own text font (Lato): words that used Playnite's font setting were Trebuchet MS on a new install, so screens like Activity, the buttons and the page facts looked different from the screenshots.
+- A game's page: the right stick only scrolls the description, at a pace you can read (it also moved the focus to Play).
+- A game's page opens on the game you picked: right after start, the library update moved Playnite's selection to the first game and the page showed that one instead.
+- A game's description is words only (store banners, GIFs and videos are left out) and never takes the focus: the right stick scrolls it smoothly, Up / Down go between the buttons and the rows below (the focus went back and forth between Play and the text, which jumped around).
+- Fewer warnings in Playnite's log: Selene no longer asks for tile and background art from its media folder when there is none.
+- Trailers without any setup: Selene downloads a game's trailer from Steam (its first minute, 720p, with sound) the first time you look at it, into the same place Extra Metadata Loader keeps trailers, so trailer cards and Collection play it. Selene settings > Spotlight > Download trailers: games you look at, the whole library, or off (#12, #13).
+- Taken out: HowLongToBeat times on a game's page (they stay on Spotlight and Collection), the song title in the top bar, and animations following the screen's refresh rate (back to 144 frames a second).
+- The menu has Extensions again: your add-ons' own menu items (an audio output switcher, metadata tools...) as in Playnite's menu, in their sections (#11).
+
+## 1.2.1 - 2026-10-26
+
+- The new-version card comes first: Selene looks for an update right at start, and a progress card (the library update...) steps aside for it and comes back after.
+- When a newer Selene is out, the menu's Update icon carries a red dot. On the Update screen the right stick scrolls a long list of what's new.
+- The right stick scrolls a game's description smoothly (on every frame, easing in and out; it moved in uneven steps).
+- Notification cards are slimmer (lower, narrower, a smaller icon and words), and a note (a new version, achievements...) stays 6 seconds before a progress card takes its place (the library update's card replaced the new-version note within a second).
+- The menu: Update sits where Setup check was (it opens a newer Selene, or looks for one); Setup check moved to Selene settings > Advanced; Update library shows only when the library update at start is off.
+- Updating Selene takes one press: when a newer version is out, the menu shows Update (and a notification says so); it shows what's new, downloads the theme and the add-on and hands them to Playnite's installer, then restarts Playnite. Settings, profiles and your theme stay. Selene settings > Advanced > Check for updates looks at once.
+
+## 1.2.0 - 2026-10-26
+
+- Spotlight and Collection take the same buttons on a game: A plays, X opens its details, Y its game options (from Spotlight with a Move option to arrange the row; Favorite is a switch there and on the heart). The questions before removing, uninstalling, resetting settings and power actions show their icons again.
+- Playnite Achievements sets itself up: its first-time page (desktop only) is done for you and every game is checked once in the background (if Playnite is closed before it finishes, the next start goes on from the game it reached), instead of only the games played since it was installed; after that, each start checks the games you played last, and an update of Playnite Achievements gets every game it has nothing for checked again. Stores still need signing in to once in its settings; Steam uses Playnite's Steam sign-in. Switch: "Achievements: set up on its own".
+- The Achievements screen shows when Playnite Achievements is checking your games: how many of how many, the game it's on, and a bar; when it finishes, the list fills in with what it found.
+- Achievements: "Recently unlocked" moves from the Achievements screen into each game's own list, under its logo (Up from the top of the list goes into it, A opens a trophy); the Achievements screen's game list moves up in its place.
+- On a game's page the right stick scrolls the description up and down, smoothly, faster the further it's pushed.
+- Presses while Selene is still starting up no longer reach the hidden home (an A opened Captures behind the start-up screen).
+- Games missing details (added by hand or by a script) are completed in the background a while after the start: every empty field (description, genres, developers, publishers, release date, features, series, age rating, scores, links, cover, background, icon) from your metadata add-ons, in the order Playnite's metadata settings give. What the add-ons can't find comes from the Steam store page of a game with exactly the same name. Nothing already there is replaced. Switch: "Complete missing game details".
+- Activity and Achievements open quicker (shorter rise-ins, rows built as needed), and Activity's covers rise left to right instead of the far ones first.
+- Activity, Surprise me and the other cards list only games Spotlight shows (in TV mode, games in the Handheld category stay off, checked across all a game's categories), so a pick always lands.
+- A game's page says "No description for this game yet." instead of a blank space.
+- Achievements: Y orders your games (last unlocked, most or least complete, name A-Z or Z-A, most trophies).
+- A game's page: the description takes only the room left above the screenshots (no more overlapping), and Released is left out for games without a date.
+- Surprise me waits for its covers before spinning, so the first spin no longer flicks past bare names or lands on an empty card.
+- The store shows Selene's breathing mark while it loads, also after a currency change (instead of "Nothing here right now").
+- Picking a game from Activity finds it on Spotlight even when DuplicateHider shows another copy of it.
+- Start opens Selene's menu everywhere, as a console's control center: over Activity, Achievements, the store, captures, Selene settings and a game's page, with the screen kept underneath; B or Start goes back to exactly where you were.
+- Activity, with the GameActivity add-on: this week day by day (a bar a day, today highlighted), your streak, a row for this month so far (how it compares with last month, your top game), and each game's sessions (how many, longest, average) in the panel. The panel also shows the game's trophy progress. Switch: "Activity: your play sessions".
+- Details: a long description fades out at the bottom instead of running into the screenshots.
+- Activity's panel at the right follows the game you're on (its logo, centered, its play time, share and when you last played it), and the covers carry just their line under them.
+- Activity looks cleaner: its numbers in one row under the title instead of boxes, your top game's logo at the right, rows of up to 20 games across the whole screen that slide along, the most-played bar clear of the focus ring, and the background crossfading between games.
+- The library update at start no longer waits for you to leave a card's screen (Activity, Achievements...) first; only the sign-in and profile screens hold it back.
+- A game picked in Activity or another card is selected on Spotlight reliably; one Spotlight's row doesn't have (left out by Playnite's filter) opens its game options instead of nothing.
+- Achievement pictures on the Achievements card are sharp: small store icons are no longer stretched while they load.
+- Nothing shakes any more at the end of a list or on a press that goes nowhere.
+- Game options (Y in Collection, Game Options on a game's page) are a Selene screen: the cover beside glass rows, switches for Favorite, Hidden and HDR, the completion status, Edit details (your score, categories, tags, genres... with tick lists), Extensions (every add-on's and script's actions for the game, in their sections), Remove and Uninstall with a question first. Switch: Games > "Game options, Selene's way" (off: Playnite's menu). Playnite's own pop-up menus are dark glass instead of blue.
+- Achievements come as trophies, like a console's: bronze, silver and gold (the game's own grade on PlayStation, else from how rare it is: gold under 5% of players, silver under 25%), and a platinum for every game completed. A game's list shows each one's trophy and the ones earned per grade; the Achievements card counts your platinums and trophies.
+- Collection's achievements block sits lower and has a trophy badge (gold when complete), the count large with its share, and a glowing bar.
+- Translating: Selene settings > Advanced > "Collect words to translate" writes every phrase Selene shows to "Selene phrases.txt" on the Desktop (the old empty-file trick in %TEMP% failed silently when it was a folder or a .txt; it works either way now).
+- Achievements (with the Playnite Achievements add-on): a game's page and Spotlight show its count with a thin bar among the stats, Y on the page opens its list like a console's trophy list (completion ring, All / Unlocked / Locked on LB / RB, order on Y, locked ones in grey, hidden ones kept hidden until X, A for one large), and a new Achievements card on Spotlight opens every game's achievements together (totals, the latest unlocks, games close to done, every game's progress). Switches: Games > Achievements on a game's page, Spotlight > Achievements card.
+- The library update at start begins a couple of seconds after the home and its intro are up (it waited a fixed 20 seconds from launch).
+- Notification cards work like a console's: none over the start-up or Spotlight's intro (they wait for it), each comes in one of three widths and keeps it while its words change, a new one (or a new message from the same task) slides the old one away instead of reshaping it, and they come in as a console's do: a short quick slide from the right with a fade, smooth at the screen's own rate. A game's page shows HowLongToBeat as one quiet line under its stats (11h 41m main story · 19h 14m with extras · 29h 1m completionist).
+- Playnite's library update ("Importing Steam games...", "Library update finished") shows as Selene's notification card instead of a line of words at the top right.
+- Spotlight and Collection show TIME TO BEAT (HowLongToBeat's main story time) beside the other stats when the add-on has it.
+- Quitting Playnite is clean: the screen goes dark at once and Playnite's "Closing" screen no longer flashes up. Sleep from the power menu no longer turns Selene's progress cards off afterwards.
+- HowLongToBeat times come by themselves: opening a game's page asks the add-on for that game's times when it has none yet. Selene settings > Games > "HowLongToBeat: fetch new games" switches the add-on's own automatic download (shown when HowLongToBeat is installed).
+- Picking a game in Activity, Find a game or Surprise me lands on that game on Spotlight with its art and logo (it sometimes landed on a neighbour with a blank background).
+- From amogh-w (#3): animations follow the screen's refresh rate (no longer capped at 144), Spotlight trailer cards play a game's full trailer when there's no preview clip, a game's page shows HowLongToBeat times (with that add-on; switch: Games > HowLongToBeat times), the top bar can show what UniPlaySong is playing (off by default: Look > Now playing in the top bar), the page behind a game's options menu stays still, and Collection's first and last games stay fully in view.
+- Report a problem: click both sticks in together anywhere to report with a picture of the screen (you see it and can leave it out), and "Type on your phone" opens a page on your phone to type and send from. The Power menu opens centred over Power.
+- Selene settings: Up from the first group goes round to the last (Advanced), Down from the last back to the first.
+- Report a problem (Selene settings > Advanced), no GitHub account needed: three quick steps (what went wrong, where you were, a few words with the on-screen keys or a keyboard), then it's sent as a GitHub issue with your versions and Selene's logs (names, folders and emails taken out), and a code to scan follows it.
+- Exit Playnite no longer freezes on the last picture. A capture picked on a game's details page fades in straight over the page (it opened hidden behind it, then flashed the Captures grid or the home), and B goes back to the details page on the first press, without lighting up Play. Start-up is quiet but for Selene's chime: the music (UniPlaySong) starts with the home, not over the intro and the profile picker. Backing out of Edit profile returns to the menu over the home (it came back on the login background).
+- Settings lists show there's more like the details page does: the rows at the edge blur and fade into the dark (the last row looked evenly faded, and a bright line flickered at the top while moving). The menu opens on Power, now in the middle, with Selene settings to its left, Playnite settings to its right and Setup check at the end.
+
+## 1.1.0 - 2026-10-25
+
+- Start-up: the background music waits for the intro to show (it started over the dark moment before it). Avatar step: moving along a row of GIF avatars no longer vibrates.
+- Setup check warns when Aniki Helper is still on: it belongs to the Aniki ReMake theme and, with Selene, adds start-up work, plays its own alert sounds and fights over the music.
+- Avatars: your own GIF keeps moving (it went through the framing step and became one still).
+- Idle screen: anywhere in Selene (not only Spotlight); each game's art comes with its logo or name and a line (playtime, last played), every fourth turn one of your own screenshots; the clock and date at the bottom right; the press that wakes it does nothing else.
+- Settings lists show there is more: the rows past the edge peek in, blurred and fading into the dark, at the bottom and (once scrolled) the top. Store: a loading card in the middle while the store fetches (after a currency change it looked like a dark page); Store currency changed from settings comes back to settings.
+- Start-up: the backdrop fades in on every PC (the cover drawn on its own thread never showed on some, so the wallpaper snapped in; a plain one fades after the first frame).
+- Selene settings reworked: eight groups (Start-up, Spotlight, Collection, Notifications, Sound & music, Look, Games, Advanced), shorter descriptions, and new settings: Start-up sound, Idle screen after (Spotlight dims and drifts through your games' art), Notification sound, Clip volume, Spotlight background (Game art / Wallpaper only), Loading screen on/off, After a game (Spotlight on that game / where you were), Ask before power actions, Surprise me without repeats, Store currency (change it again), and Reset Selene settings. Gone: the Copy log switch (Y in settings always copies it), the Selene logo switch; Trailer sound is a plain switch.
+- Clip player: after holding Left / Right, the spot waits 5 s with "Y Jump here" before the clip goes there (Y at once, B leaves it, a tap moves it 10 s, holding again glides on).
+- Settings (Selene's and Playnite's): a choice opens a list over its value (A, Up / Down, A to pick, B to leave it as it was) instead of Left / Right going round the values; numbers (text size, rows, columns, volumes) are sliders: a line with a knob, Left / Right move it.
+- Clip player: holding Left / Right glides through the clip with a preview of the frame above the bar (a tap still jumps 10 s), Up / Down set the volume (a slider shows at the right), Selene's music waits while a clip plays, and the hints became player buttons (skip, 10 s back, play / pause, 10 s on, volume) with the controller button under each. Spotlight's hints follow a change of button names (PlayStation / Xbox) at once.
+- Clips have sound: the browser that plays the NVIDIA app's AV1 clips can't decode their AAC sound, so Windows decodes the sound track once (kept in the temp folder for two days) and Selene plays it in step with the picture: pause, play, seeking and looping follow it.
+- Notification cards are sharp: on whole pixels (a card as wide as its words had soft text); the new-version card fits its words.
+- New version notice (switch: Start-up): once a day Selene checks GitHub for a newer release and says so in a notification, with where to get it (GitHub: Playnite's add-on updates don't list Selene yet). Each version is mentioned once; nothing is downloaded by itself.
+- Add-ons' progress tasks (Extra Metadata downloading logos and trailers...) now run behind Selene's notification card directly (every add-on, also when it starts the task right after a library update, and Playnite's own tasks): Playnite no longer builds and shows its progress window for each one, which froze everything moving for a moment just before the card.
+- Full refresh rate (switch: Look): Selene moves at your screen's own rate (120, 144 Hz...) while Playnite is in front; WPF's 60 fps steps landed unevenly on fast screens, a stutter everywhere.
+- No freeze as a notification comes up: Playnite's full-screen see-through progress window is made tiny and moved off the screen the moment it appears (Windows redrew it the slow way on every frame until then: a few hundred ms of stutter before each card).
+- Smoother: a notification coming up no longer freezes the screen for a moment (hiding Playnite's progress window took ~180 ms, now a single quick call; the focus coming back no longer re-checks every audio device), the add-on hint is worked out in the background, element look-ups are remembered instead of searching the whole screen each time, the Captures grid glides at the screen's rate, and the profile preview is drawn once as a picture. Store: B from a game opened in "More from" goes back to the Store. Button letters sit exactly in the middle of their circles. Choose your background: the switch is labelled "Show".
+- Back from a game: Home opens straight on the running game (the first game's art flashed up), closing a game fades into Spotlight once it shows Play again (the closing screen cut away and Now playing vanished a moment later), the session card shows after any session over 10 s, and the game is muted again while you're on the home (an audio error stopped it now and then).
+- Surprise me: only LB / RB change the list (Left / Right did too).
+- Choose your background: X (Game art / Background only) only changes the preview, to see the background with and without a game's art; the home always shows the games' art (a profile that had switched it off shows it again).
+- Music on a PC with no games yet: the default track plays on the login and the home (the music add-on waited for a game to be selected). Surprise me: no "A Play" hint at the bottom (the Play pill under the card says it).
+- Copy log moved out of the menu: Y in Selene settings copies the logs. Spotlight's first LB / RB after signing in now switches the tab (it went nowhere).
+- Spotlight: the buttons wait until the cards have flown in (a move mid-flight left the row half-landed), and the selected card's ring no longer blinks when a notification comes up.
+- Choose your theme: moving through the themes changes only the preview; Selene takes the theme when you press A.
+- Dark wallpapers with bright detail (a dotted map, stars): the console gradient and the readable-text halo now notice the detail behind the words (it was averaged away), and the gradient is always at least a little there.
+- Profile preview: the row shows real games' covers around the sample game (fetched from Steam once), and the sample's cover shows its logo; Change theme from the menu has no step dots.
+- Choose your theme / background: the preview is a sample home drawn in the theme's colors (Expedition 33 picked, its logo, Play / Details, the tabs and hints over the art or your wallpaper), not a picture of the real home; it changes at once with the theme, the wallpaper and the look.
+- Collection with no games: no dotted focus lines, and its message in Selene's text color (it could come out black).
+- Choose your background: the preview shows the look you picked (Game art / Background only showed the other one after the last speed-up).
+- Captures: the blurred picture behind the grid crossfades from one capture to the next (it blinked to black and back), and smoothly.
+- Captures: clips play with sound (the browser kept them muted; it now gets a click it counts as yours).
+- Session card as in Selene Legacy: "Session ended" and the game's name over THIS SESSION | TOTAL PLAYTIME, the logo on the right and the game's art faint behind it; the other notification cards are more see-through.
+- Captures viewer: a paused clip shows a big see-through pause sign in the middle, at once on the press (it waited for the player); it is gone the moment the clip plays again.
+- Captures and Surprise me: the LB / RB badges on their tabs look like Spotlight's and Collection's; Captures drops the LB RB Filter hint (the tabs show it).
+- Profile steps keep up when you go back and forth quickly (the preview was pictured again on every step change, and the sample art faded in and out under the screen; both only happen now when something changed).
+- Readable text: dark text gets no halo.
+- Session card: back from a game, a card with its logo says how long you played this time and in total; Steam games without a logo here get Steam's (fetched once, kept) (switch: Games, Session card).
+- Progress notifications are drawn inside Playnite's window: no black box flashing as the card appears, and no stutter while it shows (as a window of its own over the full-screen one, it slowed every frame).
+- Screens in the menu and profile steps slide smoothly: each new screen is set up before its slide starts, and the sliding pages are no longer drawn as one big picture (their own little animations redrew it every frame).
+- Profile steps: no lag opening Change theme or going back and forth between the theme and background steps (every avatar picture loaded as the screen opened, the background grid was rebuilt and reloaded on each return, the theme re-applied, and quick moves stacked slides).
+- The glint that sweeps over the focused card shows in every color theme (it took the focus color and vanished in themes where that is dark or colored).
+- Store: no flash the first time it opens (choosing the currency it already used emptied and refetched every list, and each list coming back rebuilt the page); moves glide at the screen's own frame rate.
+- Smoother motion overall: Selene's slides, fades and rises run at the screen's speed (they were held near 60 fps).
+- Profile steps: the slide from one step to the next is smooth (pictures, the backdrop, the theme recolor and the preview arriving mid-slide redrew the whole sliding page; they now wait for the slide to end).
+- Spotlight shaded like the PS5's home: a gradient from the left fading out to the right, and soft shading at the top (bar, clock) and bottom (hints), all as deep as the picture needs. Readable text's halo is lighter and counts that shading in.
+- Choose your theme: the preview shows the home (it stayed empty; the background step had taken the only preview).
+- Progress notifications stay with Playnite: after Alt+Tab to another program the card goes behind it with Playnite (it stayed on top of everything).
+- Readable text: the soft halo around the letters is drawn behind the words as a picture, so the text itself stays sharp (as an effect on the letters it made them look blurry).
+- No games at all: Collection hides its filter tabs (Spotlight keeps them).
+- Progress notifications: no flicker before the card (Playnite's own dim layer is held off while it shows).
+- Profile steps: the slide to the next page is smooth (the next page is built first, then both slide as one picture each), and the theme / background preview is never empty (opened from the menu in Collection, the home wasn't there to be pictured).
+- Readable text everywhere on the home and in Collection: each piece of text is measured against the picture right behind it; where it reads fine nothing is added, where the picture is bright it gets a soft dark halo hugging its letters (no box, no hard edges) and grey text comes up toward white (switch: Look, Readable text).
+- Progress notifications: one size for every card (a little wider, two lines of room), and no dark frame before the card (the progress window has no background of its own any more).
+- Progress notifications: the screen behind no longer darkens (Playnite dims its main window while any of its windows is open, and its hidden progress window counted) and no dark frame flashes before the card; Playnite's own sounds stay on meanwhile.
+- Empty-tab message: keeps following the row after the login or a menu has been over the home (it stayed put and ended up on the cards).
+- Collection with no games: a B Back hint, and B (Escape / Backspace on a keyboard) goes back to Spotlight; Y no longer opens Playnite's search keyboard, and A / X do nothing there.
+- Progress notifications: no more black or flickering home behind them (hiding Playnite's progress window handed the focus to another program for a moment, and Selene took that for a game covering Playnite).
+- Readable text that adapts: the empty-tab and empty-Collection messages measure how bright the picture right behind them is and get a soft dark glow and brighter words to match (nothing over a dark spot, a deep glow over a bright one), again whenever the background changes (switch: Look, Readable text).
+- Collection with no games: the message sits in the middle of the screen without the Selene mark, and the game stats and the Play / Details / Game options / Filter hints are hidden (only Spotlight and Menu do anything there).
+- Empty tab message: rises and fades in with the cards at start (and on a tab switch) instead of popping in.
+- Notifications for progress stay at least a couple of seconds (a quick task flashed by), fade in with a short drift like a console's notification (an icon tile beside the words, soft square corners) and out the same way, and tasks one after another share the card; the screen behind no longer goes dark.
+- Home with no games (or an empty tab): the message sits beside the last card and moves with the row as it scrolls (it stayed put and ended up on the cards).
+- Choose your background with no games yet: the preview shows an example game's art (Clair Obscur: Expedition 33, fetched from Steam the first time) so Game art / Background only shows what it does.
+- Progress as a notification: add-ons downloading logos, trailers and the like show a small Selene card at the top right, under the clock, with the task's words instead of covering the whole screen, and you keep browsing meanwhile (switch: Look, Progress as a notification).
+- Notifications have a sound (theme\Audio\Notification.wav when there is one, else the panel sound).
+- Start-up library update waits until you are signed in: add-ons answer it with progress screens of their own (downloading logos, trailers...), which came up in the middle of the login and profile setup.
+- Progress screen: a slim bar in the theme's color that fills as the work goes, under the words (it showed a second, smaller Selene mark).
+- Choose your background / theme: smooth moves through the grid (each move decoded a full-size wallpaper on the screen's thread mid-glide; it is decoded in the background now, the last few kept, and the change lands once the glide is done).
+- Setup check, Install all: one question for every add-on instead of Playnite's question (and restart question) per add-on. Selene downloads them all, each card showing DOWNLOADING... then RESTART TO FINISH while the button counts along, and asks once to restart; Playnite installs them all on that restart.
+- Setup check: Down from the bottom row of cards always reaches the buttons, even pressed quickly several times (only a Down right after arriving on that row waits a moment, so a held stick doesn't skip it); it lands on the nearer button.
+- Dialog buttons: the words sit in the middle of the pill (they sat a little low).
+- Playnite's progress screen (downloading an add-on, updating the library) has the same moving background as the setup check (switch: Look, Selene dialogs).
+- Start: the logo intro rises from the dark straight into the moving background (the plainer drawn one showed for half a second first).
+- Playnite's dialogs: B (or Escape) answers No / Cancel (it did nothing); they close with a short sink-and-fade, and the dim behind them fades in and out; the card is a touch see-through over a dimmed screen, like Selene's own dialogs.
+- Add-on installs: Playnite's "Restart now?" says how many add-ons are left, with Restart now / Keep installing, so you restart once at the end; add-ons you said yes to show "Restart to finish" in the setup check, and Install all skips them.
+- Alt+F4 quits Playnite from anywhere, even with a dialog up (it is caught before anything else sees it).
+- Playnite's questions (add-on installs, restart, errors) look like Selene: an icon in a soft ring, centred text, an add-on's name, author and version on a card of their own, a glow of the theme's color, and the card rises in (switch: Look, Selene dialogs).
+- Setup check: pressing Install shows the card OPENING... until Playnite's question comes up (nothing seemed to happen for a few seconds).
+- Logo intro: plays over the same moving background as the login and setup screens (it had a plainer one of its own).
+- Close to tray: Alt+F4 quits Playnite for real; Exit in the menu, the X and the taskbar's Close still hide it to the tray.
+- Logo intro: no dark flicker as it ends (the drawn background went before the background video was there; now the video fades in over it). The setup check has no "A Select" hint in the corner.
+- Setup check: just the add-ons, installed or not (the game library, game folders and controller cards are gone).
+- Black screen on a portable Playnite: Selene Core looked for Playnite's settings and the theme under AppData, so on a portable install it stayed off and the theme sat on its dark, empty login layer for ever. It asks Playnite where things are now (installed or portable).
+- Missing icons and button glyphs: the theme package had no Fonts folder (Playnite's Toolbox leaves one out of every .pthm), so the menu icons and the controller button fonts fell back to whatever Windows had. The package carries them now.
+- Without Selene Core (not installed, or disabled) the theme says so after a few seconds, with what to install, instead of staying dark.
+- Start on (Start-up) is a choice: Spotlight, Collection, or where you left it (the screen you were on when Playnite closed). A Start on Collection switch that was on becomes Collection.
+- Selene settings: a long group scrolls to keep the focused row in view (Spotlight's rows ran off the screen and the focus went on into rows you couldn't see).
+- Button names in the hints: Xbox or PlayStation (cross, circle, square, triangle, L1 / R1 / L2 / R2), as Playnite's own Button prompts setting or chosen in Selene settings (Navigation, Button names).
+- Filter tabs (Spotlight, Filter tabs): LB / RB go through Selene's five tabs, your own Playnite filter presets, or both. Presets are applied through Playnite, so they behave exactly as in Playnite, on Spotlight and in Collection.
+- Game details: a game with no captures shows a quiet tile saying so (Down from the screenshots went nowhere and the activity beside it never showed), and More like this fills up with looser matches and your most played games when few are close.
+- Choose your theme / background: smooth again (the preview is a picture of the home, retaken when the choice changes, instead of a live mirror redrawn on every frame); the backdrop crossfades to the new wallpaper; the preview itself crossfades.
+- Game details: the next band sharpens and brightens with the glide again (it switched at once), the covers are crisp again, and Down works right after opening the details from Collection (the focus could sit on nothing).
+- Other PCs: a note on the home when the Extra Metadata add-on (logos, trailers) isn't installed, pointing at the setup check (switch: Start-up, Add-on hint); Copy log (Y in Selene settings) puts both logs on the clipboard for a bug report (switch: Navigation); games that start through Ubisoft Connect, the EA app, Rockstar, Battle.net or the Xbox app get longer waits on the loading screen; Selene speaks Playnite's language when theme\Localization has a file for it (switch: Look), with a way to collect every phrase for translators.
+- Other PCs: text falls back to Segoe UI where Segoe UI Variable is missing (Windows 10); the details page's activity block hangs from the right edge, so screens that aren't 16:9 keep it on screen; the drifting dust stays off when WPF has no graphics card to draw with.
+## 1.0.0 - 2026-10-23
+
+- Choose your avatar / theme / background: the soft fade at the grid's edges is back, over the cached grid (0.10.0 faded whole rows flatly).
+- 1.0.0: Selene's first full release; the theme and Selene Core share this version.
+## 0.10.0 - 2026-10-23
+
+- Smooth big screens: tiles are drawn once into textures and their focus glow exists only while focused (every tile blurred an invisible ring on each repaint), and the game details page and the profile editor's grids glide as one texture.
+- Choose your avatar / theme / background: the grid glides smoothly, with the same soft fade at its edges (the grid is drawn once into a texture; the fade redrew every tile on each frame before).
+- Game details: the glide between bands is smooth (the whole page was redrawn through a fade mask on every frame; now only the peeking band fades, and the move runs at the screen's rate).
+- Game details: the next band peeks in at the foot of the screen, cut off and blurred, as the store's rows do; B back to Spotlight is seamless (the home is back under the page before it closes).
+- Game details: the description shows whole lines with no fade; More like this is big covers without names; closing the details no longer flashes Playnite's library grid before Spotlight.
+- Game options menu: the icons show (the icon font is now named from the theme root, as other themes do) and the items are glass rows like Selene's keys and settings.
+- Game details: the lower bands really show as the page glides (they were clipped away, leaving the focus on tiles you couldn't see).
+- Game details: the screenshots are the open game's (opened from Collection they stayed the last Spotlight game's); B from a band leaves the page; the next band starts off the screen so it can't sit under the hints.
+- A game's options menu (Play, Favorite, Hide, Edit fields...) looks like Selene: a glass card with rounded corners, the game's name as its title, rounded rows with Material icons.
+- Game details: the bands below show whole as the page glides (they were clipped), and the description and activity sit on the art without glass boxes.
+- Game details, filled in below: the game's screenshots (A opens them big), your captures of it (A opens one) with your activity beside them (play time, last played, this week, your rank), and more games like it from your own collection (A shows one on Spotlight). Down from the pills goes into these bands and the page glides up; Up or B comes back. The platform shows the store's mark and name like Spotlight (a PC game said "PC (Windows)").
+- Collection: X opens the details page (it started or installed the game instead); Y opens the game's options as the hint says (it opened Playnite's search box); Left works on the first tile after coming from Spotlight (it sat at the very edge with nothing built to its left).
+- Start-up: the library update Selene asks for 20 s after start (and when Playnite comes back from the tray) has a switch: Start-up, Library update at start.
+- Playnite's progress window (installing an add-on, updating the library) shows Selene's mark with its halo breathing under the words instead of a loading bar; the Playnite settings screen has Playnite's logo beside its title, with a breathing halo like Selene's mark.
+- Setup check: Left / Right between Install all and Done answer at once (the missing-add-ons list was read from disk on every move); Install all asks for the next add-on only once Playnite's restart question is out of the way (the two came up one over the other).
+- Collection: a game's trailer starts after the same wait as Spotlight's trailer cards (the Trailer cards after setting), not its own 4 seconds.
+- Save backups: Ludusavi no longer asks "Back up save data?" after every game; it just backs up (switch: Games, Quiet save backups).
+- Play: the loading screen's fade to black plays again as the game's window comes up (handing the game the focus waited on the game's thread, seconds sometimes, and froze the fade; it waits on a thread of its own now).
+- Logo intro: the logo fades out as it lifts before the next screen (it was cut off).
+- Play: the game fades in out of the black at the end of the loading screen (it cut in, with a flash).
+- Keyboards (Find a game, profile name): Left past the first key lands on the last, Right past the last on the first.
+- Smooth under load: the animated background's dust and the loading screen's slow art drift are drawn on threads of their own, so start-up work and a game's launch can't make them stumble.
+- Animated background: the drifting dust moves smoothly on high-refresh displays (it stepped at 60 frames a second on a 144 Hz screen).
+- Play: the loading screen no longer freezes for a moment as it comes up and again a second in (Steam's window is minimised off the UI thread; Playnite's own start waits for the loading screen's animation to finish).
+- Game details open again (the redone page set a style twice, and Playnite fell over opening it).
+- Collection: A plays the game the way Spotlight's A does (Selene's loading screen at once, the same way through; installs it when it isn't), X opens its details.
+- Play: no music under the loading screen (the selected game's trailer card still fired under it and switched the music to that game's song).
+- Collection: the game's art crossfades from game to game instead of cutting (Selene's own crossfade, over a good half second).
+- Playnite's dialogs (a yes / no box, an add-on install) look like Selene: a glass card with rounded corners and pill buttons; and a press in a dialog no longer also moves the screen behind it.
+- Who's playing: the power button's glyph sits in the middle of its circle.
+- Spotlight: a game picked in Find a game, Activity or Surprise me lands where a move would put it, the third slot (the row didn't scroll to it at all, or left it cut off at the right); LT and RT jump to the start and the end of the row.
+- Game details, redone: who made it and the critic and player scores under the logo, the genres as chips, the description on glass that fades out at its foot instead of a big empty box, and button hints.
+- The home's and the details' pills are dark glass again, like the Setup check's buttons.
+- Playnite settings from the menu open as a Selene screen now: General, Visuals, Audio, Layout, Menus and Input as sections, their settings as Selene's switches and choices, saved straight into Playnite (a row opens Playnite's own pages for the monitor and theme). Switch: Navigation, Playnite settings, Selene's way.
+- Activity, redone: the numbers as cards, your top game called out with its share of your play time, bars under the most played, and two more rows: games to pick up again (an hour or more played, untouched for 45 days) and games still waiting (never played). The rows glide up.
+- Store game page: back from the screenshot viewer, the strip keeps a focused screenshot (going past the sixth in the viewer left it with none, and Left / Right stuck).
+- Store game page: the focus starts on the Buy / Play button; Down goes to the screenshots and A there shows the screenshot on the whole screen (Left / Right go through them), Down again to "More from". Buying is the button's alone.
+- Captures: clips play with their sound (the browser wanted a press first; Selene gives it one).
+- Captures: the grid sits on a dark vignette with the focused capture's picture glowing softly behind; LB / RB filter it to screenshots or clips.
+- Captures viewer: A pauses and plays a clip, Left / Right go 10 seconds, LB / RB go to the previous or next capture; a bar with the time, the game and date at the bottom left, hints that fade away after a moment. Clips that start on a black frame get a still from further in.
+- Home: the Play / Details / Favorite pills are white, a little see-through, without an outline; the focused screenshot's ring is no longer cut off.
+- Captures: clips get stills (Windows' own thumbnail, or ffmpeg's when this PC has it), in the grid and under the card; clips the browser plays are drawn through a canvas (a big clip decoded by the graphics card stayed black).
+- Spotlight and Collection switch with a shorter hold on the crossfade.
+- Glass that reads: tiles (Setup check, keyboards, menus) and the home's Play / Details pills sit on a deeper glass over busy wallpapers.
+- Playnite's own settings (General, Visuals, Audio, Layout, Menus, Input) look like Selene settings: the sections as rounded rows with the same icons, the items as glass rows with Selene's switches.
+- Menu: Random game is gone (Surprise me on Spotlight does it, better).
+- Selene settings: settings with a choice of values, not only switches (Left / Right go round them): Trailer cards after (1 s, 2.5 s, 5 s, never), Trailer sound (off or on at start), Starting tab (where you left it, or a fixed one), Sound volume, Shade over the art (lighter, as needed, deeper), Store opens on (a tab), Surprise me picks from (installed, not played yet, all); and a switch for the pictures under the cards. The add-on page in Playnite's settings has them too.
+- Spotlight: three new cards. **Activity**: what you've been playing (this week's and all-time numbers, your most played and last played games; A shows one on Spotlight, X plays it). **Captures**: your screenshots and clips newest first, from Steam, Xbox Game Bar's Videos\Captures, the NVIDIA app's Videos\NVIDIA and folders you add in Selene Core's settings; A opens one full screen and clips play. **Surprise me**: covers flick past and stop on a game to play (LB / RB: installed, not played yet, all). Each card has its switch under Spotlight in Selene settings. The cards come as Captures, Activity, Surprise me, Store, and the row starts on the Store card. The Collection card is off by default now (the View button opens Collection); switch it back on under Spotlight.
+- Collection opens with its focus a little sooner from Spotlight.
+- The Activity, Captures and Surprise me cards show a headline and pictures like the Store card (the latest captures, the games you played last, a few ideas); Down goes into the pictures, A opens one.
+- Spotlight: pressing the left stick on a card no longer opens Playnite's filter list, and a mouse click on a card opens the card.
+- Store game page: B from the "More from" row leaves the page (it went up to the screenshots first).
+- Captures: clips Playnite's own player can't decode (the NVIDIA app's AV1 recordings) play in the browser Playnite ships with, as the Store trailers do. The card's headline names the newest capture from a game.
+- Activity: a new profile sees Playnite's own last-played dates for the games it hasn't played yet (it showed only today's).
+- Find a game: from Spotlight, the picked game is shown on Spotlight's row (on All games when the current tab doesn't have it); from Collection, in Collection as before.
+- Store card: the picked picture no longer gets cut off as it grows (the strip clipped it to its slot).
+- Store page: the last row sits where the next row would peek in, instead of leaving an empty band above the button hints; the row above it ends softly at the top.
+- Store game page: the trailer keeps playing as you go through the screenshots (it stopped on the first move), and the "More from" row melts in and out together with the page's glide (it switched at once).
+- Spotlight: the Store card shrinks back after a visit to its pictures (it stayed big).
+- Find a game: the first pick after a while on Spotlight no longer gets undone by the home's reopen (a timing race as the search closed).
+- Store game page: while the trailer plays, Left / Right only move along the screenshot strip (the picked screenshot no longer comes up behind the trailer).
+- Animated GIF avatars no longer show a flat see-through edge inside the circle.
+- Store game page: the game's trailer plays behind it (muted, looping) where Playnite's built-in browser can play it; the screenshots stay until it does. Switch: Selene settings, Games, Store trailers.
+- Keyboards (profile name, Find a game): Y types a space, Start is Done.
+- Find a game: the picked game keeps the focus in Collection (the old tile took it back half a second later).
+- Store: opens smoothly (its tiles are made as they come near the screen, and it's built once instead of twice while it fades in).
+- Store game page, redone: the game's screenshots fill the screen behind (a row of them along the bottom, Left / Right show each one), the store's logo, name, genres, release date, score, price and description on the left, and one main button: Play or Install when the game is in your library, Get it free, or Buy on its store. The cheapest price in another store shows when there is one (Y opens it), and Down shows more games from the same store.
+- Text over bright pictures: the home's shading deepens as much as the wallpaper or game art behind it needs (a shade behind the top bar too), and the text halo is stronger.
+- Signing in: the wallpaper no longer jumps as the login clears (the cover placed it differently from the home).
+- Store page: the store's logo beside its name, the button hints lower, and a game's page shows its name, price and buttons again (its pictures covered them).
+- Store: rows keep going as you scroll (Steam, GOG, PC Game Pass and the other stores' deals load their next games near the end of a row); the peek of the next row is shorter, lightly blurred and fades out above the button hints. Without store apps the Store card says games open in your browser.
+- Readable text: text everywhere gets a soft halo in the theme's background color so it reads over bright pictures (Selene settings, Look, Readable text).
+- Find a game (hold View): Selene's own search with its keyboard and sounds, matching games shown as you type; A opens the game in Collection.
+- The cards fly in again after you sign in, as the login's dimming clears.
+- A controller press is never handled twice (the Store card's pictures skipped one); one gate for every screen.
+- Store card: the picked picture glows and grows like the Store page's, and the Store card in the row steps back meanwhile.
+- Store page: the next row peeks in below, blurred and fading to dark.
+- Selene settings opened by holding Menu goes back to the home with B; opened from the menu (like Setup check, Theme and Edit profile), B goes back to the menu with that item still picked.
+- Store: tabs look like the home's filter tabs, the Xbox tab shows its games (it stayed empty after scrolling down another tab), rounded pictures that fit the focus ring, sharper pictures (Steam's double-size art, GOG's big screenshots behind its games), deals without a sharp picture left out, only the focused row shows, and "Currency" without the code. The Store card's focus ring no longer gets cut off. Signing in no longer brings up the screenshot strip, and the empty-tab message on Spotlight has no logo.
+- The Library and Store cards' details no longer slide in from the left (signing in showed it).
+- Store page: a dark background like Collection's instead of the wallpaper, much bigger games, each game's genres, release date, score and description beside its picture, sharp full-screen art only (a game with just a small picture shows none instead of a blurry one), and it opens without the delay.
+- Store: opening it no longer crashes Playnite (its pictures come a few at a time, are kept on disk and load as you scroll). The Store card's pictures leave out the games the headline already shows. Signing in no longer slides the row.
+- Store card: the headline takes turns between what's on (free games, the biggest sale, new on Steam, a sale ending soon, next week's free game) with that game's picture beside it. Down from the card goes into the game pictures: Left / Right pick one, A opens it in its store, Up or B goes back.
+- Store card: the headline says what's on ("2 free games this week", "Up to 90% off") with the free games and the biggest sale under it, your store apps as chips with their logos, and four big game pictures without names under them; the "Open the store" line that ran into the button hints is gone (A Open is in the hints).
+- Up on Spotlight's row, and Up / Down in Collection, no longer move the focus off to hidden parts (the row dropped away).
+- Signing in: the wallpaper stays and the login's dimming just clears to the home; no fly-in.
+- Store page: the Store card opens Selene's store with free games, sales, top sellers, new releases, PC Game Pass and deals from other stores. LB/RB pick the store (All, Steam, Epic Games, GOG, Xbox, More stores); A opens a game's page (screenshots, description, price, "In your library" if you own it) and from there its store app to buy it. The Store card shows this week's free games and the biggest sales as pictures with their discount and price. The first time the Store opens it asks for your currency (X in the Store changes it). Works offline with the last prices. Switch: Selene settings, Games, Store page.
+- The start-up fade from black runs on its own thread, so it stays smooth while Playnite is busy loading.
+- Spotlight: moving between the Store and Library cards no longer makes the row bounce.
+- Menu: the profile shows its name with "Switch profile" under it. The top bar's profile steps away while the menu is open.
+- The signed-in profile's avatar in the top bar beside the clock. Switch: Selene settings, Look, Profile in the top bar.
+- Collection trailers: the wallpaper no longer shows through as a trailer starts or stops, and moving on from a trailer no longer flashes the last game's art.
+- The Selene logo around the theme: a header on Selene settings, and a softly glowing mark on empty screens and while Playnite is busy. Switch: Selene settings, Look, Selene logo.
+- Back from Collection to a game on Spotlight, its art is there right away, with no wait and no wallpaper showing for a moment (Spotlight keeps its own art while Collection shows).
+- The start-up backdrop fades in again instead of popping up, without the light flashing up and dimming during it.
+- Switching between Spotlight and Collection is a real crossfade now, with no black gap in between.
+- Opening Theme no longer flickers (the current theme and wallpaper aren't reloaded), and saving a background no longer shows a game's art for a moment before it.
+- The logo intro runs on its own thread, so it stays smooth while Playnite starts up; screenshots come back when you return to a game on Spotlight; going back to Spotlight from a trailer shows the game's art again.
+- Collection: LS no longer opens Playnite's filter-preset list (the tabs do filtering); its hint is gone.
+- Entering Collection, the game's art comes in with the screen (no wallpaper showing first).
+- Back to Spotlight from Collection: its art is emptied at once (no faint frame of the last game); the start-up background is never black (the video fades in after the intro).
+- Logo intro: the moon's halo keeps glowing (a slow breath and swell), and the background video waits until the intro is over so the logo stays smooth.
+- Spotlight's row no longer bounces when moving between the Store and Collection cards.
+- Spotlight keeps Playnite's selected game to its own (Collection's hidden list kept picking its first game, flashing its art); Xbox and Microsoft Store logos.
+- Spotlight: lighter shading over game art and cards alike (no jump in brightness between them).
+- The menu has a Theme item: straight to your profile's theme and background.
+- Selene settings redesigned like a console's: groups on the left (Start-up, Navigation, Sound & music, Look, Games), their switches on the right, shorter descriptions.
+- Spotlight to Collection: Spotlight fades out, then Collection fades in (no game art behind Spotlight's screen); "Local" games show the full Selene mark.
+- Selene's own theme plays the legacy home's looping background video behind the login, menus and Spotlight's cards (other themes keep the drawn backdrop in their color).
+- The View and Menu hint badges use solid icons, as bold as the letter badges.
+- Games from no store show Selene's crescent and "Local" as their platform; the first cover's focus ring isn't cut at the left edge.
+- No game art flashing when going from Collection to Spotlight; the trailer sits on black (no navy on the left); filter tab text no longer touches the pill's edge.
+- Collection: the trailer exactly like the legacy theme (a 16:9 box on the right with its mask, the shades under it); Spotlight's tabs and filters on both screens (one choice, filled LB / RB badges); flat white store logos; Down on the Collection and Store cards stays put.
+- Collection scrolls by whole covers: no cover cut in half at the left edge.
+- Collection's background and trailer use the legacy theme's exact shades (bottom, left to the middle) and its trailer vignette; LB / RB tabs come with five presets like Spotlight's; last played reads Today / Yesterday / days ago; a crisp store icon instead of the blurry logos.
+- Spotlight: the last game's art no longer lingers faintly behind a card (Store, Collection).
+- Collection: LB / RB tabs (Playnite's filter presets) centered at the top like Spotlight's, which are centered too; bigger covers starting at the left edge; wide background art fills the screen; the game's art no longer shows through the trailer.
+- Selene's own backdrop: deep navy with a beam of light from the top left and a band of fine drifting dust and bokeh (login, menus and Spotlight's cards).
+- Spotlight and Collection crossfade into each other (the screen you leave stays up until the other has its picture).
+- Moving and confirming sound the same everywhere: Selene's screens play them through Playnite's own player (one volume).
+- Switching between Spotlight and Collection: no old game art fading out on Spotlight, and Collection's art arrives sooner.
+- Collection: an achievements bar above the covers (Playnite Achievements: unlocked / total and a progress bar, gold trophy when complete), and holding a direction moves as fast as on Spotlight.
+- Collection: the game's logo, chips and genres slide in together when you move to another game.
+- The two main screens are now Spotlight (the home row) and Collection (every game); Selene settings, Start on Collection, opens Collection after signing in.
+- Going from the library back to the home no longer flashes the library game's art.
+- Collection: under the logo, playtime, last played, platform (with the store's logo, also on Spotlight) and release year, genres beneath; while a trailer plays the game's art fades away; trailers start about 4 seconds in (like Aniki) and play on the right from a quarter in, melting into black on the left with a vignette at the top and bottom.
+- No menu button in the top bar (Start opens the menu).
+- Home filters switch with LB / RB instead of the triggers.
+- No notification bell in the top bar. Home hints along the bottom: Library and Menu (with their holds) on the left, what the focused thing does on the right.
+- New Collection (the library): the game's art behind its big logo, and when you rest on a game its trailer takes over the background (black fade on the left) with the game's song, R3 for the trailer's sound (trailers with black cinema bars are zoomed so the picture reaches the top); one row of big covers close together, no names, no scrollbar, hints along the bottom like the home.
+- The View button switches between the home and the library (it opened Playnite's settings); hold View to search the library, hold Start for Selene settings.
+- Moving in the menu no longer moves the home row behind it.
+- Switching back to Playnite while a game runs (taskbar, Alt+Tab) opens the home on the running game, with Resume and Close Game, instead of Playnite's "is running" screen.
+- Quiet loading screen: a starting game's sounds are turned down the moment they start and come back as the game shows (Selene settings, Quiet loading screen).
+- Smoother launch: when the game's window appears the loading screen fades to black (the game's own screen switch can't be seen), no background music over it, and the game's sound fades in after the ready sound.
+- Down on the Library and Store cards no longer moves focus to nothing.
+- No flash of light the first time the menu opens.
+- Smoother logo intro: it starts at the first quiet moment after Playnite starts.
+- The home has the login's glow and drifting particles behind its cards (and behind games when their art is off), on themes without a wallpaper.
+- The home's button hints are off by default, like a console's home (Selene settings, Button hints, turns them back on).
+- The menu no longer has More (Playnite's own menu) or Extensions (other add-ons' menus): only Selene, Playnite settings, desktop mode and power.
+- Every sound is leveled to sit together (tools/level_sounds.py); the moving tick is no longer louder than the rest.
+- On the home the default music plays and a game's own song only while its trailer card is open, like the legacy theme (the music add-on's live settings are now found the way the legacy theme did, and kept that way).
+- The menu is a row of solid icons along the bottom (like a console control center): a ring and the name on the focused one, Power opens sleep, restart, shut down and exit; the home stays in view above.
+- Update library starts right away in the background; if an update is already running, the menu says what it is doing instead of waiting.
+- No more moving sound when Playnite starts, when you sign in or when you press Play (Selene or Playnite moving focus itself sounded like a move).
+- Theme step: each theme shows its own wallpaper on its tile, and a strip of its colors sits under the preview.
+- Signing in no longer flashes the old home for a moment before the home's intro plays.
+- Selene settings (menu, and the add-on's settings page): turn off the logo intro, Who's playing? at start, interface sounds, music control, button hints, glow and particles, freezing games on Guide, close to tray or no-prompt launchers.
+- The intro shows only the crescent (no SELENE lettering).
+- Play, Details and the heart are readable in light themes (they took the theme's dark text color).
+- Light themes dim the home behind Playnite's menus with a dark shade instead of a bright one.
+- Power icons in the menu use the theme's color like the rest.
+- Background step: with "Game art" on, the preview shows a game's art (without selecting it, so no game song plays); with no games yet it says the wallpaper shows until you add some.
+- New sounds: a soft glassy ping and chime when a profile is made, Square Enix menu sounds for picking a profile, pressing Play and the game starting, Final Fantasy VII Remake menu sounds for confirming (A), closing (B), menus opening and when Selene asks "are you sure", a warm swell with a rising harp when you press Play, two soft harp notes when the game is up.
+- A Store card next to Library: opens the store apps on your PC (Steam, Epic, Xbox, GOG, Ubisoft, EA, Microsoft Store).
+- After Playnite starts or someone signs in, the home starts on the Library card.
+- Your own picture as an avatar: frame it in a circle first (move with the stick, zoom with the triggers).
+- Fixed moves skipping an item when the same press arrived twice.
+- Favorites and Recently played belong to whoever is signed in (the heart, the Favorites tab and the order of the row).
+- New sounds made for Selene: a short glassy tick when moving, a bright ping on confirm, a soft high shimmer on back, a two-tone chime on the logo intro.
+- First launch: the crescent crown intro, a setup check (install the add-ons Selene works with, set up save backups), then making your profile: name (on-screen keyboard), avatar, theme and background, each theme and background shown live on your real home.
+- "Who's playing?" replaces the old login: profiles glow in their own theme's color; add, edit (Y) or remove (X twice); power menu below.
+- Extensions menu, Selene: switch profile, edit profile, setup check.
+- Every screen follows the color theme: text, focus rings, buttons, glass panels and the shading over game art.
+- Your theme's wallpaper shows behind the home when no game is selected, and behind the login and menus.
+- New crescent crown logo with a glowing full moon; new icons, default cover and README banner.
+- Placeholders instead of blank screens when nothing is set up yet (login picture, home background).
+- Groundwork for profiles, 23 color themes with their own wallpapers, 415 avatars and the first-launch setup check.
+- The setup check installs the add-ons Selene works with and sets up save backups with Ludusavi.
+
+## 0.9.0 - 2026-10-21
+
+- First build of Selene, rebuilt from the ground up on Playnite's fullscreen template, with its companion add-on
+  Selene Core.
+

@@ -1,0 +1,40 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style TargetType="TextBox">
+        <Setter Property="KeyboardNavigation.TabNavigation" Value="None" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Foreground" Value="{DynamicResource SeleneInkBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SeleneInk15Brush}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource SeleneInkBrush}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Padding" Value="12,5,12,5" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="FontSize" Value="{DynamicResource FontSize}" />
+        <Setter Property="FontFamily" Value="{DynamicResource FontMain}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <!-- Selene: a rounded field with no outline at rest; focused, a ring in the focus color (as Selene's rows) (#44) -->
+                    <Border x:Name="Field" CornerRadius="14" Background="{TemplateBinding Background}" BorderThickness="2" BorderBrush="Transparent">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
+                                      VerticalScrollBarVisibility="{TemplateBinding VerticalScrollBarVisibility}"
+                                      HorizontalScrollBarVisibility="{TemplateBinding HorizontalScrollBarVisibility}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource SeleneInk25Brush}" />
+                        </Trigger>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="Field" Property="BorderBrush" Value="{DynamicResource SeleneFocusBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

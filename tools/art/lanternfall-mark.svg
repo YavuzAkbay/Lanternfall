@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
+  <!-- Lanternfall's lantern: ring, cap, glass frame, base and flame. Drawn in currentColor. Same geometry as SeleneCore/src/ForkBrand.cs. -->
+  <path d="M 36,3.6 A 4.4,4.4 0 1 1 35.99,3.6 Z" fill="none" stroke="currentColor" stroke-width="3.6"/>
+  <path d="M 28,12 L 44,12 L 51,20.2 L 21,20.2 Z" fill="currentColor"/>
+  <path d="M 22.5,19.5 L 49.5,19.5 L 49.5,54 L 22.5,54 Z M 26,23 L 26,50.5 L 46,50.5 L 46,23 Z" fill="currentColor" fill-rule="evenodd"/>
+  <path d="M 19,53.4 L 53,53.4 L 49,61 L 23,61 Z" fill="currentColor"/>
+  <path id="flame" d="M 36,27 C 40.5,32 43,35.8 43,40.2 A 7,7 0 0 1 29,40.2 C 29,35.8 31.5,32 36,27 Z" fill="currentColor"/>
+</svg>

@@ -1,0 +1,41 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                    xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+                    mc:Ignorable="d">
+
+    <Style TargetType="{x:Type ProgressBar}">
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Background" Value="{DynamicResource ControlBackgroundDarkBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource GlyphBrush}" />
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeSmall}" />
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SelectionLightBrush}" />
+    </Style>
+
+    <!-- Playnite's progress window (downloading logos, updating the library...): Selene's mark is already above the words, so
+         the progress is a slim rounded bar in the accent color that fills as the work goes (it was a second mark) -->
+    <Style x:Key="ProgressWindowProgressBarStyle" TargetType="ProgressBar">
+        <Setter Property="Height" Value="8" />
+        <Setter Property="Width" Value="420" />
+        <Setter Property="Margin" Value="0,26,0,0" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Grid>
+                        <Border x:Name="PART_Track" CornerRadius="4" Background="{DynamicResource SeleneInk15Brush}" />
+                        <Border x:Name="PART_Indicator" CornerRadius="4" HorizontalAlignment="Left" Background="{DynamicResource GlyphBrush}">
+                            <Border.Effect>
+                                <DropShadowEffect ShadowDepth="0" BlurRadius="12" Opacity="0.6" Color="{DynamicResource GlyphColor}" />
+                            </Border.Effect>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>  

@@ -1,0 +1,137 @@
+using System;
+using System.Threading;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Windows.Shapes;
+using System.Windows.Threading;
+
+namespace Selene
+{
+    // The intro's logo, drawn and animated on its own thread (a HostVisual): Playnite builds its library, the home row and
+    // decodes pictures on the main thread right at start-up, and the logo stuttered whenever that thread was busy. Here it
+    // rises in, then its moon's halo keeps breathing and swelling, whatever the main thread is doing.
+    public class IntroLogo : FrameworkElement
+    {
+        private readonly HostVisual host = new HostVisual();
+        private readonly double size;
+        private readonly Color ink, glyph;
+        private Dispatcher logoThread;
+
+        public IntroLogo(double size)
+        {
+            this.size = size;
+            Width = size;
+            Height = size;
+            ink = ColorOf("SeleneInkColor", Colors.White);
+            glyph = ColorOf("GlyphColor", Color.FromRgb(0x9C, 0xCB, 0xFF));
+            AddVisualChild(host);
+        }
+
+        private static Color ColorOf(string key, Color fallback)
+        {
+            var b = Ink.Brush(key) as SolidColorBrush;
+            return b != null ? b.Color : fallback;
+        }
+
+        protected override int VisualChildrenCount { get { return 1; } }
+        protected override Visual GetVisualChild(int index) { return host; }
+
+        // builds the logo on its thread and starts the rise (after `delayMs`) and the glow
+        public void Start(int delayMs)
+        {
+            if (logoThread != null) return;
+            var ready = new ManualResetEvent(false);
+            var t = new Thread(() =>
+            {
+                // never let anything here take Playnite down: an exception on this thread would end the whole app
+                try
+                {
+                    var target = new VisualTarget(host);
+                    var root = Build(delayMs);
+                    root.Measure(new Size(size, size));
+                    root.Arrange(new Rect(0, 0, size, size));
+                    target.RootVisual = root;
+                    logoThread = Dispatcher.CurrentDispatcher;
+                    Dispatcher.CurrentDispatcher.UnhandledException += (s, e) => { e.Handled = true; };
+                    ready.Set();
+                    Dispatcher.Run();
+                    target.Dispose();
+                }
+                catch (Exception ex) { ready.Set(); HomeNav.Log("intro logo thread: " + ex.Message); }
+            }) { IsBackground = true, Name = "Selene intro logo" };
+            t.SetApartmentState(ApartmentState.STA);
+            t.Start();
+            ready.WaitOne(2000);
+        }
+
+        private Grid rootEl;
+        private TranslateTransform liftTr;
+
+        // the way out: the logo fades as it lifts a little (on its own thread, like the rest of it)
+        public void FadeOut(int ms)
+        {
+            var d = logoThread;
+            if (d == null) return;
+            d.BeginInvoke(new Action(() =>
+            {
+                if (rootEl == null) return;
+                var ease = new CubicEase { EasingMode = EasingMode.EaseIn };
+                rootEl.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(ms)) { EasingFunction = ease });
+                if (liftTr != null) liftTr.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(-14, TimeSpan.FromMilliseconds(ms)) { EasingFunction = ease });
+            }));
+        }
+
+        public void Stop()
+        {
+            var d = logoThread;
+            logoThread = null;
+            if (d != null) d.BeginInvokeShutdown(DispatcherPriority.Normal);
+        }
+
+        // the same drawing as Ui.Mark (72 x 72 units): the halo, the crescent, the ringed full moon
+        private Grid Build(int delayMs)
+        {
+            var root = new Grid { Width = size, Height = size, Opacity = 0 };
+            rootEl = root;
+            var canvas = new Canvas { Width = 72, Height = 72 };
+            var view = new Viewbox { Child = canvas, Stretch = Stretch.Uniform };
+            var haloBrush = new RadialGradientBrush();
+            haloBrush.GradientStops.Add(new GradientStop(Color.FromArgb(0xB3, glyph.R, glyph.G, glyph.B), 0));
+            haloBrush.GradientStops.Add(new GradientStop(Color.FromArgb(0x61, glyph.R, glyph.G, glyph.B), 0.3));
+            haloBrush.GradientStops.Add(new GradientStop(Color.FromArgb(0x1F, glyph.R, glyph.G, glyph.B), 0.65));
+            haloBrush.GradientStops.Add(new GradientStop(Color.FromArgb(0, glyph.R, glyph.G, glyph.B), 1));
+            // Lanternfall: the fork's lantern (ForkBrand) instead of Selene's crescent crown, the halo on its flame
+            var halo = new Ellipse { Width = ForkBrand.HaloSize, Height = ForkBrand.HaloSize, Fill = haloBrush, RenderTransformOrigin = new Point(0.5, 0.5) };
+            Canvas.SetLeft(halo, ForkBrand.HaloX - ForkBrand.HaloSize / 2); Canvas.SetTop(halo, ForkBrand.HaloY - ForkBrand.HaloSize / 2);
+            canvas.Children.Add(halo);
+            ForkBrand.DrawMark(canvas, new SolidColorBrush(ink));
+            root.Children.Add(view);
+
+            // rise in: fade and lift
+            var lift = new TranslateTransform(0, 16);
+            root.RenderTransform = lift;
+            liftTr = lift;
+            var begin = TimeSpan.FromMilliseconds(delayMs);
+            var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+            root.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(900)) { BeginTime = begin, EasingFunction = ease });
+            lift.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(16, 0, TimeSpan.FromMilliseconds(900)) { BeginTime = begin, EasingFunction = ease });
+
+            // the halo brightens, then keeps breathing and swelling
+            var breathe = new DoubleAnimationUsingKeyFrames { BeginTime = begin };
+            breathe.KeyFrames.Add(new LinearDoubleKeyFrame(0.4, KeyTime.FromTimeSpan(TimeSpan.Zero)));
+            breathe.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(1300)), new SineEase { EasingMode = EasingMode.EaseInOut }));
+            breathe.KeyFrames.Add(new EasingDoubleKeyFrame(0.65, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(2100)), new SineEase { EasingMode = EasingMode.EaseInOut }));
+            breathe.Completed += (s, e) => halo.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0.65, 1, TimeSpan.FromMilliseconds(1100)) { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever, EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut } });
+            halo.Opacity = 0.4;
+            halo.BeginAnimation(UIElement.OpacityProperty, breathe);
+            var swell = new ScaleTransform(1, 1);
+            halo.RenderTransform = swell;
+            var grow = new DoubleAnimation(0.94, 1.08, TimeSpan.FromMilliseconds(1100)) { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever, EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }, BeginTime = begin };
+            swell.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
+            swell.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
+            return root;
+        }
+    }
+}

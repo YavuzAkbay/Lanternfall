@@ -1,0 +1,49 @@
+<!doctype html>
+<!-- Nomad browser codec test: what the page engine can decode, plus an H.264 MP4 and an HLS stream playing -->
+<html><head><meta charset="utf-8"><title>Nomad media test</title>
+<style>
+ body{background:#0b0e14;color:#e8eaf0;font:20px Segoe UI,sans-serif;margin:24px}
+ table{border-collapse:collapse;margin-bottom:16px} td{padding:4px 14px;border-bottom:1px solid #2a3142}
+ .ok{color:#5be37d}.no{color:#ff6b6b} video{width:46%;margin-right:2%;background:#000} .st{font-size:18px;color:#9aa6bb}
+</style></head><body>
+<table id="codecs"></table>
+<video id="mp4" muted autoplay playsinline loop src="https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_1MB.mp4"></video>
+<video id="hls" muted autoplay playsinline></video>
+<div class="st">MP4 (H.264/AAC): <span id="s1">loading</span> &nbsp; | &nbsp; HLS (hls.js): <span id="s2">loading</span></div>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+<script>
+var types = {
+ 'H.264 (MP4)': 'video/mp4; codecs="avc1.640028"', 'AAC': 'audio/mp4; codecs="mp4a.40.2"',
+ 'HEVC': 'video/mp4; codecs="hvc1.1.6.L120.90"', 'VP9': 'video/webm; codecs="vp9"', 'AV1': 'video/mp4; codecs="av01.0.08M.08"',
+ 'Opus': 'audio/webm; codecs="opus"'
+};
+var t = document.getElementById('codecs');
+for (var k in types) {
+ var ok = window.MediaSource && MediaSource.isTypeSupported(types[k]);
+ t.innerHTML += '<tr><td>' + k + '</td><td class="' + (ok ? 'ok">supported' : 'no">NOT supported') + '</td></tr>';
+}
+t.innerHTML += '<tr><td>Engine</td><td>' + navigator.userAgent.replace(/^.*?\) /, '') + '</td></tr>';
+function watch(v, s){
+ setInterval(function(){ s.textContent = v.error ? 'ERROR ' + v.error.code : (v.currentTime > 0.5 ? 'PLAYING ' + v.currentTime.toFixed(1) + 's ' + v.videoWidth + 'x' + v.videoHeight : 'waiting'); }, 500);
+}
+var a = document.getElementById('mp4'), b = document.getElementById('hls');
+watch(a, document.getElementById('s1')); watch(b, document.getElementById('s2'));
+var src = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
+if (window.Hls && Hls.isSupported()) { var h = new Hls(); h.loadSource(src); h.attachMedia(b); }
+else if (b.canPlayType('application/vnd.apple.mpegurl')) b.src = src;
+else document.getElementById('s2').textContent = 'hls.js unavailable';
+// a button that puts the HLS video fullscreen, like a site's player does (tests the browser's fullscreen handling)
+var fs = document.createElement('button'); fs.textContent = 'Fullscreen HLS'; fs.style.cssText = 'font-size:22px;padding:10px 18px;margin-top:12px';
+var fsInfo = document.createElement('div'); fsInfo.className = 'st'; fsInfo.textContent = 'fullscreen: not tried';
+fs.onclick = function(e){
+ fsInfo.textContent = 'clicked (trusted=' + e.isTrusted + ', activation=' + (navigator.userActivation ? navigator.userActivation.isActive : '?') + ')';
+ b.requestFullscreen().then(function(){ fsInfo.textContent += ' -> fullscreen OK'; }, function(err){ fsInfo.textContent += ' -> fullscreen FAILED: ' + err.message; });
+};
+document.body.appendChild(fs); document.body.appendChild(fsInfo);
+// the same from a player inside a cross-origin iframe (how most video sites embed their players)
+var ifr = document.createElement('iframe'); ifr.style.cssText = 'width:46%;height:220px;border:0;margin-top:12px';
+ifr.srcdoc = "<body style='margin:0;background:#222;color:#fff;font:18px Segoe UI'><video id=v muted autoplay loop style='width:60%' src='https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_1MB.mp4'></video>" +
+ "<span>click: fullscreen in iframe</span><script>document.onclick=function(){document.getElementById('v').requestFullscreen();};<\/script></body>";
+ifr.sandbox = 'allow-scripts';   // sandboxed = cross-origin, like a real embedded player
+document.body.appendChild(ifr);
+</script></body></html>

@@ -1,0 +1,190 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Playnite's own settings (General, Visuals, Audio...), in the shape of Selene settings: the sections down the left as
+         rounded rows with Material icons, the chosen section's items on the right as glass rows with Selene's switches.
+         Playnite builds the screen itself; these are the styles it takes from the theme. -->
+
+    <!-- the column of sections (Playnite puts it at the right, in a 500 px column): no panel of its own -->
+    <Style x:Key="SettingsMenuBorder" TargetType="Border">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="24,110,24,0" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+    </Style>
+
+    <!-- the chosen section's items: one glass panel over the page, reaching into the empty space at the left. Playnite's own
+         column for it is ~620 px wide, so the rows (at least 760) were cut off at the right, switches and focus ring included
+         (#44); and over a bright home the rows were hard to read without a panel behind them -->
+    <Style x:Key="SettingsSectionBorder" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource SeleneGlassSolidBrush}" />
+        <Setter Property="CornerRadius" Value="24" />
+        <Setter Property="Padding" Value="0,12,24,12" />
+        <Setter Property="Margin" Value="-470,150,40,0" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+    </Style>
+
+    <!-- a section in the column: a rounded row, the focused one filled with the focus color -->
+    <Style x:Key="SettingsMenuButton" BasedOn="{StaticResource {x:Type ButtonEx}}" TargetType="ButtonEx">
+        <Setter Property="Margin" Value="0,0,24,6" />
+        <Setter Property="Padding" Value="20,14,20,14" />
+        <Setter Property="FontSize" Value="21" />
+        <Setter Property="FontFamily" Value="{DynamicResource FontMain}" />
+        <Setter Property="Foreground" Value="{DynamicResource SeleneInkBrush}" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ButtonEx">
+                    <Grid>
+                        <Border x:Name="Fill" CornerRadius="14" Background="Transparent" />
+                        <ContentPresenter x:Name="Content" Margin="{TemplateBinding Padding}" HorizontalAlignment="Left" VerticalAlignment="Center" TextBlock.Foreground="{DynamicResource SeleneInkBrush}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Fill" Property="Background" Value="{DynamicResource SeleneInk15Brush}" />
+                        </Trigger>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="Fill" Property="Background" Value="{DynamicResource SeleneFocusBrush}" />
+                            <Setter TargetName="Content" Property="TextBlock.Foreground" Value="{DynamicResource SeleneOnFocusBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- the title above the sections, as Selene settings has it -->
+    <DataTemplate x:Key="SettingsMenuHeaderTemplate">
+        <StackPanel Margin="18,0,0,30">
+            <TextBlock Text="{DynamicResource LOCSettingsLabel}" FontSize="40" FontFamily="{DynamicResource FontMain}" Foreground="{DynamicResource SeleneInkBrush}" />
+            <TextBlock Text="Playnite" FontSize="16" FontFamily="{DynamicResource FontMain}" Foreground="{DynamicResource SeleneInk60Brush}" Margin="2,2,0,0" />
+        </StackPanel>
+    </DataTemplate>
+
+    <Thickness x:Key="SettingsSectionItemSpacing">0,0,0,8</Thickness>
+
+    <!-- a slider on a glass row -->
+    <Style x:Key="SettingsSectionSlider" TargetType="SliderEx" BasedOn="{StaticResource {x:Type SliderEx}}">
+        <Setter Property="Width" Value="420" />
+        <Setter Property="Margin" Value="{DynamicResource SettingsSectionItemSpacing}" />
+    </Style>
+
+    <!-- a switch: the label on the left, Selene's pill switch on the right, the whole row ringed when focused -->
+    <Style x:Key="SettingsSectionCheckbox" TargetType="CheckBoxEx">
+        <Setter Property="Margin" Value="{DynamicResource SettingsSectionItemSpacing}" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Foreground" Value="{DynamicResource SeleneInkBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <Border x:Name="Row" CornerRadius="16" Padding="26,16,24,16" Background="{DynamicResource SeleneGlassLightBrush}" BorderThickness="2" BorderBrush="Transparent">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock FontSize="21" FontWeight="SemiBold" FontFamily="{DynamicResource FontMain}" Foreground="{TemplateBinding Foreground}"
+                                       VerticalAlignment="Center" TextWrapping="Wrap" Grid.Column="0" Margin="0,0,24,0">
+                                <ContentPresenter RecognizesAccessKey="True" />
+                            </TextBlock>
+                            <Border x:Name="Track" Grid.Column="1" Width="56" Height="30" CornerRadius="15" VerticalAlignment="Center" Background="{DynamicResource SeleneInk25Brush}">
+                                <Border x:Name="Knob" Width="22" Height="22" CornerRadius="11" HorizontalAlignment="Left" Margin="4,0,0,0" Background="{DynamicResource SeleneInkBrush}">
+                                    <Border.RenderTransform><TranslateTransform x:Name="KnobShift" X="0" /></Border.RenderTransform>
+                                </Border>
+                            </Border>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Track" Property="Background" Value="{DynamicResource GlyphBrush}" />
+                            <Setter TargetName="Knob" Property="Background" Value="{DynamicResource SeleneScrimBrush}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="KnobShift" Storyboard.TargetProperty="X" To="26" Duration="0:0:0.2"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="KnobShift" Storyboard.TargetProperty="X" To="0" Duration="0:0:0.2"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource SeleneFocusBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource SeleneFocusBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SettingsSectionCombobox" TargetType="ComboBoxEx" BasedOn="{StaticResource {x:Type ComboBoxEx}}">
+        <Setter Property="MinWidth" Value="320" />
+        <Setter Property="Margin" Value="{DynamicResource SettingsSectionItemSpacing}" />
+    </Style>
+
+    <Style x:Key="SettingsSectionText" TargetType="TextBlock" BasedOn="{StaticResource TextBlockBaseStyle}">
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="FontSize" Value="19" />
+        <Setter Property="FontFamily" Value="{DynamicResource FontMain}" />
+        <Setter Property="Foreground" Value="{DynamicResource SeleneInk90Brush}" />
+        <Setter Property="Margin" Value="4,14,0,6" />
+    </Style>
+
+    <!-- the sections' names with Material icons (the same ones Selene settings uses) -->
+    <DataTemplate x:Key="SettingsMenuGeneralButtonTemplate">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xe8b8;" FontFamily="{DynamicResource FontMaterialIcons}" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+            <TextBlock Text="{DynamicResource LOCSettingsFSSectionGeneral}" FontSize="21" FontFamily="{DynamicResource FontMain}" VerticalAlignment="Center" />
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="SettingsMenuVisualsButtonTemplate">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xe40a;" FontFamily="{DynamicResource FontMaterialIcons}" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+            <TextBlock Text="{DynamicResource LOCSettingsFSSectionVisuals}" FontSize="21" FontFamily="{DynamicResource FontMain}" VerticalAlignment="Center" />
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="SettingsMenuAudioButtonTemplate">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xe050;" FontFamily="{DynamicResource FontMaterialIcons}" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+            <TextBlock Text="{DynamicResource LOCSettingsFSSectionAudio}" FontSize="21" FontFamily="{DynamicResource FontMain}" VerticalAlignment="Center" />
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="SettingsMenuLayoutButtonTemplate">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xe871;" FontFamily="{DynamicResource FontMaterialIcons}" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+            <TextBlock Text="{DynamicResource LOCSettingsFSSectionLayout}" FontSize="21" FontFamily="{DynamicResource FontMain}" VerticalAlignment="Center" />
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="SettingsMenuMenusButtonTemplate">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xe5d2;" FontFamily="{DynamicResource FontMaterialIcons}" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+            <TextBlock Text="{DynamicResource LOCSettingsFSSectionMenus}" FontSize="21" FontFamily="{DynamicResource FontMain}" VerticalAlignment="Center" />
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="SettingsMenuInputButtonTemplate">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xea28;" FontFamily="{DynamicResource FontMaterialIcons}" FontSize="24" VerticalAlignment="Center" Margin="0,0,16,0"/>
+            <TextBlock Text="{DynamicResource LOCSettingsFSSection}" FontSize="21" FontFamily="{DynamicResource FontMain}" VerticalAlignment="Center" />
+        </StackPanel>
+    </DataTemplate>
+</ResourceDictionary>

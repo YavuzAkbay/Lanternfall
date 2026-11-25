@@ -1,0 +1,55 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <Style TargetType="Button">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Padding" Value="12,5,12,5" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SelectionLightBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <!-- Selene: rounded; selected = white with dark text (like the home's Play/Details pills) -->
+                    <Grid>
+                        <Border x:Name="Fill" CornerRadius="12" Background="{TemplateBinding Background}"
+                                BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}"/>
+                        <TextBlock x:Name="Text" Style="{DynamicResource TextBlockBaseStyle}"
+                                   Foreground="{TemplateBinding Foreground}"
+                                   HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                   VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                   Margin="{TemplateBinding Padding}">
+                            <ContentPresenter />
+                        </TextBlock>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Fill" Property="Background" Value="{DynamicResource ControlBackgroundBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="Fill" Property="Background" Value="{DynamicResource SeleneFocusBrush}" />
+                            <Setter TargetName="Fill" Property="BorderBrush" Value="{DynamicResource SeleneFocusBrush}" />
+                            <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource SeleneOnFocusBrush}" />
+                            <Setter TargetName="Fill" Property="Effect" Value="{DynamicResource SeleneFocusGlow}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                            <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource TextBrushDark}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ButtonEx" BasedOn="{StaticResource {x:Type Button}}">
+    </Style>
+
+    <Style x:Key="LoadMoreButton" BasedOn="{StaticResource {x:Type Button}}" TargetType="ButtonEx">
+        <Setter Property="Margin" Value="0,0,0,5" />
+    </Style>
+</ResourceDictionary>

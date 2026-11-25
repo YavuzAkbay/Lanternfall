@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Application x:Class="Playnite.FullscreenApp.App" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:sys="clr-namespace:System;assembly=mscorlib">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="LocSource.xaml" />
+        <ResourceDictionary Source="GlobalResources.xaml" />
+        <ResourceDictionary Source="ControlGalleryView.xaml" />
+        <ResourceDictionary Source="Constants.xaml" />
+        <ResourceDictionary Source="Media.xaml" />
+        <ResourceDictionary Source="Images/ButtonPrompts/Xbox/Xbox.xaml" />
+        <!--Default Controls-->
+        <ResourceDictionary Source="DefaultControls/TextBox.xaml" />
+        <ResourceDictionary Source="DefaultControls/Slider.xaml" />
+        <ResourceDictionary Source="DefaultControls/CheckBox.xaml" />
+        <ResourceDictionary Source="DefaultControls/ComboBox.xaml" />
+        <ResourceDictionary Source="DefaultControls/Button.xaml" />
+        <ResourceDictionary Source="DefaultControls/ScrollViewer.xaml" />
+        <ResourceDictionary Source="DefaultControls/ToolTip.xaml" />
+        <ResourceDictionary Source="DefaultControls/ProgressBar.xaml" />
+        <ResourceDictionary Source="DefaultControls/ToggleButton.xaml" />
+        <!--Custom Controls-->
+        <ResourceDictionary Source="CustomControls/FilterEnumListSelection.xaml" />
+        <ResourceDictionary Source="CustomControls/FilterStringListSelection.xaml" />
+        <ResourceDictionary Source="CustomControls/FilterDbItemtSelection.xaml" />
+        <ResourceDictionary Source="CustomControls/FilterPresetSelector.xaml" />
+        <!--Derived Styles-->
+        <ResourceDictionary Source="DerivedStyles/ListGameItemStyle.xaml" />
+        <ResourceDictionary Source="DerivedStyles/ListGameItemTemplate.xaml" />
+        <ResourceDictionary Source="DerivedStyles/ButtonBottomMenu.xaml" />
+        <ResourceDictionary Source="DerivedStyles/ButtonTopMenu.xaml" />
+        <!--Views-->
+        <ResourceDictionary Source="Views/FiltersAdditional.xaml" />
+        <ResourceDictionary Source="Views/FiltersView.xaml" />
+        <ResourceDictionary Source="Views/GameDetails.xaml" />
+        <ResourceDictionary Source="Views/GameMenu.xaml" />
+        <ResourceDictionary Source="Views/GameStatus.xaml" />
+        <ResourceDictionary Source="Views/Main.xaml" />
+        <ResourceDictionary Source="Views/MainMenu.xaml" />
+        <ResourceDictionary Source="Views/HelpMenu.xaml" />
+        <ResourceDictionary Source="Views/MessageBox.xaml" />
+        <ResourceDictionary Source="Views/NotificationsMenu.xaml" />
+        <ResourceDictionary Source="Views/SettingsMenus.xaml" />
+        <ResourceDictionary Source="Views/TextInput.xaml" />
+        <ResourceDictionary Source="Views/ItemSelection.xaml" />
+        <ResourceDictionary Source="Views/CustomMenus.xaml" />
+      </ResourceDictionary.MergedDictionaries>
+      <!-- Nomad sandbox: the browser overlay starts hidden -->
+      <Visibility x:Key="SeleneBrowserOverlayVis">Collapsed</Visibility>
+      <Visibility x:Key="SeleneYouTubeOverlayVis">Collapsed</Visibility>
+      <Visibility x:Key="SeleneGameNewsVis">Collapsed</Visibility>
+      <Visibility x:Key="SeleneShotsSlotVis">Visible</Visibility>
+      <Visibility x:Key="SeleneYouTubeFeedVis">Collapsed</Visibility>
+      <Visibility x:Key="SeleneBrowserFeedVis">Collapsed</Visibility>
+      <Visibility x:Key="SeleneYouTubeFeedEmptyVis">Visible</Visibility>
+      <Visibility x:Key="SeleneBrowserFeedEmptyVis">Visible</Visibility>
+      <Visibility x:Key="SeleneGameNewsTileVis0">Collapsed</Visibility>
+      <Visibility x:Key="SeleneGameNewsTileVis1">Collapsed</Visibility>
+      <Visibility x:Key="SeleneGameNewsTileVis2">Collapsed</Visibility>
+      <Visibility x:Key="SeleneYouTubeFeedTileVis0">Collapsed</Visibility>
+      <Visibility x:Key="SeleneYouTubeFeedTileVis1">Collapsed</Visibility>
+      <Visibility x:Key="SeleneYouTubeFeedTileVis2">Collapsed</Visibility>
+      <Visibility x:Key="SeleneBrowserFeedTileVis0">Collapsed</Visibility>
+      <Visibility x:Key="SeleneBrowserFeedTileVis1">Collapsed</Visibility>
+      <Visibility x:Key="SeleneBrowserFeedTileVis2">Collapsed</Visibility>
+    </ResourceDictionary>
+  </Application.Resources>
+</Application>
