@@ -5,7 +5,7 @@
     <sys:String x:Key="SeleneThemeId">flexoki-light</sys:String>
     <sys:String x:Key="SeleneThemeName">Flexoki Light</sys:String>
     <sys:String x:Key="SeleneThemeMode">light</sys:String>
-    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/flexoki-light/1-orb.png</sys:String>
+    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/flexoki-light/1-lanternfall.jpg</sys:String>
 
     <Color x:Key="GlyphColor">#FF205EA6</Color>
     <Color x:Key="GlyphLightColor">#FF100F0F</Color>

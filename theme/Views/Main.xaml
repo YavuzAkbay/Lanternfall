@@ -1844,34 +1844,37 @@
                                                 <ButtonEx x:Name="SeleneBrowserFeedTile0" Tag="0" Style="{StaticResource SeleneBrowserFeedTileStyle}" Visibility="{DynamicResource SeleneBrowserFeedTileVis0}">
                                                     <Grid>
                                                         <Image Source="{DynamicResource SeleneBrowserFeed0}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                        <Border VerticalAlignment="Bottom" Padding="16,12,16,16" Background="{DynamicResource SeleneScrim65Brush}">
-                                                            <StackPanel>
+                                                        <Border VerticalAlignment="Bottom" Height="140" Background="{DynamicResource SeleneScrim65Brush}" IsHitTestVisible="False">
+                                                            <Border.OpacityMask><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#00000000" Offset="0"/><GradientStop Color="#FF000000" Offset="0.72"/></LinearGradientBrush></Border.OpacityMask>
+                                                        </Border>
+                                                        <StackPanel VerticalAlignment="Bottom" Margin="20,0,20,16">
                                                                 <TextBlock Text="{DynamicResource SeleneBrowserFeedTitle0}" FontSize="22" FontWeight="SemiBold" FontFamily="Segoe UI" Foreground="{DynamicResource SeleneInkBrush}" TextWrapping="Wrap" MaxHeight="64" TextTrimming="CharacterEllipsis"/>
                                                                 <TextBlock Text="{DynamicResource SeleneBrowserFeedSub0}" FontSize="14" FontFamily="Segoe UI" Foreground="{DynamicResource SeleneInkBrush}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
                                                             </StackPanel>
-                                                        </Border>
                                                     </Grid>
                                                 </ButtonEx>
                                                 <ButtonEx x:Name="SeleneBrowserFeedTile1" Tag="1" Style="{StaticResource SeleneBrowserFeedTileStyle}" Visibility="{DynamicResource SeleneBrowserFeedTileVis1}">
                                                     <Grid>
                                                         <Image Source="{DynamicResource SeleneBrowserFeed1}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                        <Border VerticalAlignment="Bottom" Padding="16,12,16,16" Background="{DynamicResource SeleneScrim65Brush}">
-                                                            <StackPanel>
+                                                        <Border VerticalAlignment="Bottom" Height="140" Background="{DynamicResource SeleneScrim65Brush}" IsHitTestVisible="False">
+                                                            <Border.OpacityMask><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#00000000" Offset="0"/><GradientStop Color="#FF000000" Offset="0.72"/></LinearGradientBrush></Border.OpacityMask>
+                                                        </Border>
+                                                        <StackPanel VerticalAlignment="Bottom" Margin="20,0,20,16">
                                                                 <TextBlock Text="{DynamicResource SeleneBrowserFeedTitle1}" FontSize="22" FontWeight="SemiBold" FontFamily="Segoe UI" Foreground="{DynamicResource SeleneInkBrush}" TextWrapping="Wrap" MaxHeight="64" TextTrimming="CharacterEllipsis"/>
                                                                 <TextBlock Text="{DynamicResource SeleneBrowserFeedSub1}" FontSize="14" FontFamily="Segoe UI" Foreground="{DynamicResource SeleneInkBrush}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
                                                             </StackPanel>
-                                                        </Border>
                                                     </Grid>
                                                 </ButtonEx>
                                                 <ButtonEx x:Name="SeleneBrowserFeedTile2" Tag="2" Style="{StaticResource SeleneBrowserFeedTileStyle}" Visibility="{DynamicResource SeleneBrowserFeedTileVis2}">
                                                     <Grid>
                                                         <Image Source="{DynamicResource SeleneBrowserFeed2}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                        <Border VerticalAlignment="Bottom" Padding="16,12,16,16" Background="{DynamicResource SeleneScrim65Brush}">
-                                                            <StackPanel>
+                                                        <Border VerticalAlignment="Bottom" Height="140" Background="{DynamicResource SeleneScrim65Brush}" IsHitTestVisible="False">
+                                                            <Border.OpacityMask><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#00000000" Offset="0"/><GradientStop Color="#FF000000" Offset="0.72"/></LinearGradientBrush></Border.OpacityMask>
+                                                        </Border>
+                                                        <StackPanel VerticalAlignment="Bottom" Margin="20,0,20,16">
                                                                 <TextBlock Text="{DynamicResource SeleneBrowserFeedTitle2}" FontSize="22" FontWeight="SemiBold" FontFamily="Segoe UI" Foreground="{DynamicResource SeleneInkBrush}" TextWrapping="Wrap" MaxHeight="64" TextTrimming="CharacterEllipsis"/>
                                                                 <TextBlock Text="{DynamicResource SeleneBrowserFeedSub2}" FontSize="14" FontFamily="Segoe UI" Foreground="{DynamicResource SeleneInkBrush}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
                                                             </StackPanel>
-                                                        </Border>
                                                     </Grid>
                                                 </ButtonEx>
                                             </StackPanel>

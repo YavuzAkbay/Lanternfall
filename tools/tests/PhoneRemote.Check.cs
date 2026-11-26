@@ -14,6 +14,7 @@ internal sealed class FakeTv : IRemoteHost
 {
     public string Played, Opened, Command, Query, Browsed, Web, Ctx = "home";
     public string PtrAction; public int PtrDx, PtrDy;
+    public string Pressed, Launched, CoverAsked;
     public string Fail;   // when set, every action returns this
     public string PlayVideo(string id) { Played = id; return Fail; }
     public string OpenUrl(string url) { Opened = url; return Fail; }
@@ -24,6 +25,14 @@ internal sealed class FakeTv : IRemoteHost
     public Dictionary<string, object> Status()
     {
         return new Dictionary<string, object> { { "ctx", Ctx }, { "playing", Played != null }, { "title", "Song" }, { "paused", false }, { "t", 5.0 }, { "d", 100.0 } };
+    }
+    public string Pad(string button) { Pressed = button; return Fail; }
+    public string Launch(string id) { Launched = id; return Fail; }
+    public byte[] Cover(string id) { CoverAsked = id; return id.EndsWith("1") ? new byte[] { 0xFF, 0xD8, 0xFF, 0xD9 } : null; }
+    public List<Dictionary<string, object>> Games(out string error)
+    {
+        error = null;
+        return new List<Dictionary<string, object>> { new Dictionary<string, object> { { "id", "00000000-0000-0000-0000-000000000001" }, { "name", "Hades" }, { "inst", true } } };
     }
     public List<Dictionary<string, object>> Search(string query, out string error)
     {
@@ -91,7 +100,7 @@ internal static class PhoneRemoteCheck
 
             Func<string, string, string, PhoneReply> go = delegate(string method, string path, string body) { return remote.Handle(method, path, body, Phone); };
             PhoneReply r = go("GET", "/r/" + tok, null);
-            Check(r.Status == 200 && r.Page && r.Body.Contains("TV remote") && r.Csp != null && r.Csp.Contains("img-src"), "the page is served with its own policy");
+            Check(r.Status == 200 && r.Page && r.Body.Contains("Lanternfall remote") && r.Csp != null && r.Csp.Contains("img-src"), "the page is served with its own policy");
             Check(go("GET", "/r/" + tok + "/", null).Status == 200, "trailing slash works");
             Check(go("GET", "/r/wrong", null).Status == 404 && go("GET", "/k/" + tok, null).Status == 404 && go("GET", "/", null).Status == 404, "wrong token / wrong prefix / root are 404");
             Check(remote.Handle("GET", "/r/" + tok, null, IPAddress.Parse("203.0.113.9")).Status == 403, "outside clients are refused");
@@ -148,7 +157,44 @@ internal static class PhoneRemoteCheck
             tv.Ctx = "browser";
             d = Parse(go("GET", "/r/" + tok + "/state", null).Body);
             Check((string)d["ctx"] == "browser" && !d.ContainsKey("kb"), "state: the context and no keyboard");
-            Check(PhoneRemotePage.Html.Contains("id='kb'") && PhoneRemotePage.Html.Contains("id='br'") && PhoneRemotePage.Html.Contains("id='yt'"), "the one page holds keyboard, browser and YouTube parts");
+            Check(PhoneRemotePage.Html.Contains("id='kb'") && PhoneRemotePage.Html.Contains("id='trackpad'") && PhoneRemotePage.Html.Contains("id='ytCard'")
+                && PhoneRemotePage.Html.Contains("id='dpad'") && PhoneRemotePage.Html.Contains("id='v_games'") && PhoneRemotePage.Html.Contains("id='v_send'"),
+                "the one page holds the controller, games, send, keyboard, browser and YouTube parts");
+            Check(PhoneRemotePage.Csp.Contains("img-src 'self'"), "the page may show the covers it serves");
+            foreach (char ch in PhoneRemotePage.Html) if (ch > 127) { Check(false, "the page is ASCII only (" + (int)ch + ")"); break; }
+
+            // ---- the whole-theme controller
+            foreach (string b in PhoneRemote.PadButtons)
+            {
+                tv.Pressed = null;
+                r = go("POST", "/r/" + tok + "/pad", "{\"b\":\"" + b + "\"}");
+                Check(r.Status == 200 && (bool)Parse(r.Body)["ok"] && tv.Pressed == b, "pad: " + b);
+            }
+            tv.Pressed = null;
+            Check(go("POST", "/r/" + tok + "/pad", "{\"b\":\"Guide\"}").Status == 400 && tv.Pressed == null, "pad: an unknown button is 400 and never reaches the TV");
+            Check(go("POST", "/r/" + tok + "/pad", "{}").Status == 400 && tv.Pressed == null, "pad: no button is 400");
+            Check(go("GET", "/r/" + tok + "/pad", null).Status == 405, "pad: GET is 405");
+            Check(go("POST", "/r/" + "000000000000000000000000" + "/pad", "{\"b\":\"A\"}").Status == 404 && tv.Pressed == null, "pad: a wrong token never presses");
+            tv.Fail = "A game is running. Use your controller in the game.";
+            d = Parse(go("POST", "/r/" + tok + "/pad", "{\"b\":\"A\"}").Body);
+            Check(!(bool)d["ok"] && (string)d["error"] == tv.Fail, "pad: the TV's refusal reaches the phone");
+            tv.Fail = null;
+
+            // ---- the library
+            d = Parse(go("GET", "/r/" + tok + "/games", null).Body);
+            Check((bool)d["ok"] && ((object[])d["games"]).Length == 1, "games: the list");
+            Check(go("POST", "/r/" + tok + "/games", "{}").Status == 405, "games: POST is 405");
+            r = go("POST", "/r/" + tok + "/launch", "{\"id\":\"00000000-0000-0000-0000-000000000001\"}");
+            Check(r.Status == 200 && (bool)Parse(r.Body)["ok"] && tv.Launched == "00000000-0000-0000-0000-000000000001", "launch: a game id reaches the TV");
+            tv.Launched = null;
+            Check(go("POST", "/r/" + tok + "/launch", "{\"id\":\"../../etc\"}").Status == 400 && tv.Launched == null, "launch: a bad id is 400 and never reaches the TV");
+            Check(go("GET", "/r/" + tok + "/launch", null).Status == 405, "launch: GET is 405");
+            r = go("GET", "/r/" + tok + "/cover/00000000-0000-0000-0000-000000000001", null);
+            Check(r.Status == 200 && r.Type == "image/jpeg" && r.Bytes != null && r.Bytes.Length == 4 && r.MaxAge > 0, "cover: a small JPEG the phone may keep");
+            Check(go("GET", "/r/" + tok + "/cover/00000000-0000-0000-0000-000000000002", null).Status == 404, "cover: no cover is 404");
+            tv.CoverAsked = null;
+            Check(go("GET", "/r/" + tok + "/cover/..%2f..%2fwin.ini", null).Status == 404 && tv.CoverAsked == null, "cover: only a game id is looked up");
+            Check(go("GET", "/r/" + "000000000000000000000000" + "/cover/00000000-0000-0000-0000-000000000001", null).Status == 404, "cover: a wrong token gets nothing");
 
             foreach (string c in PhoneRemote.BrowseCommands)
             {

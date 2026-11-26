@@ -1,4 +1,4 @@
-# Selene starter translation: common navigation and settings. Missing phrases use English.
+# Lanternfall starter translation: common navigation and settings. Missing phrases use English.
 Settings = 设置
 Back = 返回
 Select = 选择
@@ -102,8 +102,6 @@ Scroll to a picked game = 滚动至所选游戏
 Scroll along the row to a game you picked from search or another screen. = 从搜索或其他页面选中游戏后，将列表滚动至该游戏。
 Full-width row = 全宽游戏列表
 Let the game row reach the edges of the screen. = 允许游戏横向列表延伸至屏幕边缘。
-Trailers from YouTube = YouTube 预告片
-For games with no Steam trailer, download the official trailer from YouTube. Uses the game song tools. = 对没有 Steam 预告片的游戏，从 YouTube 下载官方预告片。使用游戏音乐工具。
 Trailer delay = 预告片延迟
 Set how long to stay on a game before its trailer plays. = 设置停留在游戏上多久后播放预告片。
 Download trailers = 下载预告片
@@ -172,8 +170,6 @@ Interface sounds volume = 界面音效音量
 Set the volume of interface sounds. = 设置界面音效的音量。
 Clip volume = 片段音量
 Set the volume of video clips in Captures. = 设置截图与录像中视频片段的音量。
-Get game songs = 获取游戏音乐
-Get missing game songs. Required tools use about 130 MB. = 获取缺少的游戏音乐。所需工具约占用 130 MB。
 Selene OST as default music = 以 Selene 原声作为默认音乐
 Use Selene OST when no default music file is selected. = 未选择默认音乐文件时使用 Selene 原声。
 Songs wait until you stop = 停止滚动后再切歌
@@ -738,7 +734,6 @@ Spotify as ambient music = 用 Spotify 作环境音乐
 Your Spotify plays instead of the ambient tracks, wherever a game has no song. Needs the Spotify app open and signed in. = 在游戏没有自己的音乐时，用你的 Spotify 代替环境音轨。需要打开并登录 Spotify 应用。
 Night music = 夜间音乐
 Softer, lower music for the evening. This is UniPlaySong's own switch. = 适合夜晚的更柔和、更低的音乐。这是 UniPlaySong 自己的开关。
-Opt in to songs for your library. Asks before downloading songs or about 130 MB of required tools. = 为你的游戏库启用音乐。下载音乐或约 130 MB 必需工具前会先询问。
 A game's song starts once you rest on it, so holding a direction scrolls smoothly. Sets UniPlaySong's hover delay. = 停留在游戏上后才开始播放它的音乐，按住方向键时滚动更流畅。设置 UniPlaySong 的悬停延迟。
 Let Selene run the music = 让 Selene 管理音乐
 Selene sets UniPlaySong's level and pauses and resumes it as you browse, launch games and watch trailers. Off leaves it alone. = Selene 会设置 UniPlaySong 的音量，并在你浏览、启动游戏和观看预告片时暂停和恢复它。关闭后不做干预。

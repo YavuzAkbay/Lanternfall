@@ -89,7 +89,9 @@ namespace Selene
                                 lock (gate) if (stop) break;
                                 continue;
                             }
-                            throw;
+                            // any other web error (timeout, 5xx, bad image link, a second rate limit) only skips this game
+                            HomeNav.Log("square art: " + g.Name + ": " + ex.Message);
+                            asked = true;
                         }
                         catch (Exception ex) { HomeNav.Log("square art: " + g.Name + ": " + ex.Message); }
                     }

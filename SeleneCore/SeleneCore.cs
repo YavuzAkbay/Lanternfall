@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -44,7 +44,9 @@ namespace Selene
 
         public override void OnApplicationStarted(OnApplicationStartedEventArgs args)
         {
-            LegacyTasks.RepairLaunchers(PlayniteApi);
+            // (starts helper processes and touches the library: never allowed to abort the plugin's start)
+            try { LegacyTasks.RepairLaunchers(PlayniteApi); }
+            catch (Exception ex) { logger.Error(ex, "Selene Core: legacy launcher repair failed"); }
             if (!Active)
             {
                 logger.Info("Selene Core: the Selene theme isn't in use (fullscreen theme: " + SelenePaths.ActiveThemeId + "), staying off");
@@ -74,13 +76,12 @@ namespace Selene
             catch (Exception ex)
             {
                 logger.Error(ex, "Selene Core: couldn't apply the profile's theme");
-                PlayniteApi.Notifications.Add(new NotificationMessage("selene-theme", "Selene couldn't apply your theme, using the default look: " + ex.Message, NotificationType.Error));
+                PlayniteApi.Notifications.Add(new NotificationMessage("selene-theme", ForkBrand.Text("Selene couldn't apply your theme, using the default look: ") + ex.Message, NotificationType.Error));
             }
             CollectionPresets.Ensure(PlayniteApi);   // Collection's LB / RB tabs
             HomeNav.RefreshRowFilters();              // the five tabs, then your own filter presets
             Ui.RefreshPrompts();                      // Xbox or PlayStation names in the hints
             SeleneShell.Start();
-            StartupWork.AfterHome("game songs", () => { if (!MediaDownloads.Unified || !MediaDownloads.Enabled) SongSetup.StartLater(); });
             StartupWork.AfterHome("library media", () => { if (MediaDownloads.Enabled) MediaDownloads.Start(); });
             // at once (off the UI thread): a new install's avatar step comes before the home, and offered only the still picture
             if (string.IsNullOrWhiteSpace(settings.Settings.AvatarPath)) AnimatedAvatar.Fetch(SelenePaths.SteamId);
@@ -102,6 +103,7 @@ namespace Selene
                 System.Threading.Thread.Sleep(secs * 1000);
             }
             try { MusicLevel.Release(); } catch { }
+            try { HomeNav.FlushLog(); } catch { }
             base.Dispose();
         }
 
@@ -112,6 +114,7 @@ namespace Selene
             HomeNav.ShutdownBegun = true;
             HomeNav.Log("quit: Playnite is closing");
             if (Active) { HomeNav.ReleaseMusic(); HomeNav.CleanMusicLeftovers(PlayniteApi); }   // the music add-on is saved as it should be
+            HomeNav.FlushLog();
         }
 
         public override void OnGameStarting(OnGameStartingEventArgs args)
@@ -123,7 +126,7 @@ namespace Selene
             if (action != null && action.Type == Playnite.SDK.Models.GameActionType.File && LegacyElevation.IsLauncher(action.Path, action.Arguments))
             {
                 args.CancelStartup = true;
-                PlayniteApi.Dialogs.ShowMessage("Selene couldn't recover this game's launcher from its old administrator task. Set its Play action to the game's executable in Playnite. If the task was already removed, use its saved details or launcher backup.", "Update game launcher");
+                PlayniteApi.Dialogs.ShowMessage(ForkBrand.Text("Selene couldn't recover this game's launcher from its old administrator task. Set its Play action to the game's executable in Playnite. If the task was already removed, use its saved details or launcher backup."), "Update game launcher");
                 return;
             }
             if (Active && Features.On("gameresolution")) GameResolution.Apply(PlayniteApi, args.Game, action);   // before the game reads its saved size
@@ -157,17 +160,19 @@ namespace Selene
         }
 
         // Extensions menu: back to Who's playing?, the profile steps for the signed-in profile, or the setup check
+        private static readonly string MenuSectionName = "@" + ForkBrand.Name;   // Playnite's own Extensions menu shows this name
+
         public override IEnumerable<MainMenuItem> GetMainMenuItems(GetMainMenuItemsArgs args)
         {
             if (!Active) yield break;
-            yield return new MainMenuItem { MenuSection = "@Selene", Description = "Switch profile", Action = a => LoginScene.OpenWith(() => new WhoScreen(null)) };
+            yield return new MainMenuItem { MenuSection = MenuSectionName, Description = "Switch profile", Action = a => LoginScene.OpenWith(() => new WhoScreen(null)) };
             if (Profiles.Active != null)
                 yield return new MainMenuItem
                 {
-                    MenuSection = "@Selene", Description = "Edit profile (name, avatar, theme, background)",
+                    MenuSection = MenuSectionName, Description = "Edit profile (name, avatar, theme, background)",
                     Action = a => { var p = Profiles.Active; if (p != null) LoginScene.OpenWith(() => new ProfileSteps(p, null, q => LoginScene.Finish())); }
                 };
-            yield return new MainMenuItem { MenuSection = "@Selene", Description = "Setup check", Action = a => LoginScene.OpenWith(() => new SetupScreen(false)) };
+            yield return new MainMenuItem { MenuSection = MenuSectionName, Description = "Setup check", Action = a => LoginScene.OpenWith(() => new SetupScreen(false)) };
         }
 
         public override ISettings GetSettings(bool firstRunSettings) { return settings; }
@@ -248,12 +253,13 @@ namespace Selene
         {
             var s = vm.Settings;
             var panel = new StackPanel { Margin = new Thickness(20) };
-            panel.Children.Add(new TextBlock { Text = "Features (also in Selene's menu under Selene settings):", FontWeight = FontWeights.SemiBold });
+            Func<string, string> B = ForkBrand.Text;   // (this page also opens in Playnite's desktop mode, where the fullscreen text hook is off)
+            panel.Children.Add(new TextBlock { Text = B("Features (also in Selene's menu under Selene settings):"), FontWeight = FontWeights.SemiBold });
             foreach (var f in Features.All)
             {
                 if (f.IsChoice || f.Action != null || f.Get != null || DownloadConsent.IsControlled(f.Key)) continue;
                 var key = f.Key;
-                var box = new CheckBox { Content = f.Label + "  -  " + f.About, IsChecked = Features.On(key), Margin = new Thickness(0, 6, 0, 0) };
+                var box = new CheckBox { Content = B(f.Label + "  -  " + f.About), IsChecked = Features.On(key), Margin = new Thickness(0, 6, 0, 0) };
                 box.Checked += (o, e) => Features.Mark(s, key, true);
                 box.Unchecked += (o, e) => Features.Mark(s, key, false);
                 panel.Children.Add(box);
@@ -263,7 +269,7 @@ namespace Selene
                 if (!f.IsChoice || DownloadConsent.IsControlled(f.Key) || (f.Available != null && !f.Available())) continue;
                 var key = f.Key; var opt = f;
                 var line = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
-                var combo = new ComboBox { ItemsSource = f.Names ?? f.Choices, SelectedIndex = Math.Max(0, Array.IndexOf(f.Choices, Features.Value(key))), Width = 190, Margin = new Thickness(0, 0, 10, 0) };
+                var combo = new ComboBox { ItemsSource = (f.Names ?? f.Choices).Select(B).ToArray(), SelectedIndex = Math.Max(0, Array.IndexOf(f.Choices, Features.Value(key))), Width = 190, Margin = new Thickness(0, 0, 10, 0) };
                 combo.SelectionChanged += (o, e) =>
                 {
                     if (combo.SelectedIndex < 0) return;
@@ -271,13 +277,13 @@ namespace Selene
                     s.Values[key] = opt.Choices[combo.SelectedIndex];
                 };
                 line.Children.Add(combo);
-                line.Children.Add(new TextBlock { Text = f.Label + "  -  " + f.About, VerticalAlignment = VerticalAlignment.Center });
+                line.Children.Add(new TextBlock { Text = B(f.Label + "  -  " + f.About), VerticalAlignment = VerticalAlignment.Center });
                 panel.Children.Add(line);
             }
-            panel.Children.Add(new TextBlock { Text = "Optional media downloads start off. Choose their scope and review storage locations in Selene settings > Spotlight or Sound & music.", TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 12, 0, 4) });
+            panel.Children.Add(new TextBlock { Text = B("Optional media downloads start off. Choose their scope and review storage locations in Selene settings > Spotlight or Sound & music."), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 12, 0, 4) });
             Func<string, string, Action<string>, TextBox> field = (label, value, set) =>
             {
-                panel.Children.Add(new TextBlock { Text = label, Margin = new Thickness(0, 12, 0, 4) });
+                panel.Children.Add(new TextBlock { Text = B(label), Margin = new Thickness(0, 12, 0, 4) });
                 var box = new TextBox { Text = value ?? "" };
                 box.TextChanged += (o, e) => set(box.Text);
                 panel.Children.Add(box);
@@ -292,7 +298,17 @@ namespace Selene
             caps.AcceptsReturn = true; caps.MinHeight = 60;
             field("Your wallpapers folder (images in it and its subfolders show up in the background picker). Empty = only Selene's wallpapers:", s.WallpapersFolder, v => s.WallpapersFolder = v);
             var gridKey = Features.Remembered("steamgriddb-key");
-            field("SteamGridDB API key, for square tile art (free at steamgriddb.com > Preferences > API). Empty = the SteamGridDB add-on's key, if any:", gridKey, v => SquareFetch.SetKey(v));
+            // (saved when the box is left, not on every keystroke: each one wrote the plugin settings file)
+            var gridBox = field("SteamGridDB API key, for square tile art (free at steamgriddb.com > Preferences > API). Empty = the SteamGridDB add-on's key, if any:", gridKey, v => { });
+            string gridApplied = gridKey ?? "";
+            Action applyGridKey = () =>
+            {
+                if (gridBox.Text == gridApplied) return;
+                gridApplied = gridBox.Text;
+                SquareFetch.SetKey(gridApplied);
+            };
+            gridBox.LostFocus += (o, e) => applyGridKey();
+            gridBox.Unloaded += (o, e) => applyGridKey();
             field("Login name. Empty = your Steam name:", s.DisplayName, v => s.DisplayName = v);
             field("Login picture (image file). Empty = your Steam avatar:", s.AvatarPath, v => s.AvatarPath = v);
             field("Optional companion program (.exe) Selene starts for Sleep, Restart, Shut down and to restart Playnite. It runs with Playnite's own rights, so only choose a program you trust. Empty = off:", s.HelperPath, v => s.HelperPath = v);
@@ -377,7 +393,6 @@ namespace Selene
             new Option { Group = "Spotlight", Key = "steadyhold", Label = "Steady hold scrolling", About = "Holding left or right moves through games at a steady pace the row can keep up with." },
             new Option { Group = "Spotlight", Key = "pickscroll", Label = "Scroll to a picked game", About = "Scroll along the row to a game you picked from search or another screen." },
             new Option { Group = "Spotlight", Key = "rowedges", Label = "Full-width row", About = "Let the game row reach the edges of the screen." },
-            new Option { Group = "Spotlight", Key = "youtubetrailers", Label = "Trailers from YouTube", About = "For games with no Steam trailer, download the official trailer from YouTube. Uses the game song tools." },
             new Option { Group = "Spotlight", Key = "trailerdelay", Label = "Trailer delay", About = "Set how long to stay on a game before its trailer plays.", Choices = new[] { "1", "2.5", "5", "0" }, Names = new[] { "1 second", "2.5 seconds", "5 seconds", "Never" }, Default = "2.5" },
             new Option { Group = "Spotlight", Key = "trailerdownload", Label = "Download trailers", About = "Off until you choose a scope and confirm the save location. Each trailer is about 20 MB.", Choices = new[] { "off", "browse", "all" }, Names = new[] { "Off", "Games you select", "Whole library" }, Default = "off", Note = Background.ArtNote, Progress = Background.ArtProgress },
             new Option { Group = "Spotlight", Key = "artdownload", Label = "Download logos and backgrounds", About = "Get missing logos and backgrounds for selected games.", DefaultOn = false, Note = Background.ArtNote, Progress = Background.ArtProgress },
@@ -426,7 +441,6 @@ namespace Selene
             new Option { Group = "Sound & music", Key = "upsdefault", Label = "Ambient music", About = "Play background music when a game has no song of its own. This is UniPlaySong's own switch.", Get = () => MusicLevel.UpsSwitch("EnableDefaultMusic"), Put = on => MusicLevel.SetUpsSwitch("EnableDefaultMusic", on), Available = MusicLevel.Installed },
             new Option { Group = "Sound & music", Key = "upsspotify", Label = "Spotify as ambient music", About = "Your Spotify plays instead of the ambient tracks, wherever a game has no song. Needs the Spotify app open and signed in.", DefaultOn = false, Get = MusicLevel.SpotifyAmbient, Put = MusicLevel.SetSpotifyAmbient, Available = () => MusicLevel.Installed() && Features.On("upsdefault") },
             new Option { Group = "Sound & music", Key = "upsnight", Label = "Night music", About = "Softer, lower music for the evening. This is UniPlaySong's own switch.", DefaultOn = false, Get = () => MusicLevel.UpsSwitch("CalmDownModeEnabled"), Put = on => MusicLevel.SetUpsSwitch("CalmDownModeEnabled", on), Available = MusicLevel.Installed },
-            new Option { Group = "Sound & music", Key = "songsetup", Label = "Get game songs", About = "Opt in to songs for your library. Asks before downloading songs or about 130 MB of required tools.", DefaultOn = false, Note = SongSetup.Status, Progress = Background.SongsProgress, Available = () => HasAddon("UniPlaySong") },
             new Option { Group = "Sound & music", Key = "selenemusic", Label = "Selene OST as default music", About = "Use Selene OST when no default music file is selected.", DefaultOn = false },
             new Option { Group = "Sound & music", Key = "songsettle", Label = "Songs wait until you stop", About = "A game's song starts once you rest on it, so holding a direction scrolls smoothly. Sets UniPlaySong's hover delay.", Available = () => HasAddon("UniPlaySong") },
             new Option { Group = "Sound & music", Key = "music", Label = "Let Selene run the music", About = "Selene sets UniPlaySong's level and pauses and resumes it as you browse, launch games and watch trailers. Off leaves it alone.", Available = () => HasAddon("UniPlaySong") },
@@ -554,7 +568,19 @@ namespace Selene
             }
         }
 
-        private static bool DefaultOn(string key) { var o = All.FirstOrDefault(f => f.Key == key); return o == null || o.DefaultOn; }
+        // key -> option, built once on first use (On/Find are asked on hot paths: every text load, every pad press)
+        private static Dictionary<string, Option> byKey;
+        private static Dictionary<string, Option> ByKey()
+        {
+            var map = byKey;
+            if (map != null) return map;
+            map = new Dictionary<string, Option>();
+            foreach (var o in All) if (o != null && o.Key != null && !map.ContainsKey(o.Key)) map[o.Key] = o;   // the first one wins, as before
+            byKey = map;
+            return map;
+        }
+
+        private static bool DefaultOn(string key) { var o = Find(key); return o == null || o.DefaultOn; }
 
         public static bool On(string key)
         {
@@ -585,7 +611,11 @@ namespace Selene
         }
 
         // ---- choices ----
-        public static Option Find(string key) { return All.FirstOrDefault(f => f.Key == key); }
+        public static Option Find(string key)
+        {
+            Option o;
+            return key != null && ByKey().TryGetValue(key, out o) ? o : null;
+        }
 
         // every switch and choice back to its default (the Reset row)
         public static void ResetAll()

@@ -1,4 +1,4 @@
-bin/
+﻿bin/
 obj/
 .vs/
 *.user
@@ -15,7 +15,7 @@ CLAUDE.local.md
 # Lanternfall Browser build output
 Browser/build/
 
-# Local-only overlay: YouTube's web route (BotGuard/PO tokens + YouTube.js). Kept on the maintainer's machine, not published.
+# Optional local files (see Browser/build.ps1); not part of this repository.
 Browser/ytweb/
 Browser/lib/ytweb/
 tools/update-youtubejs.ps1

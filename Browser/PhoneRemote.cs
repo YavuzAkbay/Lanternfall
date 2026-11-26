@@ -109,12 +109,16 @@ namespace SeleneBrowser
         string OpenUrl(string url);
         string WebSearch(string words);   // the TV browser searches the web for these words
         string Control(string command);   // YouTube: toggle, back, forward, next, previous, stop
-        string Browse(string command);    // browser: back, forward, reload, home, up, down, zoomin, zoomout, newtab, closetab
+        string Browse(string command);    // browser: back, forward, reload, home, up, down, zoomin, zoomout, newtab, closetab, address
         string Pointer(string action, int dx, int dy);   // browser cursor: move (dx, dy), scroll (dy), click
         /// <summary>ctx = "youtube" | "browser" | "home" (what is on the TV), plus that screen's facts (YouTube: playing, title, author,
         /// paused, t, d, live; browser: tab, url, canBack, canForward).</summary>
         Dictionary<string, object> Status();
         List<Dictionary<string, object>> Search(string query, out string error);   // id, title, author, duration, thumb
+        string Pad(string button);        // one controller press anywhere in the theme (PhoneRemote.PadButtons)
+        List<Dictionary<string, object>> Games(out string error);   // the library: id, name, inst, fav, run, play, last, cover, src
+        string Launch(string id);         // play that game on the TV (a Guid string)
+        byte[] Cover(string id);          // a small JPEG of that game's cover, or null
     }
 
     /// <summary>The keyboard on the TV, as the phone sees it: one at a time. Created by PhoneRemote.BeginTyping; events arrive on
@@ -224,10 +228,13 @@ namespace SeleneBrowser
         public const int MaxBody = 16384;
         public const int MaxFailures = 20;
         public const int LockMilliseconds = 5 * 60 * 1000;
-        public const int MaxConnections = 24;   // at once: a device that connects and says nothing holds a worker for up to 5 s
+        public const int MaxConnections = 24;   // at once: a device that connects and says nothing, or trickles bytes, holds a worker for up to about 10 s (PhoneNet.RequestDeadlineMs)
         public static readonly string[] PointerActions = { "move", "scroll", "click" };
         public static readonly string[] Commands = { "toggle", "back", "forward", "next", "previous", "stop" };
-        public static readonly string[] BrowseCommands = { "back", "forward", "reload", "home", "up", "down", "zoomin", "zoomout", "newtab", "closetab" };
+        public static readonly string[] PadButtons = { "A", "B", "X", "Y", "Start", "Back", "LeftShoulder", "RightShoulder", "TriggerLeft", "TriggerRight",
+                                                       "DPadUp", "DPadDown", "DPadLeft", "DPadRight", "LeftStick", "RightStick" };
+        private static readonly Regex GameId = new Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", RegexOptions.Compiled);
+        public static readonly string[] BrowseCommands = { "back", "forward", "reload", "home", "up", "down", "zoomin", "zoomout", "newtab", "closetab", "address" };
 
         private readonly object gate = new object();
         private readonly IRemoteHost host;
@@ -287,7 +294,7 @@ namespace SeleneBrowser
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(stateFile));
                 var d = new Dictionary<string, object> { { "token", token }, { "port", savedPort } };
-                File.WriteAllText(stateFile, new JavaScriptSerializer().Serialize(d), Encoding.UTF8);
+                AtomicFile.WriteAllText(stateFile, new JavaScriptSerializer().Serialize(d), Encoding.UTF8);
             }
             catch { }
         }
@@ -445,7 +452,8 @@ namespace SeleneBrowser
             string query = "";
             int q = path.IndexOf('?');
             if (q >= 0) { query = path.Substring(q + 1); path = path.Substring(0, q); }
-            if (!path.StartsWith("/r/", StringComparison.Ordinal)) return Fail(client);
+            // anything outside /r/ (a phone browser asking for /favicon.ico, an icon...) is not a guess at the secret address: no strike
+            if (!path.StartsWith("/r/", StringComparison.Ordinal)) return PhoneHttp.Plain(404, "Not found");
             string rest = path.Substring(3);
             int slash = rest.IndexOf('/');
             string tok = slash < 0 ? rest : rest.Substring(0, slash);
@@ -498,6 +506,47 @@ namespace SeleneBrowser
                 }
                 if (!t.Finish(sub == "/kb/done")) return PhoneHttp.Plain(410, "Closed");
                 return Json(Ok());
+            }
+            if (sub == "/pad")
+            {
+                if (!post) return PhoneHttp.Plain(405, "POST only");
+                Seen();
+                var pb = ReadObject(body);
+                string button = pb == null ? null : Str(pb, "b");
+                if (Array.IndexOf(PadButtons, button) < 0) return PhoneHttp.Plain(400, "Unknown button");
+                string padErr = Guard(delegate { return host.Pad(button); });
+                return Json(padErr == null ? Ok() : Error(padErr));
+            }
+            if (sub == "/games")
+            {
+                if (!get) return PhoneHttp.Plain(405, "GET only");
+                Seen();
+                string gerr = null;
+                List<Dictionary<string, object>> games;
+                try { games = host.Games(out gerr); }
+                catch { games = null; }
+                if (games == null) return Json(Error(gerr ?? "The TV could not list the games."));
+                return Json(new Dictionary<string, object> { { "ok", true }, { "games", games } });
+            }
+            if (sub == "/launch")
+            {
+                if (!post) return PhoneHttp.Plain(405, "POST only");
+                Seen();
+                var ld = ReadObject(body);
+                string gid = ld == null ? null : Str(ld, "id");
+                if (gid == null || !GameId.IsMatch(gid)) return PhoneHttp.Plain(400, "Bad game");
+                string lerr = Guard(delegate { return host.Launch(gid); });
+                return Json(lerr == null ? Ok() : Error(lerr));
+            }
+            if (sub.StartsWith("/cover/", StringComparison.Ordinal))
+            {
+                if (!get) return PhoneHttp.Plain(405, "GET only");
+                string cid = sub.Substring(7);
+                if (!GameId.IsMatch(cid)) return PhoneHttp.Plain(404, "Not found");
+                byte[] jpg = null;
+                try { jpg = host.Cover(cid); } catch { }
+                if (jpg == null) return PhoneHttp.Plain(404, "Not found");
+                return new PhoneReply { Type = "image/jpeg", Bytes = jpg, MaxAge = 3600 };
             }
             if (sub == "/ptr")
             {

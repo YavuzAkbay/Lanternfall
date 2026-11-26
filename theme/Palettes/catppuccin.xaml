@@ -5,7 +5,7 @@
     <sys:String x:Key="SeleneThemeId">catppuccin</sys:String>
     <sys:String x:Key="SeleneThemeName">Catppuccin</sys:String>
     <sys:String x:Key="SeleneThemeMode">dark</sys:String>
-    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/catppuccin/1-totoro.png</sys:String>
+    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/catppuccin/1-lanternfall.jpg</sys:String>
 
     <Color x:Key="GlyphColor">#FF89B4FA</Color>
     <Color x:Key="GlyphLightColor">#FFCDD6F4</Color>

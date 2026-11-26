@@ -15,15 +15,53 @@ namespace SeleneBrowser
             get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FreeTube"); }
         }
 
-        public static bool IsAvailable { get { return Directory.Exists(Dir) && File.Exists(Path.Combine(Dir, "profiles.db")); } }
+        // parsed NeDB files by path, valid while the file's write time and length are unchanged (a refresh used to parse the same
+        // file several times over)
+        private sealed class NeDbCached { public DateTime Written; public long Length; public List<Dictionary<string, object>> Rows; }
+        private static readonly Dictionary<string, NeDbCached> neDbCache = new Dictionary<string, NeDbCached>();
+        private static readonly object neDbLock = new object();
 
-        /// <summary>NeDB: one JSON object per line, last line per _id wins, {"$$deleted":true,"_id":..} removes. Order = first appearance of the surviving id.</summary>
+        /// <summary>NeDB: one JSON object per line, last line per _id wins, {"$$deleted":true,"_id":..} removes. Order = first appearance of the surviving id.
+        /// The list is a copy (callers may sort it); the row dictionaries are shared and must not be changed.</summary>
         public static List<Dictionary<string, object>> ReadNeDb(string fileName)
         {
-            List<Dictionary<string, object>> res = new List<Dictionary<string, object>>();
+            string path = Path.Combine(Dir, fileName);
+            DateTime written = DateTime.MinValue;
+            long length = -1;
             try
             {
-                string path = Path.Combine(Dir, fileName);
+                var info = new FileInfo(path);
+                if (info.Exists) { written = info.LastWriteTimeUtc; length = info.Length; }
+            }
+            catch { }
+            if (length >= 0)
+            {
+                lock (neDbLock)
+                {
+                    NeDbCached hit;
+                    if (neDbCache.TryGetValue(path, out hit) && hit.Written == written && hit.Length == length)
+                        return new List<Dictionary<string, object>>(hit.Rows);
+                }
+            }
+            bool parsed;
+            List<Dictionary<string, object>> rows = ParseNeDb(path, out parsed);
+            if (length >= 0 && parsed)   // a file that could not be read (locked, half written) is looked at again next time
+            {
+                lock (neDbLock)
+                {
+                    if (neDbCache.Count > 16) neDbCache.Clear();
+                    neDbCache[path] = new NeDbCached { Written = written, Length = length, Rows = rows };
+                }
+            }
+            return new List<Dictionary<string, object>>(rows);
+        }
+
+        private static List<Dictionary<string, object>> ParseNeDb(string path, out bool parsed)
+        {
+            List<Dictionary<string, object>> res = new List<Dictionary<string, object>>();
+            parsed = false;
+            try
+            {
                 if (!File.Exists(path)) return res;
                 string text;
                 using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
@@ -50,6 +88,7 @@ namespace SeleneBrowser
                     byId[id] = o;
                 }
                 foreach (string id in order) res.Add(byId[id]);
+                parsed = true;
             }
             catch { }
             return res;
@@ -386,10 +425,8 @@ namespace SeleneBrowser
             try
             {
                 string p = ScopedPath(file);
-                string tmp = p + ".tmp";
-                File.WriteAllText(tmp, Ser().Serialize(value), new UTF8Encoding(false));
-                if (File.Exists(p)) File.Delete(p);
-                File.Move(tmp, p);
+                // temp file, then one replace: a crash can never leave the real file missing or half written
+                AtomicFile.WriteAllText(p, Ser().Serialize(value), new UTF8Encoding(false));
             }
             catch { }
         }
@@ -583,17 +620,6 @@ namespace SeleneBrowser
             {
                 if (subs == null) subs = Load<List<ChannelItem>>("yt-subs.json", new List<ChannelItem>());
                 return new List<ChannelItem>(subs);
-            }
-        }
-
-        /// <summary>True when this channel was unsubscribed locally (hides a FreeTube import).</summary>
-        public static bool IsRemoved(string id)
-        {
-            if (string.IsNullOrEmpty(id)) return false;
-            lock (lk)
-            {
-                EnsureRemoved();
-                return removedSubs.Contains(id);
             }
         }
 

@@ -113,10 +113,10 @@ namespace Selene
             if (HomeNav.CanSortTab)
             {
                 int now = Math.Max(0, Array.IndexOf(HomeNav.TabSorts, HomeNav.TabSort()));
-                items.Add(new Item { Icon = Ui.Icon(0xe164), Label = "Sort this tab", Sub = HomeNav.TabSortNames[now], Run = () =>
+                items.Add(new Item { Icon = Ui.Icon(0xe164), Label = "Sort this tab", Sub = Lang.T(HomeNav.TabSortNames[now]), Run = () =>
                 {
                     int cur = Math.Max(0, Array.IndexOf(HomeNav.TabSorts, HomeNav.TabSort()));
-                    musicItems = HomeNav.TabSorts.Select((s, i) => new object[] { i == cur ? 0xe5ca : 0xe164, HomeNav.TabSortNames[i], 20 + i }).ToArray();
+                    musicItems = HomeNav.TabSorts.Select((s, i) => new object[] { i == cur ? 0xe5ca : 0xe164, Lang.T(HomeNav.TabSortNames[i]), 20 + i }).ToArray();
                     OpenPower(true);
                     powerIndex = cur; ShowPowerFocus();
                 } });
@@ -549,7 +549,7 @@ namespace Selene
             try
             {
                 var sb = new System.Text.StringBuilder();
-                sb.AppendLine("Selene " + (HomeNav.Api != null ? typeof(MenuScreen).Assembly.GetName().Version.ToString() : "") + " on Playnite " + (HomeNav.Api != null ? HomeNav.Api.ApplicationInfo.ApplicationVersion.ToString() : "") + ", Windows " + Environment.OSVersion.Version);
+                sb.AppendLine(ForkBrand.Name + " " + (HomeNav.Api != null ? typeof(MenuScreen).Assembly.GetName().Version.ToString() : "") + " on Playnite " + (HomeNav.Api != null ? HomeNav.Api.ApplicationInfo.ApplicationVersion.ToString() : "") + ", Windows " + Environment.OSVersion.Version);
                 foreach (var pair in new[] { new[] { "selene.log", System.IO.Path.Combine(System.IO.Path.GetTempPath(), "selene.log"), "500" },
                                              new[] { "playnite.log", System.IO.Path.Combine(HomeNav.Api != null ? HomeNav.Api.Paths.ConfigurationPath : "", "playnite.log"), "200" } })
                 {

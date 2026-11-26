@@ -5,7 +5,7 @@
     <sys:String x:Key="SeleneThemeId">osaka-jade</sys:String>
     <sys:String x:Key="SeleneThemeName">Osaka Jade</sys:String>
     <sys:String x:Key="SeleneThemeMode">dark</sys:String>
-    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/osaka-jade/1-glowing-city.jpg</sys:String>
+    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/osaka-jade/1-lanternfall.jpg</sys:String>
 
     <Color x:Key="GlyphColor">#FF509475</Color>
     <Color x:Key="GlyphLightColor">#FFF7E8B2</Color>

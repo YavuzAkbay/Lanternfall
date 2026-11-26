@@ -57,7 +57,16 @@ namespace Selene
             // the main screen's template is applied a moment after start: retry until its parts exist
             attachTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
             int tries = 0;
-            attachTimer.Tick += (s, e) => { if (TryAttach()) { Ready = true; attachTimer.Stop(); } else if (++tries > 120) attachTimer.Stop(); };
+            attachTimer.Tick += (s, e) =>
+            {
+                // an exception here would reach the dispatcher's unhandled path (fatal in Playnite) and the timer would
+                // re-run the half-done attach (and its event subscriptions) every 250 ms: count a throw as a failed try
+                bool done = false;
+                try { done = TryAttach(); }
+                catch (Exception ex) { HomeNav.Log("shell: attach failed: " + ex.Message); }
+                if (done) { Ready = true; attachTimer.Stop(); }
+                else if (++tries > 120) attachTimer.Stop();
+            };
             attachTimer.Start();
         }
 
@@ -192,7 +201,9 @@ namespace Selene
                     int days = (DateTime.Today - when.Value.ToLocalTime().Date).Days;
                     text = days <= 0 ? "Today" : days == 1 ? "Yesterday" : days < 7 ? days + " days ago" : when.Value.ToLocalTime().ToString("MMM d, yyyy");
                 }
-                Application.Current.Resources["SeleneLastPlayed"] = text;
+                // (a resource write makes WPF re-walk the tree even when the value is the same)
+                if (!string.Equals(Application.Current.Resources["SeleneLastPlayed"] as string, text, StringComparison.Ordinal))
+                    Application.Current.Resources["SeleneLastPlayed"] = text;
                 PlatformIcons.PublishGame(game);
             }
             catch (Exception ex) { HomeNav.Log("last played: " + ex.Message); }

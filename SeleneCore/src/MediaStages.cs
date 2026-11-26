@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -7,8 +7,8 @@ using System.Windows.Media.Animation;
 
 namespace Selene
 {
-    // Games > Download game media while it runs: art, songs and details side by side like Spotlight's stats (a small
-    // label, the count, and a word for where it stands), instead of three lines of text
+    // Games > Download game media while it runs: art and details side by side like Spotlight's stats (a small
+    // label, the count, and a word for where it stands), instead of lines of text
     internal class MediaStages
     {
         private class Stage { public string Label, Value, State; public bool Done; }
@@ -29,10 +29,6 @@ namespace Selene
                 State = total == 0 ? "Waiting" : TrailerFetch.Busy || done < total ? "Downloading" : "Done",
                 Done = total > 0 && !TrailerFetch.Busy && done >= total
             });
-
-            string value, state; bool finished;
-            SongSetup.Stage(out value, out state, out finished);
-            list.Add(new Stage { Label = "SONGS", Value = value, State = state, Done = finished });
 
             int planned = GameInfo.PlannedGames;
             list.Add(new Stage

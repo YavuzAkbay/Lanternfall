@@ -145,24 +145,6 @@ namespace Selene
             catch { return null; }
         }
 
-        public static ImageSource Cover(Game g, int width)
-        {
-            var path = CoverPath(g);
-            if (path == null) return null;
-            try
-            {
-                var bmp = new BitmapImage();
-                bmp.BeginInit();
-                bmp.CacheOption = BitmapCacheOption.OnLoad;
-                bmp.DecodePixelWidth = PixelSize.Width(width);   // (layout units -> real pixels)
-                bmp.UriSource = new Uri(path);
-                bmp.EndInit();
-                bmp.Freeze();
-                return bmp;
-            }
-            catch { return null; }
-        }
-
         // a cover-sized tile for a game: its cover as the face, or its name when it has none
         public static Tile CoverTile(Game g, double w, double h)
         {

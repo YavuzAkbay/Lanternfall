@@ -81,12 +81,14 @@ namespace Selene
                         string xml = ReadTaskDefinition(name) ?? SavedTaskDefinition(game.Id, name);
                         if (xml == null) { HomeNav.Log("legacy elevation: task missing or unreadable for " + game.Name); continue; }
                         string path, args, dir;
+                        // a launcher that cannot be repaired (the program moved, the task has no direct action) is left as it is:
+                        // nothing is changed, so there is nothing to back up (it used to add a backup file on every start)
+                        if (!LegacyElevation.ReadDirectAction(xml, out path, out args, out dir) || !File.Exists(path)) continue;
                         var folder = Path.Combine(SelenePaths.DataFolder, "LauncherBackups");
                         Directory.CreateDirectory(folder);
                         var backup = new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(new
                         { GameId = game.Id, GameName = game.Name, Path = oldPath, Arguments = oldArgs, WorkingDir = oldDir, TaskXml = xml });
                         File.WriteAllText(Path.Combine(folder, game.Id + "-" + Guid.NewGuid().ToString("N") + ".json"), backup);
-                        if (!LegacyElevation.ReadDirectAction(xml, out path, out args, out dir) || !File.Exists(path)) continue;
                         action.Path = path; action.Arguments = args; action.WorkingDir = dir;
                         try { api.Database.Games.Update(game); }
                         catch { action.Path = oldPath; action.Arguments = oldArgs; action.WorkingDir = oldDir; throw; }
@@ -110,10 +112,16 @@ namespace Selene
         // Off the UI thread: detect tasks, then the banner while any are left. Never delete profile files.
         public static void CheckLater()
         {
+            // a start that found none leaves a note with this version: the list of every task on the PC is not read again
+            // (0.3 to 1 s of CPU on every start) until an update brings a new version
+            string version = typeof(LegacyTasks).Assembly.GetName().Version.ToString();
+            if (Features.Remembered("legacytasks-clean") == version) return;
+            var ui = Application.Current.Dispatcher;
             System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
                 if (!Detect()) return;
-                Application.Current.Dispatcher.BeginInvoke(new Action(Banner));
+                if (!Any) ui.BeginInvoke(new Action(() => { try { Features.Remember("legacytasks-clean", version); } catch { } }));
+                ui.BeginInvoke(new Action(Banner));
             });
         }
 
@@ -133,7 +141,7 @@ namespace Selene
                 string summary = Summary();
                 if (Any && host != null)
                 {
-                    string line = (summary ?? "") + ". Go to Selene settings > Advanced.";
+                    string line = (summary ?? "") + Lang.T(". Go to Selene settings > Advanced.");
                     if (banner != null) { bannerLine.Text = line; return; }
                     var head = new TextBlock { Text = "Remove old administrator tasks", FontSize = 19, FontWeight = FontWeights.SemiBold, FontFamily = Ui.Display, Foreground = Ink.Brush("SeleneInkColor") };
                     bannerLine = new TextBlock { Text = line, FontSize = 15, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.75), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0) };

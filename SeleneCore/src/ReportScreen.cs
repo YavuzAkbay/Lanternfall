@@ -176,7 +176,7 @@ namespace Selene
             noteHint = new TextBlock { Text = Idea ? "Say what you'd like and when you'd use it, then press Send (the Start button)." : "Nothing to add? Press Send as it is, with A on it or the Start button.", FontSize = 16, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.6), HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 12, 0, 0) };
             col.Children.Add(noteHint);
             // what goes with it: the full logs are public on GitHub with the issue (an idea goes without them)
-            col.Children.Add(new TextBlock { Text = Idea ? "Shared in Selene's Ideas on GitHub, where others can vote for it. Only your Selene and Playnite versions go with it." : "Sent with it, public on GitHub: Selene's and Playnite's logs, your add-ons, settings and displays (your user name removed).", FontSize = 14, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.45), HorizontalAlignment = noteHint.HorizontalAlignment, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0) });
+            col.Children.Add(new TextBlock { Text = Idea ? Lang.T("Shared in Selene's Ideas on GitHub, where others can vote for it. Only your Selene and Playnite versions go with it.") : Lang.T("Sent with it, public on GitHub: Selene's and Playnite's logs, your add-ons, settings and displays (your user name removed)."), FontSize = 14, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.45), HorizontalAlignment = noteHint.HorizontalAlignment, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0) });
             pad = new KeyPad("Send");
             pad.Root.Margin = new Thickness(0, 20, 0, 0);
             pad.Typed = Type;
@@ -242,7 +242,7 @@ namespace Selene
         private void ShowNote()
         {
             bool empty = note.Length == 0;
-            noteText.Text = empty ? (Idea ? "What would you like Selene to do?" : "What happened? A few words help a lot (optional).") : note + "\u258F";
+            noteText.Text = empty ? (Idea ? Lang.T("What would you like Selene to do?") : "What happened? A few words help a lot (optional).") : note + "\u258F";
             noteText.Foreground = Ink.Brush("SeleneInkColor", empty ? 0.45 : 0.95);
             if (noteHint != null) noteHint.Visibility = empty ? Visibility.Visible : Visibility.Hidden;
             if (pad != null) pad.After(note);
@@ -348,6 +348,8 @@ namespace Selene
             };
             if (shot != null && includeShot) report["screenshot"] = Convert.ToBase64String(shot);
             var dispatcher = Root.Dispatcher;
+            // no report service (Lanternfall has none): answer at once, before the logs are read, scrubbed and compressed
+            if (string.IsNullOrEmpty(Service)) { dispatcher.BeginInvoke(new Action(() => done(null, "no report service"))); return; }
             Task.Factory.StartNew(() =>
             {
                 Dictionary<string, object> answer = null;
@@ -421,6 +423,7 @@ namespace Selene
             int turn = ++draftTurn;
             draftId = null;
             if (phoneWatch != null) phoneWatch.Stop();
+            if (string.IsNullOrEmpty(Service)) { phoneTile.Opacity = 0; phoneLine.Text = "Send it from here, or scan the code afterwards to report on GitHub."; return; }
             Ui.Fade(phoneTile, 0.15, 160);
             phoneLine.Text = "Getting the code ready...";
             Post("/draft", "", (result, error) =>
@@ -517,7 +520,8 @@ namespace Selene
                 Text = ok && Idea ? "Scan the code to see it on GitHub, where others can vote for it. Commenting there needs a free GitHub account."
                      : ok ? "Scan the code to see it on GitHub. Adding screenshots or comments there needs a free GitHub account."
                      : error == "slow down" ? "That's a few reports in a row. Try again in an hour, or scan the code to report on GitHub."
-                     : "No internet, maybe. Scan the code to report on GitHub instead.",
+                     : error == "no report service" ? "Reports open on GitHub. Scan the code to write it up there."
+                     : "Couldn't reach the report service. Scan the code to report on GitHub instead.",
                 FontSize = 20, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.65), HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, MaxWidth = 700, Margin = new Thickness(0, 10, 0, 0)
             });
             try

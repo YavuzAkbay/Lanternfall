@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -29,12 +29,12 @@ class LibraryCheck
         AppDomain.CurrentDomain.AssemblyResolve+=(s,e)=>{var name=new AssemblyName(e.Name).Name;foreach(var suffix in new[]{".dll",".exe"}){var path=Path.Combine(runtime,name+suffix);if(File.Exists(path))return Assembly.LoadFrom(path);}return null;};
         var app=new Application{ShutdownMode=ShutdownMode.OnExplicitShutdown};
         Features.Init(new SeleneSettings(),()=>{});Features.Set("sounds",false);Features.Set("collectionglide",false);
-        foreach (var category in new[] { "artdownload", "songsetup", "screenshotsdownload", "metadatacomplete", "trailerdownload" })
+        foreach (var category in new[] { "artdownload", "screenshotsdownload", "metadatacomplete", "trailerdownload" })
             Assert(!DownloadConsent.Allowed(category), "Fresh installations do not consent to " + category);
-        var legacySettings = new SeleneSettings { TurnedOn = new System.Collections.Generic.List<string> { "artdownload", "songsetup" },
+        var legacySettings = new SeleneSettings { TurnedOn = new System.Collections.Generic.List<string> { "artdownload", "screenshotsdownload" },
             Values = new System.Collections.Generic.Dictionary<string, string> { { "trailerdownload", "all" }, { "language", "en_US" } } };
         Features.Init(legacySettings, () => {});
-        Assert(!Features.On("artdownload") && !Features.On("songsetup") && Features.Value("trailerdownload") == "off", "Upgrade pauses inherited or old explicit download settings for fresh consent");
+        Assert(!Features.On("artdownload") && !Features.On("screenshotsdownload") && Features.Value("trailerdownload") == "off", "Upgrade pauses inherited or old explicit download settings for fresh consent");
         Assert(legacySettings.Values["language"] == "en_US", "Download migration preserves unrelated preferences");
         Features.Set("artdownload", true);
         Assert(!DownloadConsent.Allowed("artdownload"), "Enabling a switch alone cannot bypass destination/scope confirmation");

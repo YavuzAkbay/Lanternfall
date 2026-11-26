@@ -85,7 +85,13 @@ namespace Selene
                         }
                     }
                 }
-                catch (Exception ex) { failed.Add(new Uri(feed.Url).Host); HomeNav.Log("news: " + feed.Url + ": " + ex.Message); }
+                catch (Exception ex)
+                {
+                    // an error answer (404, 5xx) holds one of the host's two connections until it is closed
+                    var web = ex as WebException;
+                    if (web != null && web.Response != null) { try { web.Response.Close(); } catch { } }
+                    failed.Add(new Uri(feed.Url).Host); HomeNav.Log("news: " + feed.Url + ": " + ex.Message);
+                }
             }
             errors = failed.Count == 0 ? "" : "Could not refresh: " + string.Join(", ", failed.ToArray());
             return all.GroupBy(a => a.Url, StringComparer.OrdinalIgnoreCase).Select(g => g.First()).OrderByDescending(a => a.Published).Take(100).ToList();

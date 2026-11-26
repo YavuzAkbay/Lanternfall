@@ -5,7 +5,7 @@
     <sys:String x:Key="SeleneThemeId">retro-82</sys:String>
     <sys:String x:Key="SeleneThemeName">Retro 82</sys:String>
     <sys:String x:Key="SeleneThemeMode">dark</sys:String>
-    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/retro-82/1-in-the-groove.jpg</sys:String>
+    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/retro-82/1-lanternfall.jpg</sys:String>
 
     <Color x:Key="GlyphColor">#FFFAA968</Color>
     <Color x:Key="GlyphLightColor">#FFF6DCAC</Color>

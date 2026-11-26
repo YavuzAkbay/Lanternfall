@@ -56,12 +56,11 @@ namespace Selene
             var dispatcher = Root.Dispatcher;
             System.Threading.ThreadPool.QueueUserWorkItem(_ =>
             {
-                string errors = ""; var fetched = NewsCard.FetchAll(snapshot);
+                var fetched = NewsCard.FetchAll(snapshot);
                 dispatcher.BeginInvoke(new Action(() =>
                 {
                     if (closed) return;
-                    loading = false; if (fetched.Count > 0 || errors.Length == 0) articles = fetched; index = 0; Render();
-                    if (errors.Length > 0) status.Text = errors;
+                    loading = false; articles = fetched; index = 0; Render();
                 }));
             });
         }

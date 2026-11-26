@@ -18,6 +18,9 @@ namespace Selene
     {
         private const string Agent = ForkBrand.Agent;
         private const int MemoryMax = 120;
+        private const long MemoryBytesMax = 120L * 1024 * 1024;   // decoded size (a 32-bit process: 120 big pictures at 4K would be ~800 MB)
+        private const int DecodeMax = 1280;                       // real pixels wide, however big the layout asks (the art is darkened and blurred anyway)
+        private static long memoryBytes;
         private static readonly Dictionary<string, ImageSource> memory = new Dictionary<string, ImageSource>();
         private static readonly LinkedList<string> order = new LinkedList<string>();
         private static readonly SemaphoreSlim gate = new SemaphoreSlim(4);
@@ -48,35 +51,79 @@ namespace Selene
             }
             if (hit != null) { done(hit); return; }
             var ui = System.Windows.Application.Current.Dispatcher;
-            Task.Run(() =>
+            // waits for a free slot without parking a pool thread: a Store page asks for hundreds at once
+            gate.WaitAsync().ContinueWith(t =>
             {
                 ImageSource img = null;
-                gate.Wait();
                 try { img = Decode(Bytes(url), width); }
                 catch (Exception ex) { HomeNav.Log("store picture: " + ex.Message + " (" + url + ")"); }
                 finally { gate.Release(); }
                 if (img != null)
                     lock (sync)
                     {
+                        ImageSource old;
+                        if (memory.TryGetValue(key, out old)) { memoryBytes -= SizeOf(old); order.Remove(key); }
                         memory[key] = img;
+                        memoryBytes += SizeOf(img);
                         order.AddFirst(key);
-                        while (order.Count > MemoryMax) { memory.Remove(order.Last.Value); order.RemoveLast(); }
+                        while (order.Count > 1 && (order.Count > MemoryMax || memoryBytes > MemoryBytesMax))
+                        {
+                            ImageSource drop;
+                            if (memory.TryGetValue(order.Last.Value, out drop)) memoryBytes -= SizeOf(drop);
+                            memory.Remove(order.Last.Value); order.RemoveLast();
+                        }
                     }
                 ui.BeginInvoke(new Action(() => done(img)));
-            });
+            }, TaskScheduler.Default);
+        }
+
+        private static long SizeOf(ImageSource s)
+        {
+            var b = s as BitmapSource;
+            return b == null ? 0 : (long)b.PixelWidth * b.PixelHeight * 4;
+        }
+
+        // JPEG, PNG, GIF, BMP or WebP by their first bytes: a captive portal's or an error page's HTML must not be kept as the picture for good
+        private static bool IsImage(byte[] d)
+        {
+            if (d == null || d.Length < 12) return false;
+            if (d[0] == 0xFF && d[1] == 0xD8) return true;                                              // JPEG
+            if (d[0] == 0x89 && d[1] == 0x50 && d[2] == 0x4E && d[3] == 0x47) return true;              // PNG
+            if (d[0] == 0x47 && d[1] == 0x49 && d[2] == 0x46) return true;                              // GIF
+            if (d[0] == 0x42 && d[1] == 0x4D) return true;                                              // BMP
+            if (d[0] == 0x52 && d[1] == 0x49 && d[2] == 0x46 && d[3] == 0x46 && d[8] == 0x57 && d[9] == 0x45 && d[10] == 0x42 && d[11] == 0x50) return true;   // WebP
+            return false;
         }
 
         private static byte[] Bytes(string url)
         {
             var file = FileFor(url);
-            try { if (File.Exists(file)) return File.ReadAllBytes(file); } catch { }
+            try
+            {
+                if (File.Exists(file))
+                {
+                    var have = File.ReadAllBytes(file);
+                    if (IsImage(have)) return have;
+                    File.Delete(file);   // saved by an older version without the check: fetched again
+                }
+            }
+            catch { }
             byte[] data;
-            using (var web = new WebClient())
+            using (var web = new TimedWebClient())
             {
                 web.Headers[HttpRequestHeader.UserAgent] = Agent;
                 data = web.DownloadData(url);
             }
-            try { Directory.CreateDirectory(Folder); File.WriteAllBytes(file, data); } catch { }
+            if (!IsImage(data)) throw new InvalidDataException("not a picture");
+            try
+            {
+                Directory.CreateDirectory(Folder);
+                var part = file + ".part";
+                File.WriteAllBytes(part, data);
+                if (File.Exists(file)) File.Delete(file);
+                File.Move(part, file);
+            }
+            catch { }
             return data;
         }
 
@@ -89,7 +136,7 @@ namespace Selene
                 bmp.BeginInit();
                 bmp.CacheOption = BitmapCacheOption.OnLoad;
                 bmp.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
-                bmp.DecodePixelWidth = PixelSize.Width(width);   // (layout units -> real pixels)
+                bmp.DecodePixelWidth = Math.Min(DecodeMax, PixelSize.Width(width));   // (layout units -> real pixels)
                 bmp.StreamSource = ms;
                 bmp.EndInit();
                 bmp.Freeze();

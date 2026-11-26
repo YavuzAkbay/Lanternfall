@@ -43,7 +43,7 @@ namespace Selene
                 try
                 {
                     try { System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12; } catch { }
-                    using (var web = new System.Net.WebClient { Encoding = System.Text.Encoding.UTF8 })
+                    using (var web = new TimedWebClient { Encoding = System.Text.Encoding.UTF8 })
                     {
                         web.Headers[System.Net.HttpRequestHeader.UserAgent] = "Selene-Playnite";
                         web.Headers[System.Net.HttpRequestHeader.Accept] = "application/vnd.github+json";
@@ -51,6 +51,12 @@ namespace Selene
                         object tag, body;
                         if (release != null && release.TryGetValue("tag_name", out tag)) newest = Convert.ToString(tag).TrimStart('v');
                         if (release != null && release.TryGetValue("body", out body)) notes = Convert.ToString(body);
+                    }
+                    // the tag goes into a folder name and download addresses: only a plain version (1.5.13, 1.5.13-1) is accepted
+                    if (newest != null && !System.Text.RegularExpressions.Regex.IsMatch(newest, @"^\d+(\.\d+){1,3}(-\d+)?$"))
+                    {
+                        HomeNav.Log("update check: ignoring the release tag \"" + newest + "\"");
+                        newest = null; notes = null;
                     }
                     ForkUpdate.Read(newest, notes);   // Lanternfall: does it carry a newer Browser add-on?
                 }

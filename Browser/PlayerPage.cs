@@ -8,7 +8,7 @@ namespace SeleneBrowser
     public static class PlayerPage
     {
         const string Html = @"<!doctype html>
-<html><head><meta charset='utf-8'><title>Nomad Player</title>
+<html><head><meta charset='utf-8'><title>Lanternfall Player</title>
 <meta name='viewport' content='width=device-width,initial-scale=1'>
 <style>
 html,body{margin:0;height:100%;background:#000;overflow:hidden;cursor:none;user-select:none}

@@ -1,6 +1,6 @@
 // PhoneNet.cs - the plumbing the phone link (PhoneRemote.cs) stands on: which addresses and clients are allowed, picking this PC's
 // home-network address, reading one HTTP request, tokens, and writing a reply. No WPF or Playnite references on purpose, so
-// tools	ests can compile it alone. C# 5 only.
+// tools/tests can compile it alone. C# 5 only.
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -20,6 +20,29 @@ namespace SeleneBrowser
         public string Body = "";
         public bool Page;   // the phone page itself (gets the content security policy)
         public string Csp;  // overrides the default policy for the page (the remote's page shows YouTube thumbnails)
+        public byte[] Bytes; // a binary body (a game cover) in place of Body
+        public int MaxAge;   // > 0: the phone may keep it this many seconds (covers), otherwise no-store
+    }
+
+    /// <summary>Writes a file so that a crash or power cut never leaves it half written: the text goes to a temporary file beside it, which then
+    /// replaces the real one in one step. (Lives here because the tests compile this file alone.)</summary>
+    internal static class AtomicFile
+    {
+        public static void WriteAllText(string path, string text, Encoding encoding)
+        {
+            string tmp = path + ".tmp";
+            File.WriteAllText(tmp, text, encoding);
+            try
+            {
+                if (File.Exists(path)) File.Replace(tmp, path, null);
+                else File.Move(tmp, path);
+            }
+            catch
+            {
+                try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
+                throw;
+            }
+        }
     }
 
     internal static class PhoneNet
@@ -104,15 +127,22 @@ namespace SeleneBrowser
             return diff == 0;
         }
 
-        /// <summary>Reads one HTTP request (header up to 8 KB, body up to maxBody). False when it is malformed or too big.</summary>
+        /// <summary>The whole request (header and body) must arrive within this time: a client that trickles one byte at a time
+        /// (each read alone is covered by the socket's timeout) would otherwise hold one of the few connection slots for hours.</summary>
+        public const int RequestDeadlineMs = 10000;
+
+        /// <summary>Reads one HTTP request (header up to 8 KB, body up to maxBody) within RequestDeadlineMs. False when it is malformed,
+        /// too big (errorStatus 413 / 431) or too slow (408).</summary>
         public static bool TryReadRequest(Stream s, int maxBody, out string method, out string target, out string body, out int errorStatus)
         {
             method = target = body = "";
             errorStatus = 400;
+            var clock = System.Diagnostics.Stopwatch.StartNew();
             var head = new List<byte>();
             int state = 0;   // how much of \r\n\r\n has been seen
             while (state < 4)
             {
+                if (clock.ElapsedMilliseconds > RequestDeadlineMs) { errorStatus = 408; return false; }
                 int b = s.ReadByte();
                 if (b < 0) return false;
                 head.Add((byte)b);
@@ -141,6 +171,7 @@ namespace SeleneBrowser
                 int got = 0;
                 while (got < length)
                 {
+                    if (clock.ElapsedMilliseconds > RequestDeadlineMs) { errorStatus = 408; return false; }
                     int n = s.Read(buf, got, length - got);
                     if (n <= 0) return false;
                     got += n;
@@ -164,12 +195,13 @@ namespace SeleneBrowser
     {
         public static void Write(Stream s, PhoneReply r)
         {
-            byte[] body = Encoding.UTF8.GetBytes(r.Body ?? "");
+            byte[] body = r.Bytes ?? Encoding.UTF8.GetBytes(r.Body ?? "");
             var h = new StringBuilder();
             h.Append("HTTP/1.1 ").Append(r.Status.ToString(CultureInfo.InvariantCulture)).Append(' ').Append(Reason(r.Status)).Append("\r\n");
             h.Append("Content-Type: ").Append(r.Type).Append("\r\n");
             h.Append("Content-Length: ").Append(body.Length.ToString(CultureInfo.InvariantCulture)).Append("\r\n");
-            h.Append("Cache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nReferrer-Policy: no-referrer\r\nConnection: close\r\n");
+            h.Append(r.MaxAge > 0 ? "Cache-Control: private, max-age=" + r.MaxAge.ToString(CultureInfo.InvariantCulture) + "\r\n" : "Cache-Control: no-store\r\n");
+            h.Append("X-Content-Type-Options: nosniff\r\nReferrer-Policy: no-referrer\r\nConnection: close\r\n");
             if (r.Page) h.Append("Content-Security-Policy: ").Append(r.Csp ?? "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'").Append("\r\n");
             h.Append("\r\n");
             byte[] head = Encoding.ASCII.GetBytes(h.ToString());
@@ -187,6 +219,7 @@ namespace SeleneBrowser
                 case 403: return "Forbidden";
                 case 404: return "Not Found";
                 case 405: return "Method Not Allowed";
+                case 408: return "Request Timeout";
                 case 410: return "Gone";
                 case 413: return "Payload Too Large";
                 case 429: return "Too Many Requests";

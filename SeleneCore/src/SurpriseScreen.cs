@@ -95,7 +95,7 @@ namespace Selene
             var pool = (installed > 0 ? games.Where(g => g.IsInstalled) : games).Where(g => GameFacts.BackgroundPath(g) != null || GameFacts.CoverPath(g) != null).ToList();
             var ideas = new List<Game>();
             while (ideas.Count < Ui.CardTiles && pool.Count > 0) { var g = pool[cardRandom.Next(pool.Count)]; pool.Remove(g); ideas.Add(g); }
-            string about = games.Count == 0 ? "Add games and Selene picks one for you." : "Selene picks from your " + (installed > 0 ? installed + " installed games" : games.Count + " games") + (fresh > 0 ? ", or the " + fresh + " you haven't played yet." : ".");
+            string about = games.Count == 0 ? Lang.T("Add games and Selene picks one for you.") : Lang.T("Selene picks from your ") + (installed > 0 ? installed + " installed games" : games.Count + " games") + (fresh > 0 ? ", or the " + fresh + " you haven't played yet." : ".");
             if (ideas.Count > 0) about += " Down for a few ideas.";
             var entries = ideas.Select(g =>
             {
@@ -144,7 +144,7 @@ namespace Selene
                 hint.Text = "Try another pool with LB / RB.";
                 return;
             }
-            hint.Text = "Not sure what to play? Selene picks one.";
+            hint.Text = Lang.T("Not sure what to play? Selene picks one.");
             pick = preset != null && candidates.Contains(preset) ? preset : candidates[random.Next(candidates.Count)];
             seen.Add(pick.Id);
             preset = null;   // Y spins for real next time

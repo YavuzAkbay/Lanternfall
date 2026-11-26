@@ -85,7 +85,7 @@ namespace SeleneBrowser
         private readonly Border watchLiveBtn = Theme.Tile("Watch Live", 22, 0xE639, Look.Pill);  // live_tv
         // the ambient backdrop: the focused card's picture melts into the screen (debounced, so a fast scroll doesn't thrash it)
         private readonly DispatcherTimer artTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
-        private const bool AmbientArt = false;   // focused thumbnail melted into the backdrop: off
+        private static readonly bool AmbientArt = false;   // focused thumbnail melted into the backdrop: off (not a const, so the code behind the switch is not "unreachable")
         private Border artCard;       // the card whose picture is wanted (null = none)
         private CardArt artWaiting;   // art whose picture hasn't arrived yet
         private readonly StackPanel formatChipsPanel = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
@@ -120,14 +120,18 @@ namespace SeleneBrowser
             Content = BuildLayout();
             current = TabState(0);
             ShowState(current);
+            // the home screen's site tiles are drawn in the theme's colours; the handler is released with the control (it holds it alive)
+            Action themeChanged = delegate { CardInfo.Refresh(); };
             Unloaded += delegate
             {
+                Theme.Changed -= themeChanged;
                 Presence.Leave("youtube");
                 browseRestChip.Stop(); playerRestChip.Stop();
                 StopAllTimers(); ReleasePlayer();
             };
+            Loaded += delegate { Theme.Changed -= themeChanged; Theme.Changed += themeChanged; };   // attached again after an Unloaded
             artTimer.Tick += delegate { artTimer.Stop(); ApplyArt(); };
-            Theme.Changed += delegate { CardInfo.Refresh(); };   // the home screen's site tiles are drawn in the theme's colours
+            Theme.Changed += themeChanged;
             UpdateHints();
         }
 
@@ -526,7 +530,7 @@ namespace SeleneBrowser
             if (current.Header != null && current.Header.Id.Length > 0) l.Add(SubscribeEntry(current.Header.Id, current.Header.Name, current.Header.Thumbnail));
             l.Add(Item("Refresh", 0xE5D5, delegate { ReloadCurrent(); return true; }));
             l.Add(Item("Phone link", 0xE32C, delegate { OpenLinkCard(); return true; }));
-            l.Add(Item("Clear Nomad watch history", 0xE872, delegate { ClearNomadHistory(); return true; }));
+            l.Add(Item("Clear watch history", 0xE872, delegate { ClearNomadHistory(); return true; }));
             l.Add(Item("Close YouTube", 0xE5CD, delegate { return false; }));
             OpenMenu("YouTube", l);
         }
@@ -704,7 +708,7 @@ namespace SeleneBrowser
             {
                 Dispatcher.BeginInvoke(new Action(delegate
                 {
-                    Toast("Nomad watch history cleared");
+                    Toast("Watch history cleared");
                     if (tabStates[3] != null) tabStates[3].Loaded = false;
                     if (current.Tab == 3) LoadState(current);
                 }));

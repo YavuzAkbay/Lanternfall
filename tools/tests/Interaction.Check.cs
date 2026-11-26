@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
@@ -7,6 +8,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Selene;
+// the Browser add-on's own channel type (Browser\YouTubeModels.cs), to see that what Core writes is what it reads
+public class BrowserChannel { public string Id { get; set; } public string Name { get; set; } public string Thumbnail { get; set; } public string Banner { get; set; } public string Subscribers { get; set; } public string Description { get; set; } public string VideoCount { get; set; } public string Handle { get; set; } }
 class InteractionCheck
 {
     static int checks;
@@ -129,6 +132,106 @@ class InteractionCheck
             Assert(ring.HasAnimatedProperties, "Restoring ambient state restarts the selected ring");
             selected.Visibility = Visibility.Collapsed; WaitUntil(() => !ring.HasAnimatedProperties);
             Assert(!ring.HasAnimatedProperties, "An invisible selected tile has no ambient clocks");
+            // first-run "make it yours": topics -> news -> YouTube channels, then what is written for them
+            {
+                Features.Set("cardnews", false);   // (saving the news feeds would otherwise start a real fetch)
+                int pictureWait; if (!int.TryParse(Environment.GetEnvironmentVariable("LF_PICTURE_WAIT"), out pictureWait)) pictureWait = 300;   // (longer to see the pictures in the screenshots)
+                Func<Screen, System.Collections.Generic.List<PickOption>> optionsOf = s => (System.Collections.Generic.List<PickOption>)Field(s, "options");
+                Func<Screen, string> goText = s => ((Pill)Field(s, "go")).Text;
+                var topics = Personalize.Dev("");
+                Assert(topics is PickScreen && optionsOf(topics).Count == Personalize.Topics.Length, "The first step lists the topics");
+                window.Content = topics.Root; Pump(); topics.Shown(); Wait(500);
+                Assert(goText(topics) == "Skip", "Nothing picked: the button says Skip");
+                topics.Handle("A");
+                Assert(optionsOf(topics)[0].On && goText(topics).StartsWith("Continue"), "A picks a topic and the button says Continue");
+                topics.Handle("DPadRight"); topics.Handle("DPadRight"); topics.Handle("A");
+                topics.Handle("Y"); Assert(optionsOf(topics).Count(o => o.On) == 2, "Y does nothing on the topics step");
+                Wait(300); Render(topics.Root, Path.Combine(args[0], "personalize-topics.png"));
+                topics.Hidden();
+
+                var news = Personalize.Dev("news");
+                var newsOptions = optionsOf(news);
+                Assert(newsOptions.Count == NewsCard.Starters.Length, "Every suggested news source is offered");
+                Assert(newsOptions.All(o => !string.IsNullOrEmpty(o.About) && !string.IsNullOrEmpty(o.Name)), "Every source has a name and a line about it");
+                Func<string, PickOption> source = key => newsOptions.First(o => o.Key == key);
+                Assert(source(NewsFeeds.SteamLibrary).On && source("https://www.pcgamer.com/rss/").On && source("https://www.nintendolife.com/feeds/latest").On, "PC and Nintendo fill in their sources");
+                Assert(!source("https://kotaku.com/rss").On && !source("https://www.pushsquare.com/feeds/latest").On, "Other topics' sources stay off");
+                window.Content = news.Root; Pump(); news.Shown(); Wait(pictureWait);
+                news.Handle("DPadDown"); news.Handle("DPadRight"); Wait(200); Render(news.Root, Path.Combine(args[0], "personalize-news.png"));
+                news.Handle("Y"); Assert(newsOptions.All(o => o.On), "Y picks every source");
+                news.Handle("Y"); Assert(newsOptions.All(o => !o.On) && goText(news) == "Skip", "Y again picks none");
+                news.Hidden();
+
+                var tube = Personalize.Dev("youtube");
+                var tubeOptions = optionsOf(tube);
+                Assert(tubeOptions.Count == Personalize.Channels.Length + 1 && tubeOptions.Count >= 16, "The channels are offered, after a card to add one");
+                Assert(tubeOptions[0].Open != null && !tubeOptions[0].On && Field(tube, "skipAll") != null, "The first card adds a channel, and X can skip the setup");
+                Assert(tubeOptions.First(o => o.Name == "Gamers Nexus").On && tubeOptions.First(o => o.Name == "Nintendo of America").On && !tubeOptions.First(o => o.Name == "IGN").On, "The topics pick their channels");
+                window.Content = tube.Root; Pump(); tube.Shown(); Wait(pictureWait);
+                Wait(pictureWait); Render(tube.Root, Path.Combine(args[0], "personalize-youtube.png"));
+                tube.Handle("Y"); Assert(tubeOptions.Skip(1).All(o => o.On) && !tubeOptions[0].On, "Y picks every channel but never the add card");
+                tube.Handle("Y"); Assert(tubeOptions.All(o => !o.On), "Y again picks none");
+                for (int i = 0; i < 6; i++) tube.Handle("DPadDown");
+                Wait(pictureWait); Render(tube.Root, Path.Combine(args[0], "personalize-youtube-scrolled.png"));
+                tube.Hidden();
+
+                // adding a channel by hand: what is accepted, and what a channel's page gives
+                Assert(YouTubeLookup.PageFor("@IGN") == "https://www.youtube.com/@IGN", "An @handle finds the channel's page");
+                Assert(YouTubeLookup.PageFor("Linus Tech Tips") == "https://www.youtube.com/@LinusTechTips", "A name without its spaces is a handle");
+                Assert(YouTubeLookup.PageFor("https://www.youtube.com/@GMTK/videos?si=abc") == "https://www.youtube.com/@GMTK", "A link to the channel's page, with the extras dropped");
+                Assert(YouTubeLookup.PageFor("youtube.com/channel/UCKy1dAqELo0zrOtPkf0eTMw") == "https://www.youtube.com/channel/UCKy1dAqELo0zrOtPkf0eTMw", "A channel link without https works");
+                Assert(YouTubeLookup.PageFor("UCKy1dAqELo0zrOtPkf0eTMw") == "https://www.youtube.com/channel/UCKy1dAqELo0zrOtPkf0eTMw", "A bare channel id works");
+                Assert(YouTubeLookup.PageFor("https://www.youtube.com/user/PewDiePie") == "https://www.youtube.com/user/PewDiePie", "An old /user/ link works");
+                Assert(YouTubeLookup.PageFor("https://evil.example/@IGN") == null && YouTubeLookup.PageFor("https://youtube.com.evil.example/@IGN") == null, "Only youtube.com is ever read");
+                Assert(YouTubeLookup.PageFor("https://www.youtube.com/watch?v=dQw4w9WgXcQ") == null && YouTubeLookup.PageFor("") == null && YouTubeLookup.PageFor("a/../b") == null, "A video link or nothing is not a channel");
+                Assert(YouTubeLookup.PageFor("ign/../../x") == null && YouTubeLookup.PageFor("@ign?x=1&y") == null, "Odd characters never reach the address");
+                var html = "<html><head><link rel=\"canonical\" href=\"https://www.youtube.com/@SomeOne\"><meta property=\"og:title\" content=\"Some &amp; One\"><meta property=\"og:image\" content=\"https://yt3.googleusercontent.com/abc=s900-c-k-c0x00ffffff-no-rj\"><link rel=\"alternate\" type=\"application/rss+xml\" href=\"https://www.youtube.com/feeds/videos.xml?channel_id=UCKy1dAqELo0zrOtPkf0eTMw\"></head></html>";
+                var parsed = YouTubeLookup.Parse(html);
+                Assert(parsed != null && parsed.Id == "UCKy1dAqELo0zrOtPkf0eTMw" && parsed.Name == "Some & One" && parsed.Handle == "@SomeOne" && parsed.Avatar == "https://yt3.googleusercontent.com/abc=s176-c-k-c0x00ffffff-no-rj", "A channel's page gives its id, name, handle and a small avatar");
+                Assert(YouTubeLookup.Parse(html.Replace("yt3.googleusercontent.com", "evil.example")).Avatar == "", "A picture from another host is dropped");
+                Assert(YouTubeLookup.Parse("<html><title>Not a channel</title></html>") == null && YouTubeLookup.Parse("") == null, "A page that isn't a channel's gives nothing");
+                Personalize.Channel got = null;
+                var adder = new AddChannelScreen(() => null, c => got = c);
+                window.Content = adder.Root; Pump(); adder.Shown(); adder.Type("@ign"); Wait(300);
+                Render(adder.Root, Path.Combine(args[0], "personalize-add-channel.png"));
+                adder.Hidden();
+                if (Environment.GetEnvironmentVariable("LF_LIVE") == "1")
+                {
+                    var live = YouTubeLookup.Find("@IGN");
+                    Assert(live != null && live.Id == "UCKy1dAqELo0zrOtPkf0eTMw" && live.Name == "IGN" && live.Avatar.StartsWith("https://yt3.googleusercontent.com/"), "Live: @IGN is found on YouTube");
+                    Assert(YouTubeLookup.Find("this-channel-does-not-exist-zzqx") == null, "Live: a channel that doesn't exist gives nothing");
+                }
+                var mine = new Personalize.Channel { Id = "UCKy1dAqELo0zrOtPkf0eTMw", Name = "Mine", Handle = "@mine", Avatar = "https://yt3.googleusercontent.com/zzz=s176-c-k", Topics = new string[0] };
+                Assert(Personalize.AvatarUrl(mine) == mine.Avatar, "A channel added by hand keeps its own avatar address");
+
+                // the channel list is valid: real-looking ids, none twice, an avatar each, topics that exist
+                var rx = new System.Text.RegularExpressions.Regex("^UC[0-9A-Za-z_-]{22}$");
+                Assert(Personalize.Channels.All(c => rx.IsMatch(c.Id) && !string.IsNullOrEmpty(c.Avatar) && c.Handle.StartsWith("@")), "Channel ids look like YouTube's");
+                Assert(Personalize.Channels.Select(c => c.Id).Distinct().Count() == Personalize.Channels.Length, "No channel is listed twice");
+                Assert(Personalize.Channels.All(c => c.Topics.All(t => Personalize.Topics.Any(x => x.Id == t))), "Channels only use known topics");
+                Assert(Personalize.Topics.All(t => Personalize.Channels.Any(c => c.Topics.Contains(t.Id))), "Every topic has channels");
+
+                // what is written: this profile's subscriptions, in the shape the Browser reads, without losing what was there
+                var profile = Guid.NewGuid();
+                var folder = Personalize.BrowserProfileFolder(profile);
+                Directory.CreateDirectory(folder);
+                File.WriteAllText(Path.Combine(folder, "yt-subs-removed.json"), "[\"" + Personalize.Channels[1].Id + "\",\"keep-me\"]");
+                Assert(Personalize.SubscribeTo(profile, Personalize.Channels.Take(3)) == 3, "Three new channels are subscribed");
+                Assert(Personalize.SubscribeTo(profile, Personalize.Channels.Take(4)) == 1, "Asking again only adds the new one");
+                var ser = new System.Web.Script.Serialization.JavaScriptSerializer();
+                var subs = ser.Deserialize<System.Collections.Generic.List<BrowserChannel>>(File.ReadAllText(Path.Combine(folder, "yt-subs.json")));
+                Assert(subs.Count == 4 && subs[0].Id == Personalize.Channels[0].Id && subs[0].Name == "IGN" && subs[0].Handle == "@IGN" && subs[0].Thumbnail.StartsWith("https://yt3.googleusercontent.com/"), "The Browser's own channel type reads what was written");
+                var removed = ser.Deserialize<System.Collections.Generic.List<string>>(File.ReadAllText(Path.Combine(folder, "yt-subs-removed.json")));
+                Assert(removed.Count == 1 && removed[0] == "keep-me", "A channel picked again is taken off the unsubscribed list, the rest stays");
+                Assert(!File.Exists(Path.Combine(folder, "yt-subs.json.tmp")), "No temp file is left behind");
+
+                // news: the picked sources are on, the other suggestions go, a feed added by hand stays
+                NewsFeeds.Save(new System.Collections.Generic.List<NewsFeed> { new NewsFeed { Url = "https://kotaku.com/rss", Enabled = true }, new NewsFeed { Url = "https://example.org/my-feed.xml", Enabled = true } });
+                Personalize.FollowNews(new[] { NewsFeeds.SteamLibrary, "https://www.nintendolife.com/feeds/latest" });
+                var feeds = NewsFeeds.Load();
+                Assert(feeds.Count == 3 && feeds.All(f => f.Enabled), "Picked sources and the hand-made feed are on");
+                Assert(feeds.Any(f => f.Url == "https://example.org/my-feed.xml") && !feeds.Any(f => f.Url == "https://kotaku.com/rss"), "A source not picked goes, a hand-made feed stays");
+            }
             Console.WriteLine("Passed "+checks+" UI interaction checks; rendered first-language and restart screens."); return 0;
         }
         finally { window.Close(); if(Directory.Exists(scratch))Directory.Delete(scratch,true); }

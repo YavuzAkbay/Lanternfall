@@ -714,6 +714,9 @@ namespace Selene
         // gap between two (to find what makes Selene stutter)
         public static void StartupFrameLog()
         {
+            // only for the developer switch: a Rendering handler makes WPF draw at the fastest screen's rate, which the
+            // start-up intro should not pay just for a log line
+            if (!DevFrames) return;
             var sw = System.Diagnostics.Stopwatch.StartNew();
             WatchSlowJobs(sw, 40, 9000);
             double last = 0; int n = 0;
@@ -744,7 +747,11 @@ namespace Selene
         // a controller press (or release) exactly as Playnite's controller manager sends it: a GameControllerInputEventArgs through the
         // InputManager, so Selene's pad handling and the lists treat it as a real press (held-direction steps, automated runs)
         private static Type padArgs, padInput, padState;
-        public static bool SendPad(string button, bool down)
+        public static bool SendPad(string button, bool down) { return SendPad(button, down, false); }
+
+        // previewOnly: only the Preview stage goes in; WPF's input manager raises the KeyDown / KeyUp that follows by itself (the
+        // phone remote: with both stages sent, the home row took a press as two steps)
+        public static bool SendPad(string button, bool down, bool previewOnly)
         {
             try
             {
@@ -766,7 +773,8 @@ namespace Selene
                                                       : (names.FirstOrDefault(n => n.IndexOf("Releas", StringComparison.OrdinalIgnoreCase) >= 0) ?? names[names.Length - 1]));
                 // both stages, each its own event, as Playnite sends them: Selene's row moves on the Preview, its pad handling
                 // (repeats, holds) reads the KeyDown
-                foreach (var stage in down ? new[] { System.Windows.Input.Keyboard.PreviewKeyDownEvent, System.Windows.Input.Keyboard.KeyDownEvent }
+                foreach (var stage in previewOnly ? new[] { down ? System.Windows.Input.Keyboard.PreviewKeyDownEvent : System.Windows.Input.Keyboard.PreviewKeyUpEvent }
+                                      : down ? new[] { System.Windows.Input.Keyboard.PreviewKeyDownEvent, System.Windows.Input.Keyboard.KeyDownEvent }
                                            : new[] { System.Windows.Input.Keyboard.PreviewKeyUpEvent, System.Windows.Input.Keyboard.KeyUpEvent })
                 {
                     var e = (System.Windows.Input.KeyEventArgs)Activator.CreateInstance(padArgs, key, state, Enum.Parse(padInput, button));

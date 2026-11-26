@@ -33,7 +33,18 @@ namespace Selene
                 if (!hooked.TryGetValue(brush, out seen))
                 {
                     hooked.Add(brush, brush);
-                    System.ComponentModel.DependencyPropertyDescriptor.FromProperty(ImageBrush.ImageSourceProperty, typeof(ImageBrush)).AddValueChanged(brush, (s, a) => Apply(brush));
+                    // the descriptor table keeps the brush alive until RemoveValueChanged: off again when the face goes (Loaded hooks it anew)
+                    var desc = System.ComponentModel.DependencyPropertyDescriptor.FromProperty(ImageBrush.ImageSourceProperty, typeof(ImageBrush));
+                    EventHandler h = (s, a) => Apply(brush);
+                    desc.AddValueChanged(brush, h);
+                    RoutedEventHandler gone = null;
+                    gone = (s2, a2) =>
+                    {
+                        face.Unloaded -= gone;
+                        try { desc.RemoveValueChanged(brush, h); } catch { }
+                        hooked.Remove(brush);
+                    };
+                    face.Unloaded += gone;
                 }
                 Apply(brush);
             }

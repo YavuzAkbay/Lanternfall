@@ -188,7 +188,7 @@ def default_wallpaper(theme_id):
 
 
 OUT.mkdir(parents=True, exist_ok=True)
-themes = [("selene", "Selene", SELENE)]
+themes = [("selene", "Lanternfall", SELENE)]
 themes += [(p.stem, NAMES.get(p.stem, p.stem.replace("-", " ").title()), tomllib.loads(p.read_text(encoding="utf-8")))
            for p in sorted(SOURCES.glob("*.toml"))]
 

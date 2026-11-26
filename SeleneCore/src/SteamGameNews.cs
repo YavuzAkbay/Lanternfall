@@ -135,11 +135,19 @@ namespace Selene
             request.ReadWriteTimeout = 10000;
             request.UserAgent = "Selene game news reader";
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
-            using (var response = (HttpWebResponse)request.GetResponse())
-            using (var stream = response.GetResponseStream())
-            using (var reader = new StreamReader(stream, Encoding.UTF8))
+            try
             {
-                return reader.ReadToEnd();
+                using (var response = (HttpWebResponse)request.GetResponse())
+                using (var stream = response.GetResponseStream())
+                using (var reader = new StreamReader(stream, Encoding.UTF8))
+                {
+                    return reader.ReadToEnd();
+                }
+            }
+            catch (WebException ex)
+            {
+                if (ex.Response != null) { try { ex.Response.Close(); } catch { } }   // (an error answer holds a connection until closed)
+                throw;
             }
         }
 

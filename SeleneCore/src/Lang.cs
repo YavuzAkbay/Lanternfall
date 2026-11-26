@@ -75,7 +75,7 @@ namespace Selene
         }
 
         // ---- collecting the English phrases to translate: Advanced > "Collect words to translate" writes each phrase shown
-        // to "Selene phrases.txt" on the Desktop, once each, " = " after it. (The old way, an empty "selene-strings" in
+        // to "Lanternfall phrases.txt" on the Desktop, once each, " = " after it. (The old way, an empty "selene-strings" in
         // %TEMP%, still works as a file, a .txt or a folder: Explorer hides the .txt, and it failed silently.)
         public static void CollectIfAsked()
         {
@@ -86,7 +86,7 @@ namespace Selene
         }
 
         // (the Desktop as the user sees it: with OneDrive it's the OneDrive one, not the folder under the profile)
-        public static string PhrasesFile { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Selene phrases.txt"); } }
+        public static string PhrasesFile { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Lanternfall phrases.txt"); } }
         private static int written;   // phrases written this session (the first and a failure go to the log)
 
         public static void Collect(bool on)
@@ -98,7 +98,7 @@ namespace Selene
                 seen = new HashSet<string>(StringComparer.Ordinal);
                 if (File.Exists(collectFile))
                     foreach (var line in File.ReadAllLines(collectFile)) { int at = line.IndexOf(" = ", StringComparison.Ordinal); if (at > 0) seen.Add(line.Substring(0, at)); }
-                else File.WriteAllText(collectFile, "# Selene's phrases: write your language after each \" = \", then save this as theme\\Localization\\<language>.txt" + Environment.NewLine);
+                else File.WriteAllText(collectFile, "# Lanternfall's phrases: write your language after each \" = \", then save this as theme\\Localization\\<language>.txt" + Environment.NewLine);
                 HomeNav.Log("language: collecting phrases into " + collectFile + " (" + seen.Count + " so far)");
             }
             catch (Exception ex) { collectFile = null; HomeNav.Log("language: can't collect phrases: " + ex.Message); }
@@ -210,7 +210,13 @@ namespace Selene
             var state = states.GetOrCreateValue(t);
             if (state.Updating) return;
             var text = t.Text == state.Translated ? state.Original : t.Text;
-            if (string.IsNullOrEmpty(text) || text.Length > 400 || !HasLetters(text)) return;
+            if (string.IsNullOrEmpty(text) || !HasLetters(text)) return;
+            if (text.Length > 400)   // too long to translate or collect, but the name still has to be Lanternfall
+            {
+                var branded = ForkBrand.Text(text);
+                if (branded != text) { state.Original = text; state.Translated = branded; state.Updating = true; try { t.SetCurrentValue(TextBlock.TextProperty, branded); } finally { state.Updating = false; } }
+                return;
+            }
             if (BindingOperations.GetBindingExpressionBase(t, TextBlock.TextProperty) != null) return;
             if (collectFile != null && seen.Add(text))
             {

@@ -71,6 +71,8 @@ namespace SeleneBrowser
         public event EventHandler FullScreenChanged;
         public event Action<string> NewWindowRequested;
         public event Action<string> PageNotice;
+        /// <summary>The whole WebView2 browser process exited: this view is dead and must be replaced (the host disposes and recreates it).</summary>
+        internal event Action BrowserProcessGone;
         private int lastCrashAt;
 
         public UIElement Element { get { return this; } }
@@ -223,6 +225,7 @@ namespace SeleneBrowser
                 s.IsStatusBarEnabled = false;
                 s.IsZoomControlEnabled = false;
                 s.AreBrowserAcceleratorKeysEnabled = false;
+                s.AreDefaultScriptDialogsEnabled = false;   // otherwise WebView2 shows its own dialog, which the pad cannot answer, and ScriptDialogOpening is never raised
                 core.NewWindowRequested += delegate(object o, CoreWebView2NewWindowRequestedEventArgs a)
                 {
                     a.Handled = true;
@@ -246,7 +249,14 @@ namespace SeleneBrowser
                         if (m.Length > 90) m = m.Substring(0, 89) + "\u2026";
                         if (a.Kind == CoreWebView2ScriptDialogKind.Alert) { a.Accept(); Raise(PageNotice, m.Length > 0 ? "Page: " + m : "The page showed a message"); }
                         else if (a.Kind == CoreWebView2ScriptDialogKind.Beforeunload) a.Accept();
-                        else Raise(PageNotice, "The page asked a question and it was declined" + (m.Length > 0 ? ": " + m : ""));
+                        else
+                        {
+                            // a confirm / prompt: no Accept means cancelled (confirm() = false, prompt() = null). The deferral
+                            // is completed at once so the page is never left waiting for an answer.
+                            CoreWebView2Deferral wait = a.GetDeferral();
+                            try { Raise(PageNotice, "The page asked a question and it was declined" + (m.Length > 0 ? ": " + m : "")); }
+                            finally { wait.Complete(); }
+                        }
                     }
                     catch (Exception ex) { Fail("dialog", ex); }
                 };
@@ -261,6 +271,13 @@ namespace SeleneBrowser
                         lastCrashAt = now;
                         Raise(PageNotice, "The page stopped responding - reloading");
                         if (a.ProcessFailedKind != CoreWebView2ProcessFailedKind.BrowserProcessExited) core.Reload();
+                        else
+                        {
+                            // the shared environment belongs to the dead browser: the next view must make a new one
+                            lock (envLock) { envTask = null; }
+                            var gone = BrowserProcessGone;
+                            if (gone != null) Dispatcher.BeginInvoke(new Action(delegate { if (!disposed) gone(); }));
+                        }
                     }
                     catch (Exception ex) { Fail("process failed", ex); }
                 };
@@ -603,7 +620,7 @@ namespace SeleneBrowser
                 {
                     live = 0;
                     envTask = null;   // lets the browser process exit; the next view makes a new environment
-                    GC.Collect();
+                    System.Threading.ThreadPool.QueueUserWorkItem(delegate { GC.Collect(); });   // lets go of the COM objects without stalling the UI thread
                 }
             }
         }

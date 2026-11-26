@@ -39,9 +39,6 @@ namespace SeleneBrowser
         private string defaultUserAgent = "";
         private bool mobile;
 
-        /// <summary>The page is being shown as on a phone.</summary>
-        internal bool IsMobile { get { return mobile; } }
-
         private void ExtrasInit()
         {
             try { defaultUserAgent = core.Settings.UserAgent ?? ""; }
@@ -62,10 +59,11 @@ namespace SeleneBrowser
             try { if (op.TotalBytesToReceive.HasValue) size = (long)op.TotalBytesToReceive.Value; } catch (Exception) { }
             bool decided = false;
             var timeout = new DispatcherTimer { Interval = TimeSpan.FromSeconds(60) };
-            Action<bool, DownloadItem> decide = null;
+            Func<bool, DownloadItem, bool> decide = null;
+            var request = new DownloadRequest { Name = Path.GetFileName(path), Size = size };
             decide = delegate(bool ok, DownloadItem item)
             {
-                if (decided) return;
+                if (decided) return false;
                 decided = true;
                 timeout.Stop();
                 try
@@ -74,12 +72,21 @@ namespace SeleneBrowser
                     if (!a.Cancel) Track(op, item);
                     deferral.Complete();
                 }
-                catch (Exception ex) { Fail("download answer", ex); }
+                catch (Exception ex) { Fail("download answer", ex); return false; }
+                return true;
             };
+            request.Decide = decide;
             // nobody answered in a minute (a menu is up, the browser was hidden): refuse, so the page is not left waiting
-            timeout.Tick += delegate { decide(false, null); };
+            timeout.Tick += delegate
+            {
+                if (decide(false, null))
+                {
+                    var expired = request.Expired;
+                    if (expired != null) { try { expired(); } catch (Exception ex) { Fail("download expiry", ex); } }
+                }
+            };
             timeout.Start();
-            try { ask(new DownloadRequest { Name = Path.GetFileName(path), Path = path, Size = size, Decide = decide }); }
+            try { ask(request); }
             catch (Exception ex) { Fail("download ask", ex); decide(false, null); }
         }
 

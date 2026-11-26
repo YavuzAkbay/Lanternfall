@@ -15,10 +15,8 @@ if (-not $SkipBuild) {
 foreach ($suite in 'check', 'igdbmeta', 'gamenews', 'cardfeed', 'phonenet', 'phoneremote', 'browser-tools', 'browser-codec', 'browser-expiry', 'browser-caption', 'browser-tabs', 'bugs', 'interaction', 'library', 'security', 'backgroundchanger') {
     $null = Check $suite (Join-Path $PSScriptRoot "tests/$suite.ps1")
 }
-& python -m unittest discover -s (Join-Path $PSScriptRoot 'tests') -p 'test_*.py' -v
-$results += [pscustomobject]@{ Check = 'Maintainer tooling'; Result = $(if ($LASTEXITCODE -eq 0) { 'PASS' } else { 'FAIL' }) }
-& node --test (Join-Path $PSScriptRoot 'tests/release-notify.test.cjs')
-$results += [pscustomobject]@{ Check = 'Release notifications'; Result = $(if ($LASTEXITCODE -eq 0) { 'PASS' } else { 'FAIL' }) }
+& node (Join-Path $PSScriptRoot 'tests/trailer-loop.cjs')
+$results += [pscustomobject]@{ Check = 'Trailer canvas (node)'; Result = $(if ($LASTEXITCODE -eq 0) { 'PASS' } else { 'FAIL' }) }
 $results | Format-Table -AutoSize
 if (@($results | Where-Object Result -eq 'FAIL').Count) { exit 1 }
 Write-Host 'All checks passed.'

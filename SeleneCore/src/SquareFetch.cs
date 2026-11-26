@@ -278,7 +278,7 @@ namespace Selene
         private static WebClient Client(string key)
         {
             try { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12; } catch { }
-            var wc = new WebClient { Encoding = System.Text.Encoding.UTF8 };
+            var wc = new TimedWebClient { Encoding = System.Text.Encoding.UTF8 };
             wc.Headers[HttpRequestHeader.UserAgent] = "Selene";
             if (key != null) wc.Headers[HttpRequestHeader.Authorization] = "Bearer " + key;
             return wc;

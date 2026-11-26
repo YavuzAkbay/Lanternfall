@@ -623,8 +623,8 @@ namespace Selene
                 var dir = Path.GetDirectoryName(exe);
                 // a helper started from somewhere else (e.g. a tool started from Downloads, which keeps running after the
                 // game closes) doesn't define the game: then the install folder does
-                bool inside = !string.IsNullOrWhiteSpace(folder) && dir != null
-                              && Full(dir).StartsWith(Full(folder));
+                string fullDir = Full(dir), fullFolder = Full(folder);   // (null for a path with characters Windows refuses)
+                bool inside = fullDir != null && fullFolder != null && fullDir.StartsWith(fullFolder);
                 if (!string.IsNullOrWhiteSpace(dir) && (inside || string.IsNullOrWhiteSpace(g.InstallDirectory))) return dir;
             }
             return g.InstallDirectory;

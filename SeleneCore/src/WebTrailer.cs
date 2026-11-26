@@ -15,6 +15,21 @@ namespace Selene
     {
         private FrameworkElement browser;
         private bool shown;
+        // the title watcher: WPF's descriptor table keeps the view (and this closure) alive until RemoveValueChanged
+        private DependencyPropertyDescriptor titleDesc;
+        private EventHandler titleHandler;
+
+        // pages left in the temp folder by a crash or a failed start
+        static WebTrailer()
+        {
+            try
+            {
+                foreach (var pattern in new[] { "selene-clip-*.html", "selene-trailer-*.html" })
+                    foreach (var f in System.IO.Directory.GetFiles(System.IO.Path.GetTempPath(), pattern))
+                        try { if ((DateTime.Now - System.IO.File.GetLastWriteTime(f)).TotalHours > 24) System.IO.File.Delete(f); } catch { }
+            }
+            catch { }
+        }
         public FrameworkElement View { get { return browser; } }
 
         // null when the browser can't be made
@@ -33,8 +48,9 @@ namespace Selene
                 t2.browser = view;
                 // the page tells us when the video plays (or that it can't) through its title
                 var title = DependencyPropertyDescriptor.FromName("Title", type, type);
+                t2.titleDesc = title;
                 if (title != null)
-                    title.AddValueChanged(view, (s, e) =>
+                    title.AddValueChanged(view, t2.titleHandler = (s, e) =>
                     {
                         var text = view.GetValue(title.DependencyProperty) as string;
                         if (!string.IsNullOrEmpty(text) && text != "playing") HomeNav.Log("trailer page: " + text);
@@ -88,8 +104,9 @@ namespace Selene
                 view.Opacity = 0;
                 t2.browser = view;
                 var title = DependencyPropertyDescriptor.FromName("Title", type, type);
+                t2.titleDesc = title;
                 if (title != null)
-                    title.AddValueChanged(view, (s, e) =>
+                    title.AddValueChanged(view, t2.titleHandler = (s, e) =>
                     {
                         var text = view.GetValue(title.DependencyProperty) as string;
                         if (string.IsNullOrEmpty(text)) return;
@@ -176,8 +193,9 @@ namespace Selene
                 t2.browser = view;
                 var name = System.IO.Path.GetFileName(path);
                 var title = DependencyPropertyDescriptor.FromName("Title", type, type);
+                t2.titleDesc = title;
                 if (title != null)
-                    title.AddValueChanged(view, (s, e) =>
+                    title.AddValueChanged(view, t2.titleHandler = (s, e) =>
                     {
                         var text = view.GetValue(title.DependencyProperty) as string;
                         if (string.IsNullOrEmpty(text) || t2.browser == null) return;
@@ -339,17 +357,13 @@ namespace Selene
             catch (Exception ex) { HomeNav.Log("clip script: " + ex.Message); }
         }
 
-        // fades away (a screenshot was picked); Stop ends it for good
-        public void Hide()
-        {
-            if (browser != null) browser.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(400)));
-        }
-
         public void Stop()
         {
             var b = browser;
             browser = null;
             if (b == null) return;
+            try { if (titleDesc != null && titleHandler != null) titleDesc.RemoveValueChanged(b, titleHandler); } catch { }
+            titleDesc = null; titleHandler = null;
             try
             {
                 var parent = System.Windows.Media.VisualTreeHelper.GetParent(b) as System.Windows.Controls.Panel;

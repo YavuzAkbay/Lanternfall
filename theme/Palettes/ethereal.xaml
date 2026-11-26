@@ -5,7 +5,7 @@
     <sys:String x:Key="SeleneThemeId">ethereal</sys:String>
     <sys:String x:Key="SeleneThemeName">Ethereal</sys:String>
     <sys:String x:Key="SeleneThemeMode">dark</sys:String>
-    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/ethereal/1-cosmic.jpg</sys:String>
+    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/ethereal/1-lanternfall.jpg</sys:String>
 
     <Color x:Key="GlyphColor">#FF7D82D9</Color>
     <Color x:Key="GlyphLightColor">#FFFFCEAD</Color>

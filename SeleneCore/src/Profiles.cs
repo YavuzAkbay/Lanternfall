@@ -216,34 +216,6 @@ namespace Selene
             return Path.Combine(folder, Guid.NewGuid().ToString("N") + extension);
         }
 
-        public static void SetTheme(string theme)
-        {
-            var p = Active;
-            if (p == null) return;
-            p.Theme = theme;
-            Save();
-            ApplyLook();
-        }
-
-        // null puts the theme's default wallpaper back
-        public static void SetWallpaper(string wallpaper)
-        {
-            var p = Active;
-            if (p == null) return;
-            p.Wallpaper = wallpaper;
-            Save();
-            ApplyLook();
-        }
-
-        public static void SetHomeBackground(string look)
-        {
-            var p = Active;
-            if (p == null) return;
-            p.HomeBackground = look;
-            Save();
-            ApplyLook();
-        }
-
         public static bool ToggleFavorite(Guid gameId)
         {
             var p = Active;
@@ -305,8 +277,6 @@ namespace Selene
             ApplyHomeBackground(Features.Value("homebackground") == "wallpaper" ? "wallpaper" : "art");
             TopProfile.Refresh();
         }
-
-        public static readonly string[] HomeBackgrounds = { "art", "wallpaper" };
 
         // anything but "wallpaper" (including the old "blend") is the game's art: theme\Constants.xaml's value
         public static void ApplyHomeBackground(string look)

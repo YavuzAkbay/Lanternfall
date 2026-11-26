@@ -506,14 +506,17 @@ namespace SeleneBrowser
                     loadedToken = -1;
                     try { old.LoadEnd -= OnPlayerLoadEnd; } catch { }
                     try { pvHost.Children.Remove(old.Element); } catch { }
-                    DisposeObj(old);
-                    DisposeObj(old.Element);
-                    try
+                    DisposeObj(old);   // EdgeView.Dispose already frees its element and WebView2 (and is safe to call twice)
+                    if (!(old is EdgeView))
                     {
-                        FieldInfo wf = old.GetType().GetField("web", BindingFlags.Instance | BindingFlags.NonPublic);
-                        if (wf != null) DisposeObj(wf.GetValue(old));
+                        DisposeObj(old.Element);
+                        try
+                        {
+                            FieldInfo wf = old.GetType().GetField("web", BindingFlags.Instance | BindingFlags.NonPublic);
+                            if (wf != null) DisposeObj(wf.GetValue(old));
+                        }
+                        catch { }
                     }
-                    catch { }
                     logger.Info("SeleneBrowser: YouTube player view disposed");
                 }
                 LocalServer.TrimCaches();

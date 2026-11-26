@@ -1,4 +1,4 @@
-# Selene starter translation: common navigation and settings. Missing phrases use English.
+# Lanternfall starter translation: common navigation and settings. Missing phrases use English.
 Settings = Paramètres
 Back = Retour
 Select = Sélectionner
@@ -102,8 +102,6 @@ Scroll to a picked game = Défiler jusqu'au jeu choisi
 Scroll along the row to a game you picked from search or another screen. = Faire défiler la rangée jusqu'au jeu choisi depuis la recherche ou un autre écran.
 Full-width row = Rangée pleine largeur
 Let the game row reach the edges of the screen. = Laisser la rangée de jeux aller jusqu'aux bords de l'écran.
-Trailers from YouTube = Bandes-annonces de YouTube
-For games with no Steam trailer, download the official trailer from YouTube. Uses the game song tools. = Pour les jeux sans bande-annonce Steam, télécharger la bande-annonce officielle depuis YouTube. Utilise les outils des musiques de jeu.
 Trailer delay = Délai de la bande-annonce
 Set how long to stay on a game before its trailer plays. = Régler le temps passé sur un jeu avant que sa bande-annonce démarre.
 Download trailers = Télécharger les bandes-annonces
@@ -172,8 +170,6 @@ Interface sounds volume = Volume des sons de l'interface
 Set the volume of interface sounds. = Régler le volume des sons de l'interface.
 Clip volume = Volume des clips
 Set the volume of video clips in Captures. = Régler le volume des clips vidéo dans Captures.
-Get game songs = Récupérer les musiques de jeu
-Get missing game songs. Required tools use about 130 MB. = Récupérer les musiques de jeu manquantes. Les outils nécessaires occupent environ 130 Mo.
 Selene OST as default music = Bande-son Selene comme musique par défaut
 Use Selene OST when no default music file is selected. = Utiliser la bande-son de Selene quand aucun fichier de musique par défaut n'est choisi.
 Songs wait until you stop = Musiques après l'arrêt du défilement
@@ -738,7 +734,6 @@ Spotify as ambient music = Spotify comme musique d'ambiance
 Your Spotify plays instead of the ambient tracks, wherever a game has no song. Needs the Spotify app open and signed in. = Votre Spotify remplace les pistes d'ambiance partout où un jeu n'a pas de musique. L'application Spotify doit être ouverte et connectée.
 Night music = Musique du soir
 Softer, lower music for the evening. This is UniPlaySong's own switch. = Une musique plus douce et plus basse pour le soir. C'est un réglage d'UniPlaySong.
-Opt in to songs for your library. Asks before downloading songs or about 130 MB of required tools. = Activer les musiques pour votre bibliothèque. Demande avant de télécharger des musiques ou environ 130 Mo d'outils nécessaires.
 A game's song starts once you rest on it, so holding a direction scrolls smoothly. Sets UniPlaySong's hover delay. = La musique d'un jeu commence quand vous vous arrêtez dessus : maintenir une direction défile sans à-coups. Règle le délai de survol d'UniPlaySong.
 Let Selene run the music = Laisser Selene gérer la musique
 Selene sets UniPlaySong's level and pauses and resumes it as you browse, launch games and watch trailers. Off leaves it alone. = Selene règle le volume d'UniPlaySong, le met en pause et le relance quand vous naviguez, lancez des jeux et regardez des bandes-annonces. Désactivé, Selene n'y touche pas.

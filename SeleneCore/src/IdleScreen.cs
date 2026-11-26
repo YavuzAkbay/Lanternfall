@@ -78,12 +78,18 @@ namespace Selene
             var list = new List<Slide>();
             if (api != null)
             {
-                foreach (var g in api.Database.Games.Where(g => GameFacts.BackgroundPath(g) != null).OrderBy(g => random.Next()).Take(40))
+                // shuffled first, then each game's picture is looked up (a disk probe) only until 40 are found, not for the whole library
+                int picked = 0;
+                foreach (var g in api.Database.Games.OrderBy(x => random.Next()).ToList())
                 {
+                    if (picked >= 40) break;
+                    var picture = GameFacts.BackgroundPath(g);
+                    if (picture == null) continue;
+                    picked++;
                     var logo = Path.Combine(api.Paths.ConfigurationPath, "ExtraMetadata", "games", g.Id.ToString(), "logo.png");
                     var secs = GameFacts.Seconds(g);
                     var last = GameFacts.LastPlayed(g);
-                    var slide = new Slide { Picture = GameFacts.BackgroundPath(g), Logo = File.Exists(logo) ? logo : null, Title = g.Name, Status = g.IsInstalled ? "Installed" : "Not installed" };
+                    var slide = new Slide { Picture = picture, Logo = File.Exists(logo) ? logo : null, Title = g.Name, Status = g.IsInstalled ? "Installed" : "Not installed" };
                     if (secs > 0) slide.Figures.Add(new[] { "PLAYTIME", GameFacts.Hours(secs) });
                     if (last.HasValue) slide.Figures.Add(new[] { "LAST PLAYED", GameFacts.Ago(last) });
                     if (slide.Figures.Count == 0) slide.Figures.Add(new[] { "PLAYTIME", "Not played yet" });

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,13 +10,13 @@ namespace Selene
     {
         private const string Version = "explicit-media-v1";
         public static bool IsControlled(string key)
-        { return key == "artdownload" || key == "songsetup" || key == "screenshotsdownload" || key == "trailerdownload" || key == "metadatacomplete"; }
+        { return key == "artdownload" || key == "screenshotsdownload" || key == "trailerdownload" || key == "metadatacomplete"; }
         public static bool Initialize(SeleneSettings settings)
         {
             if (settings.Values == null) settings.Values = new Dictionary<string, string>();
             string value;
             if (settings.Values.TryGetValue("media-download-policy", out value) && value == Version) return false;
-            foreach (var key in new[] { "artdownload", "songsetup", "screenshotsdownload", "metadatacomplete" }) Features.Mark(settings, key, false);
+            foreach (var key in new[] { "artdownload", "screenshotsdownload", "metadatacomplete" }) Features.Mark(settings, key, false);
             settings.Values["trailerdownload"] = "off";
             settings.Values["media-download-policy"] = Version;
             return true;
@@ -42,10 +42,6 @@ namespace Selene
                 var files = HomeNav.Api != null ? Path.GetDirectoryName(HomeNav.Api.Database.GetFullFilePath("Selene-location-check")) : Path.Combine(config, "library", "files");
                 return "Fill missing details for your library using metadata add-ons and Steam. This can download covers and backgrounds. Existing details are kept.\n\nMedia is stored in your Playnite library:\n" + files;
             }
-            if (key == "songsetup") return "Download missing songs for your whole library through UniPlaySong.\n\n" +
-                "This also downloads yt-dlp and ffmpeg if needed (about 130 MB of tools; songs use additional space).\n\n" +
-                "Songs: " + Path.Combine(config, "ExtraMetadata", "UniPlaySong", "Games") + "\nTools: " + Path.Combine(SelenePaths.DataFolder, "Tools") +
-                "\n\nThis requests one library batch. Automatic library/install triggers are disabled for Selene-managed tools. UniPlaySong manages its active queue; independent add-on setups have separate controls.";
             if (key == "artdownload") return "Download missing logos and backgrounds for games you select, plus sample art when you open appearance previews. Existing files stay available while downloads are off.\n\n" +
                 "Logos: " + Path.Combine(config, "ExtraMetadata", "games") + "\nBackgrounds: " + SelenePaths.Media("Hero") + "\nPreview samples: " + SelenePaths.Media("Sample");
             if (key == "screenshotsdownload") return "Download screenshots when you select a game. No whole-library background download.\n\nSaved to:\n" + SelenePaths.Media("Screenshots-v2");
@@ -58,7 +54,6 @@ namespace Selene
         public static void Changed(string key)
         {
             if (key == "metadatacomplete") GameInfo.CompleteLater();
-            else if (key == "songsetup") SongSetup.DownloadSettingsChanged();
             else if (key == "screenshotsdownload") GameMedia.DownloadSettingsChanged();
             else { TrailerFetch.DownloadSettingsChanged(); GameMedia.KickDownloads(); }
         }

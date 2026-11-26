@@ -120,10 +120,32 @@ namespace Selene
                     item.Selected += (s, a) => Load(el);
                     item.Unselected += (s, a) => Load(el);
                 }
-                var square = SquarePathOf(el);   // the square art's file name follows the media folder setting
-                if (square != null) System.ComponentModel.DependencyPropertyDescriptor.FromProperty(TextBlock.TextProperty, typeof(TextBlock)).AddValueChanged(square, (s, a) => Load(el));
             }
+            WatchSquare(el);
             Load(el);
+        }
+
+        // the square art's file name follows the media folder setting: its text changing loads the face again. The descriptor
+        // table keeps the watched TextBlock (and so the whole tile) alive until RemoveValueChanged, so it comes off on Unloaded
+        // (and goes on again at the next Loaded)
+        private static readonly ConditionalWeakTable<FrameworkElement, object> squareWatched = new ConditionalWeakTable<FrameworkElement, object>();
+        private static void WatchSquare(FrameworkElement el)
+        {
+            var square = SquarePathOf(el);
+            object seen;
+            if (square == null || squareWatched.TryGetValue(el, out seen)) return;
+            var desc = System.ComponentModel.DependencyPropertyDescriptor.FromProperty(TextBlock.TextProperty, typeof(TextBlock));
+            EventHandler h = (s, a) => Load(el);
+            desc.AddValueChanged(square, h);
+            squareWatched.Add(el, h);
+            RoutedEventHandler gone = null;
+            gone = (s, a) =>
+            {
+                el.Unloaded -= gone;
+                try { desc.RemoveValueChanged(square, h); } catch { }
+                squareWatched.Remove(el);
+            };
+            el.Unloaded += gone;
         }
 
         private static void Load(FrameworkElement el)
@@ -182,10 +204,10 @@ namespace Selene
                 var win = Window.GetWindow(el);
                 var content = win != null ? win.Content as FrameworkElement : null;
                 // the window's content and whatever wraps it (a Viewbox) down to the first element laid out at design size
-                var walked = new System.Text.StringBuilder();
+                var walked = scaleLogged ? null : new System.Text.StringBuilder();   // (only for the one log line)
                 for (var cur = content; cur != null; )
                 {
-                    walked.Append(cur.GetType().Name).Append('(').Append(Math.Round(cur.ActualWidth)).Append(") ");
+                    if (walked != null) walked.Append(cur.GetType().Name).Append('(').Append(Math.Round(cur.ActualWidth)).Append(") ");
                     var box = cur as Viewbox;
                     var inner = box != null ? box.Child as FrameworkElement : null;
                     if (inner != null && inner.ActualWidth > 0 && box.ActualWidth > 0) { stretch = box.ActualWidth / inner.ActualWidth; break; }

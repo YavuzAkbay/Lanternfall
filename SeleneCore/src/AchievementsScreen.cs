@@ -233,27 +233,6 @@ namespace Selene
             Ui.Rise(right, 80, 12, 320);
         }
 
-        // a completion ring: the track, the share as an arc, the percent in the middle
-        internal static Grid Ring(double share, double size)
-        {
-            share = Math.Max(0, Math.Min(1, share));
-            var g = new Grid { Width = size, Height = size };
-            double stroke = size * 0.08, r = (size - stroke) / 2, c = size / 2;
-            g.Children.Add(new Ellipse { Stroke = Ink.Brush("SeleneInkColor", 0.15), StrokeThickness = stroke });
-            if (share >= 0.999) g.Children.Add(new Ellipse { Stroke = Ink.Brush("SeleneFocusColor"), StrokeThickness = stroke });
-            else if (share > 0)
-            {
-                double angle = share * 2 * Math.PI;
-                var start = new Point(c, c - r);
-                var end = new Point(c + r * Math.Sin(angle), c - r * Math.Cos(angle));
-                var fig = new PathFigure { StartPoint = start, IsClosed = false };
-                fig.Segments.Add(new ArcSegment(end, new Size(r, r), 0, share > 0.5, SweepDirection.Clockwise, true));
-                g.Children.Add(new System.Windows.Shapes.Path { Data = new PathGeometry(new[] { fig }), Stroke = Ink.Brush("SeleneFocusColor"), StrokeThickness = stroke, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round });
-            }
-            g.Children.Add(new TextBlock { Text = (int)Math.Floor(share * 100) + "%", FontSize = size * 0.24, FontFamily = Ui.Display, FontWeight = FontWeights.SemiBold, Foreground = Ink.Brush("SeleneInkColor"), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center });
-            return g;
-        }
-
         // ---- the list ----
         private void Fill()
         {
@@ -430,25 +409,6 @@ namespace Selene
             if (it.Rarity.HasValue)
                 line.Children.Add(new TextBlock { Text = "  \u00B7  " + (it.Rarity.Value < 1 ? it.Rarity.Value.ToString("0.0") : Math.Round(it.Rarity.Value).ToString("0")) + "%", FontSize = size, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.55), VerticalAlignment = VerticalAlignment.Center });
             return line;
-        }
-
-        // the trophies earned, grade by grade, as a console counts them
-        internal static StackPanel GradeCounts(AchievementsData.GameSet set, double size)
-        {
-            var row = new StackPanel { Orientation = Orientation.Horizontal };
-            foreach (var grade in new[] { "Gold", "Silver", "Bronze" })
-            {
-                row.Children.Add(new TextBlock { Text = Ui.Icon(0xea23), FontFamily = Ui.Icons, FontSize = size + 2, Foreground = AchievementsData.GradeBrush(grade), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 5, 0) });
-                row.Children.Add(new TextBlock { Text = set.Earned(grade).ToString(), FontSize = size, FontWeight = FontWeights.SemiBold, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.9), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 18, 0) });
-            }
-            return row;
-        }
-
-        internal static Brush TierBrush(AchievementsData.Item it)
-        {
-            if (it.Tier == "Ultra rare") return Ink.Brush("GlyphColor");
-            if (it.Tier == "Rare") return Ink.Brush("GlyphColor", 0.8);
-            return Ink.Brush("SeleneInkColor", 0.6);
         }
 
         private void ShowTabs()

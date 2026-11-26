@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -49,7 +49,7 @@ namespace Selene
                 new[] { "Music", "musicvolume", "musicmuted", "upsgame", "independentmusic", "upsdefault", "selenemusic", "upsspotify", "upsnight", "nowplaying", "musiccard", "mediacontrols" },
                 new[] { "Sounds", "sounds", "soundvolume", "startsound", "notifysound", "quietdetails", "soundmenu", "livevolume" },
                 new[] { "While you play", "trailersound", "launchquiet" },
-                new[] { "Music setup", "music", "songsetup", "songsettle" } } },
+                new[] { "Music setup", "music", "songsettle" } } },
             { "Games", new[] {
                 new[] { "Your library", "gamesget", "gamesask" },
                 new[] { "Launching", "launchstyle", "launchmotion", "launchshade", "loadingscreen", "launchseamless", "launchchoice", "aftergame", "guidefocus" },
@@ -551,7 +551,7 @@ namespace Selene
                 if (key == "nowplaying") NowPlayingBar.Refresh();
                 if (key == "sounds" || key == "soundvolume") HomeNav.SyncMoveSound();
                 if (key == "hltb" || key == "achievements" || key == "rowedges" || key == "collectioninfo" || key == "collectionhints") SeleneShell.ApplyNowPlaying();
-                if (key == "translatecollect") { Lang.Collect(Features.On(key)); if (Features.On(key)) Ui.Notice("Phrases are saved to \"Selene phrases.txt\" on your Desktop."); }
+                if (key == "translatecollect") { Lang.Collect(Features.On(key)); if (Features.On(key)) Ui.Notice("Phrases are saved to \"Lanternfall phrases.txt\" on your Desktop."); }
                 Ui.Key();
                 ShowSwitch(index, true);
                 if (key == "hints") { HomeHints.Update(); SeleneShell.ApplyNowPlaying(); }

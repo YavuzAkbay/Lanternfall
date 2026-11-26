@@ -190,9 +190,16 @@ zergnet.com
             lock (gate)
             {
                 if (extTask != null) return;
+                // a fetch that found nothing (offline) is tried again from a later view, but not more often than every 5 minutes
+                if (fetchTried && unchecked(Environment.TickCount - lastFetchAt) < 5 * 60 * 1000) return;
+                fetchTried = true;
+                lastFetchAt = Environment.TickCount;
                 extTask = Task.Factory.StartNew<string>(Fetch, TaskCreationOptions.LongRunning);
             }
         }
+
+        private static bool fetchTried;
+        private static int lastFetchAt;
 
         private static string Fetch()
         {
@@ -291,8 +298,11 @@ zergnet.com
                 // ad blocking was off when the browser started: the extension must not run (it lives in the profile, so remove it)
                 if (!BrowserSettings.AdBlockAtStartup) { RemoveFromProfile(core); return; }
                 StartExtensionFetch();
+                Task<string> fetching;
+                lock (gate) fetching = extTask;
+                if (fetching == null) { lock (gate) installStarted = false; return; }   // backing off after a failed fetch: a later view retries
                 var ui = TaskScheduler.FromCurrentSynchronizationContext();
-                extTask.ContinueWith(delegate(Task<string> t)
+                fetching.ContinueWith(delegate(Task<string> t)
                 {
                     bool ok = false;
                     try
@@ -300,7 +310,12 @@ zergnet.com
                         if (!t.IsFaulted && !t.IsCanceled && t.Result != null) { ok = true; AddToProfile(core, t.Result, ui); }
                     }
                     catch (Exception ex) { logger.Warn("SeleneBrowser: AdBlock extension install: " + ex.Message); }
-                    if (!ok) lock (gate) installStarted = false;   // retry from the next view
+                    if (!ok)
+                        lock (gate)
+                        {
+                            installStarted = false;   // retry from a later view ...
+                            if (extTask == fetching) extTask = null;   // ... with a new download attempt, not the finished (empty) task
+                        }
                 }, ui);
             }
             catch (Exception ex) { logger.Warn("SeleneBrowser: AdBlock extension: " + ex.Message); }

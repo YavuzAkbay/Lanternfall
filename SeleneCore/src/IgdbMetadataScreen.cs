@@ -520,6 +520,7 @@ namespace Selene
                 var files = new List<string>();
                 for (int i = 0; i < candidates.Count; i++)
                 {
+                    if (gen != generation) return;   // the user went back: no more downloads for a page that is gone
                     var image = candidates[i];
                     var file = session.Temp("bg-thumb", ".jpg");
                     try { IgdbMetadataClient.Download(IgdbMetadataClient.ImageUrl(image.ImageId, "screenshot_med"), file); }
@@ -729,6 +730,7 @@ namespace Selene
                 var files = new List<string>();
                 for (int i = 0; i < candidates.Count; i++)
                 {
+                    if (gen != generation) return;
                     var file = session.Temp("cover-thumb", ".jpg");
                     try { IgdbMetadataClient.Download(IgdbMetadataClient.ImageUrl(candidates[i].ImageId, "cover_big"), file); }
                     catch { file = null; }

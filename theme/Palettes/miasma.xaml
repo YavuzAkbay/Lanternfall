@@ -5,7 +5,7 @@
     <sys:String x:Key="SeleneThemeId">miasma</sys:String>
     <sys:String x:Key="SeleneThemeName">Miasma</sys:String>
     <sys:String x:Key="SeleneThemeMode">dark</sys:String>
-    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/miasma/01-nature-of-fear.jpg</sys:String>
+    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/miasma/1-lanternfall.jpg</sys:String>
 
     <Color x:Key="GlyphColor">#FF78824B</Color>
     <Color x:Key="GlyphLightColor">#FFC2C2B0</Color>

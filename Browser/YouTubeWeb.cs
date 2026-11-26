@@ -1,10 +1,8 @@
-// YouTubeWeb.cs - YouTube's own web route for a video's streams, used when YouTube refuses the plain app client
-// (ANDROID_VR answers "Sign in to confirm you're not a bot" and app-client links stop after ~1 MB). Same idea as FreeTube:
-// a hidden Edge WebView2 page runs YouTube's BotGuard to mint Proof-of-Origin tokens, asks the TV client for the video and
-// deciphers its stream urls with YouTube.js (lib/ytweb, MIT). The page script is ytweb/resolver.js.
+﻿// YouTubeWeb.cs - an optional web route for a video's streams, tried when the app client gets no playable links. It runs
+// a hidden Edge WebView2 page from an optional ytweb folder; the folder is not part of this repository, and without it
+// Available is false and playback uses the other sources.
 //
-// The page is ours but lives at https://www.youtube.com/__lanternfall/ (served from the ytweb folder through
-// WebResourceRequested), so YouTube's endpoints are same-origin. The WebView2 runs on its own STA thread with its own
+// The page is served at https://www.youtube.com/__lanternfall/ from that folder (WebResourceRequested). The WebView2 runs on its own STA thread with its own
 // dispatcher, so Playnite's UI thread never waits on it (and it works outside Playnite, for tests). It shuts itself down
 // after a while without use (it is a whole browser process tree). C# 5 only.
 using System;
@@ -60,16 +58,24 @@ namespace SeleneBrowser
         /// <summary>The folder with resolver.html / resolver.js / youtubei.js (copied beside the DLL by build.ps1).</summary>
         public static string Folder { get { return Path.Combine(DllDir, "ytweb"); } }
 
+        private static int availableCache = -1;   // -1 unknown, 0 no, 1 yes: the files and the runtime do not change while Playnite runs
+
         public static bool Available
         {
             get
             {
+                int known = availableCache;
+                if (known >= 0) return known == 1;
+                bool ok;
                 try
                 {
-                    foreach (string f in Served) if (!File.Exists(Path.Combine(Folder, f))) return false;
-                    return EdgeView.IsAvailable();
+                    ok = true;
+                    foreach (string f in Served) if (!File.Exists(Path.Combine(Folder, f))) { ok = false; break; }
+                    if (ok) ok = EdgeView.IsAvailable();
                 }
-                catch { return false; }
+                catch { ok = false; }
+                availableCache = ok ? 1 : 0;
+                return ok;
             }
         }
 
@@ -180,13 +186,15 @@ namespace SeleneBrowser
                 p.ExtendedWindowStyle = 0x80 | 0x08000000;     // WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE
                 s.Host = new HwndSource(p);
                 string dataRoot = SeleneBrowserPlugin.DataDir;
-                if (string.IsNullOrEmpty(dataRoot)) dataRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Nomad");
+                if (string.IsNullOrEmpty(dataRoot)) dataRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lanternfall");
                 string udf = Path.Combine(dataRoot, "webview2-youtube");
                 Directory.CreateDirectory(udf);
                 s.Env = await CoreWebView2Environment.CreateAsync(null, udf, new CoreWebView2EnvironmentOptions());
-                if (s.Stopped) return;
+                if (s.Stopped) { ReleaseStopped(s); return; }
                 s.Controller = await s.Env.CreateCoreWebView2ControllerAsync(s.Host.Handle);
-                if (s.Stopped) return;
+                // the session was stopped while the browser was still being created: StopSession ran before there was a controller
+                // to close, so close it here or its browser process keeps the user-data folder locked
+                if (s.Stopped) { ReleaseStopped(s); return; }
                 s.Controller.IsVisible = false;
                 CoreWebView2 core = s.Controller.CoreWebView2;
                 core.Settings.AreDevToolsEnabled = false;
@@ -268,12 +276,12 @@ namespace SeleneBrowser
             lock (lk) foreach (Call c in s.Calls.Values) { if (c.Json == null) c.Error = why; c.Done.Set(); }
         }
 
-        /// <summary>Closes the hidden WebView2 and ends its thread (any thread). The next Resolve starts it again.</summary>
-        public static void Stop()
+        // on the session's thread: what StopSession would have closed, for a session stopped before its browser existed
+        private static void ReleaseStopped(Session s)
         {
-            Session s;
-            lock (lk) s = cur;
-            if (s != null) StopSession(s);
+            try { if (s.Controller != null) s.Controller.Close(); } catch { }
+            try { if (s.Host != null) s.Host.Dispose(); } catch { }
+            s.Core = null;
         }
 
         private static void StopSession(Session s)

@@ -5,7 +5,7 @@
     <sys:String x:Key="SeleneThemeId">matte-black</sys:String>
     <sys:String x:Key="SeleneThemeName">Matte Black</sys:String>
     <sys:String x:Key="SeleneThemeMode">dark</sys:String>
-    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/matte-black/0-ship-at-sea.jpg</sys:String>
+    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/matte-black/1-lanternfall.jpg</sys:String>
 
     <Color x:Key="GlyphColor">#FFE68E0D</Color>
     <Color x:Key="GlyphLightColor">#FFBEBEBE</Color>

@@ -65,7 +65,12 @@ namespace SeleneBrowser
             fade = new Fader(card, 12);
             Children.Add(new Viewbox { Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly, Margin = new Thickness(40, 24, 40, 24), Child = card });
             tick.Tick += delegate { Refresh(); };
-            RemoteService.Sent += delegate { try { Dispatcher.BeginInvoke(new Action(delegate { if (IsOpen) Close(); })); } catch { } };
+            // a phone sent something: the card closes. The static event would keep this card (and the screen holding it) alive, so
+            // it is attached while the card is in the tree only.
+            Action sent = delegate { try { Dispatcher.BeginInvoke(new Action(delegate { if (IsOpen) Close(); })); } catch { } };
+            Loaded += delegate { RemoteService.Sent -= sent; RemoteService.Sent += sent; };
+            Unloaded += delegate { RemoteService.Sent -= sent; };
+            RemoteService.Sent += sent;
         }
 
         public void Open()

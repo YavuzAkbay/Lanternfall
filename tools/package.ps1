@@ -35,6 +35,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Theme packaging failed' }
 if ($LASTEXITCODE -ne 0) { throw 'Add-on packaging failed' }
 # Lanternfall Browser (Browser and YouTube screens), its own add-on
 & (Join-Path $root 'Browser\build.ps1')
+# the local-only YouTube web route overlay must never ship (CLAUDE.md): move Browser\ytweb and Browser\lib\ytweb out and delete Browser\build first
+if (Test-Path -LiteralPath (Join-Path $root 'Browser\build\ytweb')) { throw 'Browser\build contains the local-only ytweb overlay: move it out of the tree, delete Browser\build and package again' }
 & $toolbox pack (Join-Path $root 'Browser\build') $dist
 if ($LASTEXITCODE -ne 0) { throw 'Browser add-on packaging failed' }
 # Toolbox skips a theme's top-level Fonts folder (it treats fonts as Playnite's template files), so the icon and button

@@ -278,6 +278,7 @@ namespace Selene
             };
             w.PreviewKeyDown += (s, e) => { if (e.Key == System.Windows.Input.Key.Escape && Back(w)) e.Handled = true; };
             open = w;
+            w.Closed += (s, e) => { if (ReferenceEquals(open, w)) open = null; };   // (a closed dialog's whole tree was kept until the next one)
         }
 
         // Playnite's progress window (downloading an add-on, updating the library): Selene's moving background behind the
@@ -382,7 +383,7 @@ namespace Selene
             }
             else
             {
-                note = "That's every add-on Selene works with. Restart now and they all start working.";
+                note = Lang.T("That's every add-on Selene works with. Restart now and they all start working.");
                 if (no != null) no.Content = "Later";
                 first = yes;
             }

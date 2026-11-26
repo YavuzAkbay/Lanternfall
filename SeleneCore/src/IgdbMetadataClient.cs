@@ -299,6 +299,8 @@ namespace Selene
             return Request(Backend + "game/" + Uri.EscapeDataString(id ?? ""), null);
         }
 
+        private const int MaxDownload = 20 * 1024 * 1024;
+
         public static void Download(string url, string path)
         {
             var dir = Path.GetDirectoryName(path);
@@ -312,8 +314,18 @@ namespace Selene
             using (var stream = response.GetResponseStream())
             using (var memory = new MemoryStream())
             {
-                stream.CopyTo(memory);
-                File.WriteAllBytes(path, memory.ToArray());
+                if (response.ContentLength > MaxDownload) throw new InvalidDataException("The picture is too large");
+                var buffer = new byte[16384]; int count;
+                while ((count = stream.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    if (memory.Length + count > MaxDownload) throw new InvalidDataException("The picture is too large");
+                    memory.Write(buffer, 0, count);
+                }
+                // written beside it and moved in whole: a cut-off picture must not stay under the final name
+                var part = path + ".part";
+                File.WriteAllBytes(part, memory.ToArray());
+                if (File.Exists(path)) File.Delete(path);
+                File.Move(part, path);
             }
         }
 

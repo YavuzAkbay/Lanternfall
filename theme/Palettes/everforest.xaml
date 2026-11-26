@@ -5,7 +5,7 @@
     <sys:String x:Key="SeleneThemeId">everforest</sys:String>
     <sys:String x:Key="SeleneThemeName">Everforest</sys:String>
     <sys:String x:Key="SeleneThemeMode">dark</sys:String>
-    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/everforest/1-tree-tops.jpg</sys:String>
+    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/everforest/1-lanternfall.jpg</sys:String>
 
     <Color x:Key="GlyphColor">#FF7FBBB3</Color>
     <Color x:Key="GlyphLightColor">#FFD3C6AA</Color>

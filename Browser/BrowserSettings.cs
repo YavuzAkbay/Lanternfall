@@ -249,7 +249,7 @@ namespace SeleneBrowser
                         d["SiteZoom"] = new Dictionary<string, double>(siteZoom);
                         d["MobileSites"] = new List<string>(mobileSites);
                         Directory.CreateDirectory(Path.GetDirectoryName(file));
-                        File.WriteAllText(file, new JavaScriptSerializer().Serialize(d), Encoding.UTF8);
+                        AtomicFile.WriteAllText(file, new JavaScriptSerializer().Serialize(d), Encoding.UTF8);
                     }
                 }
                 catch (Exception ex) { logger.Error(ex, "SeleneBrowser: cannot write " + file); }

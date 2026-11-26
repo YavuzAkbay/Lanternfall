@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Selene
@@ -104,7 +105,6 @@ namespace Selene
                     if (type == "mdia") handler = null;
                 }
                 // (hdlr sits in mdia before minf: the handler found is passed down to stbl through the recursion's argument)
-                if (type == "mdia") { }
                 pos += size;
             }
         }
@@ -121,9 +121,12 @@ namespace Selene
                 var fi = new FileInfo(path);
                 var dir = Path.Combine(Path.GetTempPath(), "selene-trailer-copies");
                 Directory.CreateDirectory(dir);
-                foreach (var old in new DirectoryInfo(dir).GetFiles()) if (old.LastWriteTime < DateTime.Now.AddDays(-3)) { try { old.Delete(); } catch { } }
                 var key = (path + "|" + fi.Length + "|" + fi.LastWriteTimeUtc.Ticks).GetHashCode().ToString("x8");
                 var copy = Path.Combine(dir, key + "-no" + drop + ".mp4");
+                // these are whole-file copies: the 6 newest are kept, none older than 3 days (the one asked for stays)
+                int kept = 0;
+                foreach (var old in new DirectoryInfo(dir).GetFiles().OrderByDescending(f => f.LastWriteTime))
+                    if ((++kept > 6 || old.LastWriteTime < DateTime.Now.AddDays(-3)) && !string.Equals(old.FullName, copy, StringComparison.OrdinalIgnoreCase)) { try { old.Delete(); } catch { } }
                 if (File.Exists(copy)) return copy;
                 var offsets = new List<long>();
                 using (var f = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) Traks(f, 0, f.Length, drop, offsets, 0);

@@ -1,9 +1,7 @@
-﻿// console-style Left/Right for the "SeleneGameRow" list on the old theme's Welcome Hub.
-// the old theme plugin handles every Left/Right on the hub itself (nearest focusable element, else next page),
-// which skips tiles and jumps pages. A Window class handler runs before the old theme plugin's instance handler,
-// so for focus inside SeleneGameRow we move exactly one visible tile, keep it at the left edge, and mark
-// the key handled. Everything else is left to the old theme plugin.
-// Loaded by the ClaudeLibraryTools extension via Add-Type (C# 5: no ?. or string interpolation).
+﻿// The home screen's input and navigation hub: console-style Left/Right for the "SeleneGameRow" list on the Welcome Hub
+// (a Window class handler runs before the theme's own, moves exactly one visible tile, keeps it at the left edge and marks
+// the key handled), the pad and keyboard routing, the launch cover and the overlays (Browser / YouTube).
+// (C# 5: no ?. or string interpolation.)
 using System;
 using System.Linq;
 using System.Collections;
@@ -49,7 +47,6 @@ namespace Selene
         // screenshots; motion, slides and art stay. Read once at start (the background is built then)
         private static bool? light;
         public static bool Light { get { if (light == null) light = Lite || Features.On("perfmode"); return light.Value; } }
-        public static string LastError;
         public static void ApplyPerformanceMode()
         {
             GameMedia.ApplyPerformanceMode();
@@ -120,7 +117,7 @@ namespace Selene
             RowMode = System.IO.File.Exists(tvBackup) ? "all" : "tv";
             var app = Application.Current;
             if (app != null) StartupWork.Yield(
-                () => { app.Resources["SeleneRowMode"] = RowMode; app.Exit += (s, e) => { GamePause.Unhush(); GamePause.Resume(); CloseToTray.UnmuteOnExit(); RestoreTaskbar(); }; },
+                () => { app.Resources["SeleneRowMode"] = RowMode; app.Exit += (s, e) => { GamePause.Unhush(); GamePause.Resume(); CloseToTray.UnmuteOnExit(); RestoreTaskbar(); FlushLog(); }; },
                 () => { EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.LoadedEvent, new RoutedEventHandler(OnAnyWindowLoaded)); InputManager.Current.PreProcessInput += OnPreProcessInput; },
                 HookExistingRows,
                 () => { AutoHideTaskbar(); KeepPlayniteOpenOnLaunch(); },
@@ -262,8 +259,7 @@ namespace Selene
             }
             catch (Exception ex)
             {
-                LastError = ex.ToString();
-                Log(LastError);
+                Log(ex.ToString());
             }
         }
 
@@ -319,25 +315,6 @@ namespace Selene
             foreach (var d in new[] { 1, 2, 3, -1 })
                 if (i + d >= 0 && i + d < n) list.Add(row.Items[i + d]);
             return list;
-        }
-
-        private static bool FocusTopBar(ListBox row, FrameworkElement fromItem)
-        {
-            var w = Window.GetWindow(row);
-            var bar = w != null ? FindByName(w, "HubTopBarBackground") : null;
-            if (bar == null) return false;
-            var from = fromItem ?? row;
-            double x = from.TranslatePoint(new Point(from.ActualWidth / 2, 0), w).X;
-            UIElement best = null; double bestD = double.MaxValue;
-            foreach (var el in Focusables(bar))
-            {
-                double ex = el.TranslatePoint(new Point(el.RenderSize.Width / 2, 0), w).X;
-                double d = Math.Abs(ex - x);
-                if (d < bestD) { bestD = d; best = el; }
-            }
-            if (best == null) return false;
-            best.Focus();
-            return true;
         }
 
         private static System.Collections.Generic.List<UIElement> Focusables(DependencyObject root)
@@ -460,7 +437,8 @@ namespace Selene
         {
             QueuePush(row);
             ArmPreview(row);
-            PreloadCoverArt(row.SelectedItem);
+            // (the loading screen's art is decoded once the selection rests: QueuePush's timer; a decode per step of a held
+            // stick queued two screen-wide pictures each)
             ShowHeart(row.SelectedItem);
             GameMedia.OnSelected(row.SelectedItem, RowNeighbours(row));
             // Lanternfall: the same selection brings Steam news for this game (falls back to the screenshot strip)
@@ -764,7 +742,7 @@ namespace Selene
             CacheNewsCards(win);
             RenderFilterTabs(win);
             HomeHints.Attach(win);
-            hub.IsVisibleChanged += (s, a) => { if ((bool)a.NewValue) { FindAndPlay(win); RenderFilterTabs(win); } else { RefreshLibraryFades(); HidePreview(); ForceHorizontalLibrary(); EnsureBigScreenFilter(); if (!openingDetails) FocusLibraryLater(win); } };
+            hub.IsVisibleChanged += (s, a) => { if ((bool)a.NewValue) { FindAndPlay(win); RenderFilterTabs(win); } else { RefreshLibraryFades(); HidePreview(); ForceHorizontalLibrary(); if (!openingDetails) FocusLibraryLater(win); } };
             Log("hub hooked");
         }
 
@@ -1226,7 +1204,6 @@ namespace Selene
         public static void DevGuide() { Log("dev guide: as the Guide button"); GoHomeFromGuide(); }
         public static void DevR3() { TogglePreviewSound(); }
         // dev key "testgame:<exe>": a game of that program, started like any game (launch cover, return); removed once it stops
-        public static Guid DevGameId = Guid.Empty;
         public static void DevTestGame(string exe)
         {
             try
@@ -1244,7 +1221,6 @@ namespace Selene
                 }
                 var play = g.GameActions != null ? g.GameActions.FirstOrDefault(a => a.IsPlayAction) : null;
                 if (play != null && (play.Arguments != args || play.Path != exe)) { play.Arguments = args; play.Path = exe; play.WorkingDir = System.IO.Path.GetDirectoryName(exe); g.InstallDirectory = play.WorkingDir; Api.Database.Games.Update(g); }
-                DevGameId = g.Id;
                 Log("dev test game: starting " + exe + (args != null ? " " + args : ""));
                 Api.StartGame(g.Id);
             }
@@ -1540,8 +1516,7 @@ namespace Selene
                 Application.Current.Resources["SeleneRowMode"] = mode;
                 var row = LiveRow();
                 if (row != null) RebuildGames(row);
-                if (mode == "tv") EnsureBigScreenFilter();
-                else if (Api != null && Api.MainView.GetActiveFilterPreset() == BigScreenPreset)
+                if (mode != "tv" && Api != null && Api.MainView.GetActiveFilterPreset() == BigScreenPreset)
                 {
                     foreach (var fp in Api.Database.FilterPresets)
                         if (fp.Name == "All") { Api.MainView.ApplyFilterPreset(fp.Id); break; }
@@ -1585,11 +1560,6 @@ namespace Selene
             if (lines.Length < 2) return;
             var auth = "Basic " + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(lines[0].Trim() + ":" + lines[1].Trim()));
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;  // .NET Framework defaults to old TLS
-            System.Net.ServicePointManager.ServerCertificateValidationCallback = (s, cert, chain, errors) =>
-            {
-                var req = s as System.Net.HttpWebRequest;
-                return req != null && req.RequestUri.Host == "localhost";  // the host's self-signed certificate, local only
-            };
             string list = HttpCall("GET", "https://localhost:47990/api/clients/list", auth, null);
             int n = 0;
             foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(list, "\\{[^{}]*\"connected\":true[^{}]*\\}"))
@@ -1610,6 +1580,10 @@ namespace Selene
             req.ReadWriteTimeout = 2500;
             req.KeepAlive = false;
             req.Headers["Authorization"] = auth;
+            // the host's self-signed certificate, accepted for this request only and only on localhost (a process-wide
+            // callback would have broken every other HTTPS call Playnite and its add-ons make)
+            req.ServerCertificateValidationCallback = (sender, cert, chain, errors) =>
+                errors == System.Net.Security.SslPolicyErrors.None || req.RequestUri.Host == "localhost";
             if (body != null)
             {
                 req.ContentType = "application/json";
@@ -1623,17 +1597,6 @@ namespace Selene
 
         // TV: the library shows the "Big Screen" filter preset (a streamed session keeps the whole library)
         private static readonly Guid BigScreenPreset = new Guid("e1fb63ec-0f24-4eaf-bfd2-68fbe05d1411");
-
-        private static void EnsureBigScreenFilter()
-        {
-            try
-            {
-                if (Api == null || RowMode != "tv") return;
-                // only when nothing is chosen: a tab picked with LB / RB in Collection stays
-                return;   // Collection follows Selene's tabs now (CollectionPresets); the old Big Screen preset isn't forced
-            }
-            catch (Exception ex) { Log("filter: " + ex.Message); }
-        }
 
         // Switching the layout rebuilds the library list and drops focus (controller dead). Put focus on the
         // selected game (or the first one) once the list exists.
@@ -1856,7 +1819,17 @@ namespace Selene
             if (pushTimer == null)
             {
                 pushTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
-                pushTimer.Tick += (s, e) => { pushTimer.Stop(); lastPushAt = DateTime.Now; var r = pushTimer.Tag as ListBox; if (r != null) PushSelected(r); };
+                pushTimer.Tick += (s, e) =>
+                {
+                    pushTimer.Stop();
+                    try
+                    {
+                        lastPushAt = DateTime.Now;
+                        var r = pushTimer.Tag as ListBox;
+                        if (r != null) { PushSelected(r); PreloadCoverArt(r.SelectedItem); }
+                    }
+                    catch (Exception ex) { Log("push selection: " + ex.Message); }   // (Playnite's own setter can throw: not on the dispatcher's unhandled path)
+                };
             }
             pushTimer.Stop();
             pushTimer.Tag = row;
@@ -1877,12 +1850,9 @@ namespace Selene
 
         // the background step's preview: the row's first game's art shown in the home's art layer (its own picture, not
         // Playnite's selected game, so no song starts). False when the library has no game with art to borrow.
-        private static Image previewArt;
-
         // something the profile steps' preview shows changed (it is pictured again only then)
         public static int PreviewVersion { get; private set; }
-        public static DateTime PreviewChangedAt { get; private set; }
-        public static void PreviewChanged() { PreviewVersion++; PreviewChangedAt = DateTime.Now; }
+        public static void PreviewChanged() { PreviewVersion++; }
 
         public static bool ShowArtForPreview(bool on)
         {
@@ -1897,11 +1867,11 @@ namespace Selene
                 if (parent != null) parent.Children.Remove(previewLayer);
                 previewLayer = null;
             }
-            previewArt = null;
             if (!on) return false;
             if (art == null) { Log("preview art: no art layer"); return false; }
             var row = LiveRow();
             string file = null, name = null;
+            var heroDir = SelenePaths.Media("Hero");
             if (row != null && Api != null)
                 foreach (var item in row.Items)
                 {
@@ -1910,18 +1880,18 @@ namespace Selene
                     if (!(id is Guid)) continue;
                     var game = Api.Database.Games.Get((Guid)id);
                     if (game == null) continue;
-                    var hero = System.IO.Path.Combine(SelenePaths.Media("Hero"), game.Id + ".jpg");
+                    var hero = System.IO.Path.Combine(heroDir, game.Id + ".jpg");
                     file = System.IO.File.Exists(hero) ? hero
                          : !string.IsNullOrEmpty(game.BackgroundImage) ? Api.Database.GetFullFilePath(game.BackgroundImage) : null;
                     if (file != null && !file.StartsWith("http", StringComparison.OrdinalIgnoreCase) && System.IO.File.Exists(file)) { name = game.Name; break; }
                     file = null;
                 }
-            var pic = file != null ? Wallpapers.Load(file) : null;
-            Log("preview art: the example game (library art: " + (pic != null ? name : "none") + ")");
+            // (the file is only known to exist: decoding it here, on the UI thread, was for nothing)
+            Log("preview art: the example game (library art: " + (file != null ? name : "none") + ")");
             // always the example game (the same picture for everyone, whatever the library holds); the row's own game only
             // tells the note below whether the library has art of its own
             SampleArtForPreview(art);
-            lastHasArt = pic != null;
+            lastHasArt = file != null;
             return lastHasArt;
         }
 
@@ -1938,7 +1908,6 @@ namespace Selene
                     CornerRadius = new CornerRadius(16), Padding = new Thickness(18, 7, 18, 8), Background = Ink.Brush("SeleneGlassColor", 0.6),
                     Child = new TextBlock { Text = "Example game art \u00B7 " + SampleName, FontSize = 18, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.85) }
                 });
-            previewArt = new Image();   // a marker for removal: the layer is what's shown
             art.Children.Add(layer);
             previewLayer = layer;
             PreviewChanged();
@@ -2018,6 +1987,9 @@ namespace Selene
             if (samplePic == null && file != null) samplePic = Wallpapers.Load(file);   // decoded once, kept
             if (samplePic != null) { PutPreviewArt(art, samplePic, true); return true; }
             if (!DownloadConsent.Allowed("artdownload")) return false;
+            // neither the fetched nor the shipped copy exists: the download goes into the media folder (a null path would have
+            // written ".part" into the working directory and thrown on the move)
+            if (file == null) file = System.IO.Path.Combine(SelenePaths.Media("Sample"), "expedition33-hero.jpg");
             var ui = Application.Current.Dispatcher;
             System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
@@ -2163,30 +2135,49 @@ namespace Selene
                 var step = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(30) };   // (every 15 ms stuttered: the row has to lay out each time)
                 int waits = 0;
                 DateTime began = DateTime.MinValue, lastTick = DateTime.MinValue;
-                Action finish = () => { step.Stop(); rideFirst = -1; EnsureTileCaches(row); AfterSelection(row); done(); };
+                bool finished = false;
+                Action finish = () =>
+                {
+                    if (finished) return;
+                    finished = true;
+                    step.Stop(); rideFirst = -1;
+                    try { EnsureTileCaches(row); AfterSelection(row); }
+                    catch (Exception fx) { Log("find a game: landing: " + fx.Message); }
+                    done();   // (always: the caller's own placement follows)
+                };
                 step.Tick += (s, e) =>
                 {
-                    if (LoginScene.IsActive) { if (++waits < 120) return; finish(); return; }   // (the screen it was picked on still closing: a moment)
-                    var now = DateTime.Now;
-                    if (began == DateTime.MinValue) began = now;
-                    double p = Math.Min(1, (now - began).TotalSeconds / seconds);
-                    double eased = p < 0.5 ? 4 * p * p * p : 1 - Math.Pow(-2 * p + 2, 3) / 2;
-                    int want = start + (int)Math.Round(span * eased);
-                    int cur = row.SelectedIndex;
-                    if (cur >= 0 && want > cur)
+                    try
                     {
-                        int next = want;
-                        while (next < idx && !IsShown(row.Items[next])) next++;
-                        if (next > idx) next = idx;
-                        wantedFocusIndex = next;
-                        try
+                        if (LoginScene.IsActive) { if (++waits < 120) return; finish(); return; }   // (the screen it was picked on still closing: a moment)
+                        var now = DateTime.Now;
+                        if (began == DateTime.MinValue) began = now;
+                        double p = Math.Min(1, (now - began).TotalSeconds / seconds);
+                        double eased = p < 0.5 ? 4 * p * p * p : 1 - Math.Pow(-2 * p + 2, 3) / 2;
+                        int want = start + (int)Math.Round(span * eased);
+                        int cur = row.SelectedIndex;
+                        if (cur >= 0 && want > cur)
                         {
-                            MoveTo(row, cur, next);
-                            if ((now - lastTick).TotalMilliseconds >= 55) { Ui.Tick(); lastTick = now; }   // (the tick plays on real presses only: here by hand)
+                            int next = want;
+                            while (next < idx && !IsShown(row.Items[next])) next++;
+                            if (next > idx) next = idx;
+                            wantedFocusIndex = next;
+                            try
+                            {
+                                MoveTo(row, cur, next);
+                                if ((now - lastTick).TotalMilliseconds >= 55) { Ui.Tick(); lastTick = now; }   // (the tick plays on real presses only: here by hand)
+                            }
+                            finally { wantedFocusIndex = -1; }
                         }
-                        finally { wantedFocusIndex = -1; }
+                        if (p >= 1 || row.SelectedIndex == idx) finish();
                     }
-                    if (p >= 1 || row.SelectedIndex == idx) finish();
+                    catch (Exception ex)
+                    {
+                        // a throw here would repeat every 30 ms and leave rideFirst set (which blocks AfterSelection for good)
+                        Log("find a game: ride step: " + ex.Message);
+                        step.Stop(); rideFirst = -1;
+                        try { finish(); } catch { }
+                    }
                 };
                 step.Start();
                 return true;
@@ -2652,8 +2643,6 @@ namespace Selene
                 // the title stays hidden while the 16:9 card is open; HidePreview puts it back under the tile
 
                 Log("preview: " + game + " (" + Prop(game, "Id") + ") " + System.IO.Path.GetFileName(path));
-                var songFor = Prop(game, "Id");
-                if (songFor is Guid) SongSetup.NoteMissing((Guid)songFor);   // (no song yet while they're still coming: said once)
             }
             catch (Exception ex) { Log("preview failed: " + ex.Message); }
         }
@@ -2861,16 +2850,21 @@ namespace Selene
             if (changed || (WantDefault && !musicHeldForLaunch)) EmptyLibraryMusic();   // retry after a startup hold, even when the mode itself did not change
             // UniPlaySong can switch to a game's song on its own when Playnite's selection changes: like the legacy theme,
             // the wanted state is checked 4x a second and put back
-            if (musicGuard == null)
+            // (only with UniPlaySong installed: without it there is nothing to guard)
+            if (musicGuard == null && Api != null && Api.Addons.Plugins.Any(pl => pl.Id == UniPlaySongId))
             {
                 musicGuard = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
                 musicGuard.Tick += (s, e) =>
                 {
-                    var live = LiveUps();
-                    var prop = live != null ? live.GetType().GetProperty("ForceDefaultMusicOverride") : null;
-                    if (prop == null || !Features.On("music")) return;
-                    if (!Equals(prop.GetValue(live, null), WantDefault)) { prop.SetValue(live, WantDefault, null); Log("UPS ForceDefaultMusicOverride put back to " + WantDefault); }
-                    if ((DateTime.Now - emptyMusicAt).TotalSeconds > 3) EmptyLibraryMusic();
+                    try
+                    {
+                        var live = LiveUps();
+                        var prop = live != null ? live.GetType().GetProperty("ForceDefaultMusicOverride") : null;
+                        if (prop == null || !Features.On("music")) return;
+                        if (!Equals(prop.GetValue(live, null), WantDefault)) { prop.SetValue(live, WantDefault, null); Log("UPS ForceDefaultMusicOverride put back to " + WantDefault); }
+                        if ((DateTime.Now - emptyMusicAt).TotalSeconds > 3) EmptyLibraryMusic();
+                    }
+                    catch (Exception ex) { Log("music guard: " + ex.Message); }
                 };
                 musicGuard.Start();
             }
@@ -2941,7 +2935,7 @@ namespace Selene
                 if (paused != null && paused.Cast<object>().Any()) return;
                 var interim = service.GetType().GetMethod("PlayDefaultMusicInterim");
                 if (interim == null) return;
-                if (musicStandIn == null) musicStandIn = new Playnite.SDK.Models.Game("Selene") { IsInstalled = true };
+                if (musicStandIn == null) musicStandIn = new Playnite.SDK.Models.Game(ForkBrand.Name) { IsInstalled = true };
                 interim.Invoke(service, new object[] { musicStandIn, settings });
                 if ((DateTime.Now - idleMusicLoggedAt).TotalSeconds > 60) { idleMusicLoggedAt = DateTime.Now; Log("UPS: idle, default track asked for"); }
             }
@@ -3121,13 +3115,19 @@ namespace Selene
         }
 
         // UniPlaySong swapped its settings object (a save does): looked up again on the next use
-        internal static void ForgetUps() { upsSettings = null; }
+        internal static void ForgetUps() { upsSettings = null; upsLookedAt = DateTime.MinValue; }
+
+        // a failed look-up is not repeated for a few seconds (the music guard asks four times a second, and each look-up
+        // walks every add-on and logs)
+        private static DateTime upsLookedAt = DateTime.MinValue;
 
         // UniPlaySong's live settings, the object its player reads: found inside the add-on like the legacy theme did
         // (asking Playnite for the add-on's settings can hand back a copy, so changes never reached the player)
         internal static object LiveUps()
         {
             if (upsSettings != null || Api == null) return upsSettings;
+            if ((DateTime.Now - upsLookedAt).TotalSeconds < 5) return null;
+            upsLookedAt = DateTime.Now;
             foreach (var plugin in Api.Addons.Plugins)
             {
                 if (plugin.Id != UniPlaySongId) continue;
@@ -3841,8 +3841,7 @@ namespace Selene
             }
             catch (Exception ex)
             {
-                LastError = ex.ToString();
-                Log(LastError);
+                Log(ex.ToString());
             }
         }
 
@@ -3871,10 +3870,14 @@ namespace Selene
         private static void OnTitleTimer(object sender, EventArgs e)
         {
             titleTimer.Stop();
-            var row = titleTimer.Tag as ListBox;
-            if (row == null) return;
-            var c = row.ItemContainerGenerator.ContainerFromIndex(Math.Max(0, row.SelectedIndex)) as FrameworkElement;
-            if (c != null) PlaceTitle(row, c, 0);
+            try
+            {
+                var row = titleTimer.Tag as ListBox;
+                if (row == null) return;
+                var c = row.ItemContainerGenerator.ContainerFromIndex(Math.Max(0, row.SelectedIndex)) as FrameworkElement;
+                if (c != null) PlaceTitle(row, c, 0);
+            }
+            catch (Exception ex) { Log("title timer: " + ex.Message); }
         }
 
         private static FrameworkElement FindTitle(ListBox row)
@@ -4341,8 +4344,7 @@ namespace Selene
                 // Collection's list: nothing above or below it (Up / Down took the focus off to hidden parts)
                 if (dirPad && (pressed.EndsWith("Up") || pressed.EndsWith("Down")) && InLibraryList(Keyboard.FocusedElement as DependencyObject)) { e.Cancel(); return; }
                 var item = Keyboard.FocusedElement as ListBoxItem;
-// per-press file logging removed (disk write on the UI thread every move)
-                //                 Log("pad " + pressed + " focus=" + (Keyboard.FocusedElement == null ? "null" : Keyboard.FocusedElement.GetType().Name) + " item=" + (item != null ? item.DataContext : null));
+                // (no per-press logging: a disk write on the UI thread every move)
                 // LB / RB switch the home's filters (All games, Installed...); moving a tile: nothing
                 if ((pressed == "LeftShoulder" || pressed == "RightShoulder") && SpotlightShowing())
                 {
@@ -4770,8 +4772,6 @@ namespace Selene
         private static readonly HashSet<Window> ccHooked = new HashSet<Window>();
         private static readonly HashSet<Window> ccClosing = new HashSet<Window>();
 
-        private static DateTime lastToolWindowAt = DateTime.MinValue;
-
         // a window of Playnite's other than the main one has the focus (a dialog)
         // Collection's list has nothing in it (no games, or none on this tab)
         public static bool CollectionEmpty()
@@ -4834,7 +4834,7 @@ namespace Selene
             if (Isolated && GetForegroundWindow() == IntPtr.Zero) { var mw = Application.Current.MainWindow; return mw != null && mw.IsActive; }
             uint pid;
             GetWindowThreadProcessId(GetForegroundWindow(), out pid);
-            return pid == (uint)System.Diagnostics.Process.GetCurrentProcess().Id;
+            return pid == OwnPid;
         }
 
 
@@ -4842,7 +4842,6 @@ namespace Selene
         private static void OnAnyWindowLoaded(object sender, RoutedEventArgs e)
         {
             var win = sender as Window;
-            if (win != null && win != Application.Current.MainWindow) lastToolWindowAt = DateTime.Now;
             if (win == null || win == Application.Current.MainWindow || ccHooked.Contains(win)) return;
             win.Dispatcher.BeginInvoke(new Action(() =>
             {
@@ -4966,7 +4965,9 @@ namespace Selene
         // the heart on the home's Favourite pill (Main.xaml binds it to SeleneHeartGlyph)
         private static void ShowHeart(object game)
         {
-            Application.Current.Resources["SeleneHeartGlyph"] = game != null && !(game is string) && IsFavoriteOf(game) ? "\uE00B" : "\uE006";
+            var glyph = game != null && !(game is string) && IsFavoriteOf(game) ? "\uE00B" : "\uE006";
+            var res = Application.Current.Resources;
+            if (!string.Equals(res["SeleneHeartGlyph"] as string, glyph, StringComparison.Ordinal)) res["SeleneHeartGlyph"] = glyph;   // (a resource write re-walks the tree even when nothing changed)
         }
 
         // another profile signed in: its favorites, recently played and order
@@ -5209,7 +5210,6 @@ namespace Selene
         // for the home's button hints
         internal static bool Moving { get { return movingCard != null || movingGame != null; } }
         internal static bool InRow(DependencyObject d) { return IsInRow(d); }
-        internal static bool HasTrailer(object game) { return CardVideo(game) != null; }
         // R3 has something to switch on: a full trailer (preview clips and Extra Metadata's short clips are silent)
         internal static bool HasTrailerSound(object game) { return game != null && !(game is string) && FullTrailerPath(game) != null; }
 
@@ -5587,8 +5587,6 @@ namespace Selene
         }
         private static readonly string RowFilterFile = System.IO.Path.Combine(SelenePaths.PlayniteConfig, "selene-row-filter.txt");
         private static int rowFilter = -1;
-        private static Border filterPill;
-        private static TextBlock filterPillText;
 
         private static int RowFilter
         {
@@ -5763,35 +5761,6 @@ namespace Selene
             catch { }
         }
 
-        private static object FindWithProperty(object root, string prop, int depth)
-        {
-            if (root == null) return null;
-            var type = root.GetType();
-            if (type.GetProperty(prop) != null) return root;
-            if (depth <= 0 || type.Namespace == "System") return null;
-            const BindingFlags any = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-            foreach (var f in type.GetFields(any))
-            {
-                if (f.FieldType.IsValueType || f.FieldType == typeof(string)) continue;
-                object v; try { v = f.GetValue(root); } catch { continue; }
-                var hit = FindWithProperty(v, prop, depth - 1);
-                if (hit != null) return hit;
-            }
-            return null;
-        }
-
-        private static bool TriggerHeld()
-        {
-            if (Isolated) return false;
-            for (int i = 0; i < 4; i++)
-            {
-                XInputStateEx s;
-                try { if (XInputGetStateEx(i, out s) == 0 && (s.LT > 60 || s.RT > 60)) return true; } catch { return false; }
-            }
-            return false;
-        }
-
-
         // Filter tabs in the home top bar (left slot, SeleneFilterTabs): LT / RT badges around the
         // five filters, the active one on a white pill (console tab look), the others dimmed.
         // New set of cards: they fade in and slide a little from the side the filter moved to (0.26 s, eased).
@@ -5955,40 +5924,6 @@ namespace Selene
             t.Start();
         }
 
-        // console-style pill just above the row; stays while a filter is on, flashes and fades for "All games"
-        private static void ShowFilterPill(ListBox row, bool changed)
-        {
-            var host = FindByName(VisualTreeHelper.GetParent(VisualTreeHelper.GetParent(row)) ?? row, "SeleneRowIntro") as Grid;
-            if (host == null) host = VisualTreeHelper.GetParent(row) as Grid;
-            if (host == null) return;
-            if (filterPill == null || VisualTreeHelper.GetParent(filterPill) != host)
-            {
-                if (filterPill != null) { var old = VisualTreeHelper.GetParent(filterPill) as Panel; if (old != null) old.Children.Remove(filterPill); }
-                filterPillText = new TextBlock { Foreground = Ink.Brush("SeleneInkColor"), FontSize = 17, FontFamily = new FontFamily("Segoe UI Variable Display, Segoe UI"), FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
-                var hint = new TextBlock { Text = "LT \u25C2  \u25B8 RT", Foreground = Ink.Brush("SeleneInkColor", 0.7), FontSize = 13, Margin = new Thickness(14, 1, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-                var sp = new StackPanel { Orientation = Orientation.Horizontal };
-                sp.Children.Add(filterPillText);
-                sp.Children.Add(hint);
-                filterPill = new Border
-                {
-                    Child = sp, CornerRadius = new CornerRadius(17), Padding = new Thickness(16, 5, 16, 6),
-                    Background = Ink.Brush("SeleneGlassColor", 0.45),
-                    BorderBrush = Ink.Brush("SeleneInkColor", 0.25), BorderThickness = new Thickness(1),
-                    HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
-                    Margin = new Thickness(8, -40, 0, 0), IsHitTestVisible = false, Opacity = 0
-                };
-                Panel.SetZIndex(filterPill, 50);
-                host.Children.Add(filterPill);
-            }
-            filterPillText.Text = RowFilterLabels[RowFilter] + "  \u00B7  " + games.Count;
-            bool keep = RowFilter != 0;
-            if (!changed) { filterPill.BeginAnimation(UIElement.OpacityProperty, null); filterPill.Opacity = keep ? 1 : 0; return; }
-            filterPill.BeginAnimation(UIElement.OpacityProperty, keep ? (AnimationTimeline)
-                new DoubleAnimation(1, TimeSpan.FromMilliseconds(180))
-                : Keys(1, 0, 1.4, 0.4, null));
-        }
-
-
         // a tab with no games says so (and how it fills up) next to the cards
         private static void ShowRowEmpty(ListBox row, bool empty)
         {
@@ -6003,7 +5938,7 @@ namespace Selene
                 case "recent": title = "Nothing played lately"; hint = "Games you play show up here for a month."; break;
                 case "favorites": title = "No favorites yet"; hint = "Press X on a game to add it to your favorites."; break;
                 case "unplayed": title = "You've started everything"; hint = "Every game in your library has been played at least once."; break;
-                default: title = "No games yet"; hint = "Add your stores in the setup check: Menu, Extensions, Selene."; break;
+                default: title = "No games yet"; hint = Lang.T("Add your stores in the setup check: Menu, Extensions, Selene."); break;
             }
             var titleBlock = (TextBlock)FindByName(box, "SeleneRowEmptyTitle");
             // the row is rebuilt more than once on a tab switch: the same message already showing stays put (no second slide-in),
@@ -6101,8 +6036,16 @@ namespace Selene
             if (inner != null) inner.Margin = new Thickness(36, 22, 36, 22);
             AdaptiveText.Watch(box, Contrast.Behind);
             RefreshRowPad();
+            box.IsVisibleChanged -= OnEmptyBoxVisibleChanged;
+            box.IsVisibleChanged += OnEmptyBoxVisibleChanged;
             StartFollowRowEmpty();
             OnFollowRowEmpty(null, EventArgs.Empty);
+        }
+
+        // the empty tab's words are in sight again (the home came back): the follow timer, stopped while they weren't, runs again
+        private static void OnEmptyBoxVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if ((bool)e.NewValue && ReferenceEquals(sender, emptyBox) && emptyFollowTimer == null) StartFollowRowEmpty();
         }
 
         private static void OnFollowRowEmpty(object sender, EventArgs e)
@@ -6116,7 +6059,9 @@ namespace Selene
                     StopFollowRowEmpty();
                     return;
                 }
-                if (!box.IsVisible) return;
+                // out of sight for now: the timer rests (it ticked at the screen's rate, with the fine timer resolution held, for as
+                // long as the home stayed hidden) and starts again when the box shows
+                if (!box.IsVisible) { StopFollowRowEmpty(); return; }
                 // a rebuilt row (filter switch, scroll) changes the count or the source: re-find the spacer then. A container
                 // that isn't realized yet is retried on the next tick as well.
                 if (emptyPad == null || emptyPadCount != row.Items.Count || !ReferenceEquals(emptyPadSource, row.ItemsSource)) RefreshRowPad();
@@ -6156,9 +6101,10 @@ namespace Selene
             var res = Application.Current.Resources;
             libraryGames = all;
             UpdateFilterTabs();
-            res["SeleneStatGames"] = all.ToString();
-            res["SeleneStatInstalled"] = installed.ToString();
-            res["SeleneStatRecent"] = recent.ToString();
+            // (a resource write re-walks the tree even when the value is the same: only what changed is written)
+            var stats = new[] { new[] { "SeleneStatGames", all.ToString() }, new[] { "SeleneStatInstalled", installed.ToString() }, new[] { "SeleneStatRecent", recent.ToString() } };
+            foreach (var stat in stats)
+                if (!string.Equals(res[stat[0]] as string, stat[1], StringComparison.Ordinal)) res[stat[0]] = stat[1];
             GameFacts.CardStats();
             if (!res.Contains("SeleneStatStoresSet")) { res["SeleneStatStores"] = StoreScreen.InstalledNames(); res["SeleneStatStoresSet"] = true; }
         }
@@ -6525,6 +6471,9 @@ namespace Selene
 
         private static void CloseYouTubeOverlay() { Log("youtube: close overlay"); HideOverlay("SeleneYouTubeOverlayVis", YouTubeSurface()); }
         private static void CloseBrowserOverlay() { Log("browser: close overlay"); HideOverlay("SeleneBrowserOverlayVis", BrowserSurface()); }
+        // Lanternfall phone remote: a game started from the phone closes Browser / YouTube first (PhoneCast.Launch)
+        internal static void CloseNomadOverlays() { if (BrowserOverlayUp()) CloseBrowserOverlay(); if (YouTubeOverlayUp()) CloseYouTubeOverlay(); }
+        internal static bool NomadOverlayUp() { return BrowserOverlayUp() || YouTubeOverlayUp(); }
 
         // a card switched on or off in Selene settings: the row follows now (it only dropped cards when Spotlight opened, and
         // a card switched back on never came back until Playnite restarted)
@@ -6612,7 +6561,6 @@ namespace Selene
 
         // remembers the user's own taskbar state across crashes (Playnite closed without its exit step left it hidden)
         private static readonly string TaskbarFlag = System.IO.Path.Combine(SelenePaths.PlayniteConfig, "selene-taskbar-before.txt");
-        private static bool IsFullscreenApp { get { return System.Diagnostics.Process.GetCurrentProcess().ProcessName.IndexOf("Fullscreen", StringComparison.OrdinalIgnoreCase) >= 0; } }
 
         // Taskbar auto-hide is OFF (user's choice, 2026-10-10): the taskbar is left as the user set it. Only a state that an
         // older, crashed fullscreen run left behind (flag file) is put back.
@@ -6932,7 +6880,7 @@ namespace Selene
                 if (gameWindow == IntPtr.Zero) return;
                 uint pid;
                 GetWindowThreadProcessId(gameWindow, out pid);
-                if (pid == 0 || pid == (uint)System.Diagnostics.Process.GetCurrentProcess().Id) return;
+                if (pid == 0 || pid == OwnPid) return;
                 string name = null;
                 if (Api != null) foreach (var g in Api.Database.Games) if (g.IsRunning) { name = g.Name; break; }
                 // only a game Playnite is running, and never the Windows shell: Guide on the desktop "paused" Explorer
@@ -6949,7 +6897,7 @@ namespace Selene
                         Log("pause: " + proc + " was in front -> " + WindowInfo(real));
                         gameWindow = real;
                         GetWindowThreadProcessId(real, out pid);
-                        if (pid == 0 || pid == (uint)System.Diagnostics.Process.GetCurrentProcess().Id) return;
+                        if (pid == 0 || pid == OwnPid) return;
                         try { proc = System.Diagnostics.Process.GetProcessById((int)pid).ProcessName.ToLowerInvariant(); } catch { }
                     }
                 }
@@ -7023,7 +6971,7 @@ namespace Selene
                 foreach (var pid in LocalGames.ProcessesInGameFolder(g0)) pids.Add(pid);
                 if (pids.Any(pid => LocalGames.IsElevated(pid)))
                 {
-                    Api.Dialogs.ShowMessage("Close this administrator game from its own menu. Selene's elevated game controls are currently unavailable.", "Close game");
+                    Api.Dialogs.ShowMessage(ForkBrand.Text("Close this administrator game from its own menu. Selene's elevated game controls are currently unavailable."), "Close game");
                     return;
                 }
                 var main = Application.Current.MainWindow;
@@ -7088,7 +7036,7 @@ namespace Selene
             {
                 uint pid;
                 GetWindowThreadProcessId(GetForegroundWindow(), out pid);
-                if (pid == 0 || pid == (uint)System.Diagnostics.Process.GetCurrentProcess().Id) return false;
+                if (pid == 0 || pid == OwnPid) return false;
                 return LocalGames.IsElevated((int)pid);
             }
             catch { return false; }
@@ -7242,7 +7190,7 @@ namespace Selene
                 GetWindowThreadProcessId(target, out pid);
                 if (pid == 0 || LocalGames.IsElevated((int)pid))
                 {
-                    Api.Dialogs.ShowMessage("Close this administrator game from its own menu, then start it again. Selene's elevated game controls are currently unavailable.", "Restart game");
+                    Api.Dialogs.ShowMessage(ForkBrand.Text("Close this administrator game from its own menu, then start it again. Selene's elevated game controls are currently unavailable."), "Restart game");
                     return;
                 }
                 var answer = Api.Dialogs.ShowMessage("Close " + name + " and start it again?" + Environment.NewLine + "Unsaved progress will be lost.", "Restart game",
@@ -7381,7 +7329,7 @@ namespace Selene
                     uint pid;
                     var fg = GetForegroundWindow();
                     GetWindowThreadProcessId(fg, out pid);
-                    QuitHandoff = pid != (uint)System.Diagnostics.Process.GetCurrentProcess().Id ? fg : IntPtr.Zero;
+                    QuitHandoff = pid != OwnPid ? fg : IntPtr.Zero;
                     Log("quit: Selene's windows hidden, Playnite closes out of sight");
                     StopStealGuard(w);   // (Guide's guard must not pull Playnite back now)
                     // Playnite's closing window activates itself (an invisible window would hold the focus for the seconds
@@ -7393,7 +7341,7 @@ namespace Selene
                     {
                         if (!Quitting || DateTime.Now > handoffEnd) { handoff.Stop(); return; }
                         uint fp; var fgw = GetForegroundWindow(); GetWindowThreadProcessId(fgw, out fp);
-                        if (fp != (uint)System.Diagnostics.Process.GetCurrentProcess().Id)
+                        if (fp != OwnPid)
                         {
                             // (right after the hide Windows hasn't moved the focus yet: the window it lands on is learnt here)
                             if (fgw != IntPtr.Zero && (QuitHandoff == IntPtr.Zero || !IsWindow(QuitHandoff))) QuitHandoff = fgw;
@@ -7439,6 +7387,7 @@ namespace Selene
                     if (!Quitting || !ShutdownBegun) return;
                     Log("quit: Playnite still closing after 30 s -> ended");
                     try { if (configDir != null) System.IO.File.Delete(System.IO.Path.Combine(configDir, "safestart.flag")); } catch { }
+                    try { FlushLog(); } catch { }
                     try { System.Diagnostics.Process.GetCurrentProcess().Kill(); } catch { }
                 }) { IsBackground = true, Name = "SeleneQuitWatch" }.Start();
             }
@@ -7505,7 +7454,6 @@ namespace Selene
         private static DateTime gamePidsAt = DateTime.MinValue, soundSince = DateTime.MinValue, lastSoundAt = DateTime.MinValue;
         private static int soundTick;
 
-        public static void GameStarting() { GameStarting(Guid.Empty); }
 
         private static Window coverWindow;
 
@@ -7774,7 +7722,6 @@ namespace Selene
             return bmp;
         }
 
-        [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool SetLayeredWindowAttributes(IntPtr h, uint key, byte alpha, uint flags);
         [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern int SetWindowLong(IntPtr h, int index, int value);
 
         // console: once the game's window shows up the art darkens slowly to black and stays black until the game is ready.
@@ -8042,7 +7989,19 @@ namespace Selene
             }));
         }
 
+        // (the timer's tick: a throw here must not reach the dispatcher's unhandled path or repeat every 100 ms)
         private static void CheckGameReady()
+        {
+            try { CheckGameReadyCore(); }
+            catch (Exception ex)
+            {
+                Log("launch: ready check failed: " + ex.Message);
+                try { AbortLaunchCover(IntPtr.Zero, "the ready check failed"); }
+                catch { if (launchTimer != null) launchTimer.Stop(); }
+            }
+        }
+
+        private static void CheckGameReadyCore()
         {
             var w = Application.Current.MainWindow;
             if (!launching || w == null) { if (launchTimer != null) launchTimer.Stop(); return; }
@@ -8101,7 +8060,7 @@ namespace Selene
                     var cover = coverWindow != null ? new System.Windows.Interop.WindowInteropHelper(coverWindow).Handle : IntPtr.Zero;
                     var proc = ProcessNameOf(fg);
                     bool shell = proc == "explorer" || proc == "shellexperiencehost" || proc == "startmenuexperiencehost" || proc == "searchhost" || proc == "textinputhost" || proc == "lockapp" || proc == "";
-                    asking = small && !shell && IsWindowVisible(fg) && fg != cover && fpid != (uint)System.Diagnostics.Process.GetCurrentProcess().Id;
+                    asking = small && !shell && IsWindowVisible(fg) && fg != cover && fpid != OwnPid;
                 }
                 if (asking && fg == launcherAsk) launcherAskTicks++; else { launcherAsk = asking ? fg : IntPtr.Zero; launcherAskTicks = 0; }
                 if (asking && launcherAskTicks >= 120) { AbortLaunchCover(fg, "a launcher window waits for you: " + WindowInfo(fg)); return; }
@@ -8190,6 +8149,7 @@ namespace Selene
                     GamePause.Unhush();
                     HoldMusicForLaunch(false);
                     launching = false;
+                    StopWatchingForeground();
                     launchTimer.Stop();
                     gameWindow = readyWindow;
                     PlayReadySound();
@@ -8249,6 +8209,7 @@ namespace Selene
             GamePause.FadeBack(2000, 2000);   // the ready sound first, then the game's sound fades in
             HoldMusicForLaunch(false);
             launching = false;
+            StopWatchingForeground();
             if (launchTimer != null) launchTimer.Stop();
             var w = Application.Current.MainWindow;
             if (w == null) return;
@@ -8476,6 +8437,7 @@ namespace Selene
             // closed at once: the fade-into-the-game (a veil melting away) has no game to show, and with Playnite just restored its
             // animations could stall and leave the black veil up (#24)
             CloseCoverWindow(false, () => { if (bringForward != IntPtr.Zero) ForceForeground(bringForward); else if (w != null) { if (CloseToTray.IsHidden) CloseToTray.ShowFromTray(); w.Activate(); FocusRowSoon(0); } });
+            StopWatchingForeground();
             Log("launch cover: aborted (" + why + ")");
             QueueScreenRefresh("loading screen ended without the game", 600);
         }
@@ -8532,29 +8494,6 @@ namespace Selene
         // the loading screen's art, drawn on its own thread (let go a while after the screen has gone)
         private static OffThread coverArtStage;
 
-        private static void StopCoverArtLater()
-        {
-            var stage = coverArtStage;
-            if (stage == null) return;
-            coverArtStage = null;
-            var later = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
-            later.Tick += (s, e) => { later.Stop(); stage.Stop(); };
-            later.Start();
-        }
-
-        private static void EndLaunchCover()
-        {
-            if (!launching) return;
-            launching = false;
-            if (launchAttempt != null) launchAttempt.Complete();
-            StopCoverArtLater();
-            if (launchTimer != null) launchTimer.Stop();
-            var w = Application.Current.MainWindow;
-            if (w != null) w.Topmost = false;
-            CloseCoverWindow(false, null);
-            Log("launch cover: cancelled by Guide");
-        }
-
         [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
         private delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);
         [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool EnumWindows(EnumWindowsProc cb, IntPtr lParam);
@@ -8583,7 +8522,7 @@ namespace Selene
             var mi = new MONITORINFO { Size = System.Runtime.InteropServices.Marshal.SizeOf(typeof(MONITORINFO)) };
             if (!GetMonitorInfo(MonitorFromWindow(playnite, 2), ref mi)) return IntPtr.Zero;
             int mw = mi.Monitor.Right - mi.Monitor.Left, mh = mi.Monitor.Bottom - mi.Monitor.Top;
-            uint ownPid = (uint)System.Diagnostics.Process.GetCurrentProcess().Id;
+            uint ownPid = OwnPid;
             IntPtr result = IntPtr.Zero;
             EnumWindows((h, l) =>
             {
@@ -8710,9 +8649,12 @@ namespace Selene
 
         private static void WatchForeground()
         {
-            if (foregroundHook != IntPtr.Zero) return;
-            foregroundProc = (h, evt, hwnd, o, c, t, time) => { if (launching) KeepCoverOnTop(); };
-            foregroundHook = SetWinEventHook(3, 3, IntPtr.Zero, foregroundProc, 0, 0, 0);   // EVENT_SYSTEM_FOREGROUND, out of context
+            if (foregroundHook == IntPtr.Zero)
+            {
+                foregroundProc = (h, evt, hwnd, o, c, t, time) => { if (launching) KeepCoverOnTop(); };
+                foregroundHook = SetWinEventHook(3, 3, IntPtr.Zero, foregroundProc, 0, 0, 0);   // EVENT_SYSTEM_FOREGROUND, out of context
+            }
+            if (showHook != IntPtr.Zero) return;
             // a window that appears without taking the focus (Genshin Impact's small first window at the top left, launchers'
             // splash screens) flashed over the loading screen until the next 100 ms check: any new top-level window puts it back
             showProc = (h, evt, hwnd, o, c, t, time) =>
@@ -8730,7 +8672,21 @@ namespace Selene
             };
             showHook = SetWinEventHook(0x8002, 0x8002, IntPtr.Zero, showProc, 0, 0, 0);   // EVENT_OBJECT_SHOW, out of context
         }
-        [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern IntPtr GetParent(IntPtr hwnd);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool UnhookWinEvent(IntPtr hook);
+
+        // the loading screen is over: the hooks go (EVENT_OBJECT_SHOW is system-wide, and every window or object any program shows
+        // was sent to Playnite's UI thread for the rest of the session). The next launch hooks again. A hook is removed from the
+        // thread that set it; if that fails it is kept, as before.
+        private static void StopWatchingForeground()
+        {
+            try
+            {
+                if (foregroundHook != IntPtr.Zero && UnhookWinEvent(foregroundHook)) foregroundHook = IntPtr.Zero;
+                if (showHook != IntPtr.Zero && UnhookWinEvent(showHook)) showHook = IntPtr.Zero;
+            }
+            catch (Exception ex) { Log("launch: unhooking failed: " + ex.Message); }
+        }
         private static int launchShownLogged;
 
         // a window for the log: its program, class, place and size, and whether it is topmost / run as administrator
@@ -8761,6 +8717,27 @@ namespace Selene
         // the same off the UI thread: attaching to the game's input thread waits for that thread to answer, and a game in the
         // middle of its display-mode switch answered seconds later, freezing the loading screen's fade (and the veil's) with it
         private static void ForceForegroundAsync(IntPtr hwnd, Action then) { ForceForegroundAsync(hwnd, then, true); }
+
+        // Lanternfall phone remote: a press from the phone needs Playnite in front (Windows gives a window in the background no keyboard
+        // focus, so the press had nowhere to go). Already in front: then() runs now; otherwise Playnite's top window (a dialog over
+        // the main one, when one is open) comes forward first.
+        internal static void PhoneFront(Action then)
+        {
+            var app = Application.Current;
+            if (app == null) return;
+            uint fgPid;
+            GetWindowThreadProcessId(GetForegroundWindow(), out fgPid);
+            if (fgPid == (uint)System.Diagnostics.Process.GetCurrentProcess().Id) { then(); return; }
+            Window top = null;
+            // a dialog open (modal): the newest owned window shown, otherwise the main window (never an add-on's overlay window)
+            if (System.Windows.Interop.ComponentDispatcher.IsThreadModal)
+                foreach (Window w in app.Windows) if (w.IsVisible && w.Owner != null) top = w;
+            if (top == null) top = app.MainWindow;
+            var hwnd = top != null ? new System.Windows.Interop.WindowInteropHelper(top).Handle : IntPtr.Zero;
+            if (hwnd == IntPtr.Zero) { then(); return; }
+            Log("phone remote: Playnite was behind " + WindowInfo(GetForegroundWindow()) + ", bringing it forward");
+            ForceForegroundAsync(hwnd, () => { if (top.IsVisible) top.Activate(); then(); });
+        }
         // raise=false: the focus only, the window left where it is in the stacking (a starting game behind the loading screen:
         // raising it showed its first, half-drawn frame over the art for a moment)
         private static void ForceForegroundAsync(IntPtr hwnd, Action then, bool raise)
@@ -8981,43 +8958,6 @@ namespace Selene
         private static readonly Guid UniPlaySongId = new Guid("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
         private static object upsSettings;
 
-        // UniPlaySong "continues the same song" for the home music (its private _lastDefaultMusicPath), so every start
-        // came back to one track. Seed that with a random track from the folder: a different song per Playnite start,
-        // and UniPlaySong still picks a new random one when a song ends.
-        private static void ShuffleFirstHomeSong(object plugin)
-        {
-            try
-            {
-                var folder = Convert.ToString(upsSettings.GetType().GetProperty("DefaultMusicFolderPath").GetValue(upsSettings, null));
-                if (string.IsNullOrEmpty(folder) || !System.IO.Directory.Exists(folder)) return;
-                var files = System.IO.Directory.GetFiles(folder, "*.mp3");
-                if (files.Length < 2) return;
-                var svc = FindWithField(plugin, "_lastDefaultMusicPath", 4);
-                if (svc == null) { Log("music shuffle: playback service not found"); return; }
-                var pick = files[new Random().Next(files.Length)];
-                svc.GetType().GetField("_lastDefaultMusicPath", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(svc, pick);
-                Log("music shuffle: first home song " + System.IO.Path.GetFileName(pick));
-            }
-            catch (Exception ex) { Log("music shuffle: " + ex.Message); }
-        }
-
-        private static object FindWithField(object root, string field, int depth)
-        {
-            if (root == null) return null;
-            const BindingFlags any = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-            var type = root.GetType();
-            if (type.GetField(field, any) != null) return root;
-            if (depth <= 0 || type.Namespace == "System" || type.IsPrimitive) return null;
-            foreach (var f in type.GetFields(any))
-            {
-                if (f.FieldType.IsValueType || f.FieldType == typeof(string) || f.FieldType.IsArray) continue;
-                object v; try { v = f.GetValue(root); } catch { continue; }
-                var hit = FindWithField(v, field, depth - 1);
-                if (hit != null) return hit;
-            }
-            return null;
-        }
-
 
         // Home: quiet, a game's own song only while its trailer card is open (like the legacy theme)
         private static void UpdateMusicOverride() { SetMusic(previewShowing ? "trailer" : "home"); }
@@ -9062,7 +9002,7 @@ namespace Selene
                             GetWindowThreadProcessId(fg, out fgPid);
                             string who = "?";
                             try { who = System.Diagnostics.Process.GetProcessById((int)fgPid).ProcessName; } catch { }
-                            bool own = fgPid == (uint)System.Diagnostics.Process.GetCurrentProcess().Id;
+                            bool own = fgPid == OwnPid;
                             bool otherScreen = fg != IntPtr.Zero && MonitorFromWindow(fg, 2) != MonitorFromWindow(me2, 2);
                             if (!own && !otherScreen && DateTime.Now < stealGuardUntil)
                             {
@@ -9099,7 +9039,7 @@ namespace Selene
                         var fgw = GetForegroundWindow();
                         GetWindowThreadProcessId(fgw, out pid);
                         var me = new System.Windows.Interop.WindowInteropHelper(mw).Handle;
-                        if (pid == (uint)System.Diagnostics.Process.GetCurrentProcess().Id) return;  // one of Playnite's own windows
+                        if (pid == OwnPid) return;  // one of Playnite's own windows
                         if (MonitorFromWindow(fgw, 2) != MonitorFromWindow(me, 2)) return;  // e.g. clicking the desk monitor
                         if (!CoversScreen(fgw, me)) return;  // a popup / small window: Playnite stays as it is
                         root.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, TimeSpan.Zero));
@@ -9248,20 +9188,6 @@ namespace Selene
             Ui.Play("OpenPanel.wav", 0.8);
             LoginScene.OpenWith(() => new SearchScreen());
             Log("hold view -> find a game");
-        }
-
-        // (Playnite's own search in the library, no longer used)
-        private static void OpenPlayniteSearch()
-        {
-            var w = Application.Current.MainWindow;
-            if (w == null) return;
-            SeleneShell.ShowLibrary();
-            w.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                var search = FindByName(w, "PART_ButtonSearch") as System.Windows.Controls.Primitives.ButtonBase;
-                if (search != null && search.Command != null && search.Command.CanExecute(search.CommandParameter)) search.Command.Execute(search.CommandParameter);
-                Log("hold view -> library search" + (search == null ? " (no search button)" : ""));
-            }), System.Windows.Threading.DispatcherPriority.Background);
         }
 
         // LB / RB in Collection: the same five tabs as Spotlight (one choice for both screens); Collection applies the
@@ -9511,10 +9437,94 @@ namespace Selene
 
         public static string ThemeDir { get { return SelenePaths.ThemeDir; } }
 
+        // %TEMP%\selene.log. Lines are queued and written by one background writer (a file append on every call, usually on
+        // the UI thread, stalled it whenever a virus scanner looked at the file); FlushLog writes what is left (quit).
+        private static readonly object logLock = new object();      // the queue
+        private static readonly object logWriteLock = new object(); // the file
+        private static readonly Queue<string> logQueue = new Queue<string>();
+        private static bool logWriterRunning, logTrimmed;
+        private const int LogQueueMax = 20000;           // lines waiting (the writer is stuck: the newest are dropped, not memory)
+        private const long LogTrimAbove = 4L * 1024 * 1024;   // a log past this is cut back at the first write of a run...
+        private const int LogKeepBytes = 1536 * 1024;         // ...to its last part (the one before this start stays in a report)
+
         public static void Log(string s)
         {
             PerformanceRecorder.FromLog(s);
-            try { System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "selene.log"), DateTime.Now.ToString("HH:mm:ss.fff ") + s + Environment.NewLine); } catch { }
+            var line = DateTime.Now.ToString("HH:mm:ss.fff ") + s + Environment.NewLine;
+            lock (logLock)
+            {
+                if (logQueue.Count < LogQueueMax) logQueue.Enqueue(line);
+                if (logWriterRunning) return;
+                logWriterRunning = true;
+            }
+            System.Threading.ThreadPool.QueueUserWorkItem(WriteLogQueue);
+        }
+
+        private static void WriteLogQueue(object state)
+        {
+            try
+            {
+                while (true)
+                {
+                    System.Threading.Thread.Sleep(250);   // lines that come together are written together
+                    string[] lines;
+                    lock (logLock)
+                    {
+                        if (logQueue.Count == 0) { logWriterRunning = false; return; }
+                        lines = logQueue.ToArray();
+                        logQueue.Clear();
+                    }
+                    WriteLogLines(lines);
+                }
+            }
+            catch { lock (logLock) logWriterRunning = false; }
+        }
+
+        // everything still queued is written now (quit: the writer thread would be cut off with the process)
+        public static void FlushLog()
+        {
+            string[] lines;
+            lock (logLock)
+            {
+                lines = logQueue.ToArray();
+                logQueue.Clear();
+            }
+            if (lines.Length > 0) WriteLogLines(lines);
+        }
+
+        private static void WriteLogLines(string[] lines)
+        {
+            lock (logWriteLock)
+            {
+                try
+                {
+                    var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "selene.log");
+                    if (!logTrimmed) { logTrimmed = true; TrimLog(path); }
+                    System.IO.File.AppendAllText(path, string.Concat(lines));
+                }
+                catch { }
+            }
+        }
+
+        private static void TrimLog(string path)
+        {
+            try
+            {
+                var info = new System.IO.FileInfo(path);
+                if (!info.Exists || info.Length <= LogTrimAbove) return;
+                byte[] tail = new byte[LogKeepBytes];
+                int got;
+                using (var fs = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite | System.IO.FileShare.Delete))
+                {
+                    fs.Seek(-LogKeepBytes, System.IO.SeekOrigin.End);
+                    got = fs.Read(tail, 0, tail.Length);
+                }
+                int start = Array.IndexOf(tail, (byte)'\n', 0, got) + 1;   // from the next whole line
+                if (start <= 0 || start >= got) return;
+                using (var fs = new System.IO.FileStream(path, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.ReadWrite | System.IO.FileShare.Delete))
+                    fs.Write(tail, start, got - start);
+            }
+            catch { }
         }
 
         private static DependencyObject GetParent(DependencyObject d)
@@ -9563,7 +9573,8 @@ namespace Selene
         public static bool Disabled;  // test harness switch
         private static readonly Dictionary<string, ImageSource> decoded = new Dictionary<string, ImageSource>();
         private static readonly LinkedList<string> decodedOrder = new LinkedList<string>();
-        private const int DecodedMax = 8;
+        // (each is a screen-wide picture: 33 MB at 4K, in a 32-bit process; fewer kept, and fewer still on "Reduce memory use")
+        private static int DecodedMax { get { return Features.On("lightweight") ? 3 : 5; } }
         private System.Windows.Threading.DispatcherTimer settle;
         private object pending;
         private object shown = DependencyProperty.UnsetValue;

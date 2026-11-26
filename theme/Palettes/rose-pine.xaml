@@ -5,7 +5,7 @@
     <sys:String x:Key="SeleneThemeId">rose-pine</sys:String>
     <sys:String x:Key="SeleneThemeName">Rosé Pine</sys:String>
     <sys:String x:Key="SeleneThemeMode">light</sys:String>
-    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/rose-pine/1-funky-shapes.jpg</sys:String>
+    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/rose-pine/1-lanternfall.jpg</sys:String>
 
     <Color x:Key="GlyphColor">#FF56949F</Color>
     <Color x:Key="GlyphLightColor">#FF575279</Color>

@@ -20,7 +20,7 @@ namespace SeleneBrowser
     public static class LocalServer
     {
         // Kind: "" = plain stream/caption token, "pl" = HLS playlist (rewritten on the way through), "seg" = HLS media segment/key
-        class TokenEntry { public string Url; public bool IsCaption; public string Vtt; public DateTime Expires; public string Kind = ""; public string Ua; public string VideoId; public int Itag; }
+        class TokenEntry { public string Url; public bool IsCaption; public string Vtt; public string Kind = ""; public string Ua; public string VideoId; public int Itag; }
         class CacheEntry { public StreamInfo Info; public DateTime At; public List<string> Tokens = new List<string>(); }
         class Req
         {
@@ -41,9 +41,7 @@ namespace SeleneBrowser
         static readonly Regex UriAttr = new Regex("URI=\"([^\"]*)\"", RegexOptions.Compiled);
 
         // ---------------------------------------------------------------- public API
-        public static int Port { get { Start(); return port; } }
         public static string BaseUrl { get { Start(); return "http://127.0.0.1:" + port; } }
-        public static bool IsRunning { get { return listener != null; } }
 
         public static bool Start()
         {
@@ -64,18 +62,6 @@ namespace SeleneBrowser
                     return true;
                 }
                 catch { listener = null; return false; }
-            }
-        }
-
-        public static void Stop()
-        {
-            lock (lk)
-            {
-                try { if (listener != null) listener.Stop(); } catch { }
-                listener = null;
-                tokens.Clear();
-                cache.Clear();
-                hlsMap.Clear();
             }
         }
 
@@ -117,7 +103,7 @@ namespace SeleneBrowser
             lock (lk)
             {
                 TokenEntry e = new TokenEntry();
-                e.Url = url; e.IsCaption = caption; e.Expires = DateTime.UtcNow.AddHours(3);
+                e.Url = url; e.IsCaption = caption;
                 tokens[t] = e;
                 if (ce != null) ce.Tokens.Add(t);
             }
@@ -188,7 +174,7 @@ namespace SeleneBrowser
                 }
                 t = NewToken();
                 TokenEntry e = new TokenEntry();
-                e.Url = url; e.Kind = kind; e.Ua = Http.WebUA; e.Expires = DateTime.UtcNow.AddHours(12);
+                e.Url = url; e.Kind = kind; e.Ua = Http.WebUA;
                 tokens[t] = e;
                 hlsMap[key] = t;
                 return t;

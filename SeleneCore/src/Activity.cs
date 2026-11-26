@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -6,10 +6,9 @@ using System.Windows.Shapes;
 namespace Selene
 {
     // What Selene has running in the background, for a red dot on the menu's Selene settings and on the settings group that owns
-    // the work: songs (Sound & music), trailers and art (Spotlight), the achievements check (Games).
+    // the work: trailers and art (Spotlight), the achievements check (Games).
     public static class Background
     {
-        public static bool Songs { get { try { return SongSetup.Busy; } catch { return false; } } }
         public static bool Art { get { try { return TrailerFetch.Busy; } catch { return false; } } }
         public static bool Achievements
         {
@@ -28,14 +27,13 @@ namespace Selene
 
         // the SteamGridDB key was skipped in setup and none has come since: the Look setting waits for it
         public static bool SquareKey { get { try { return SquareKeyScreen.Skipped; } catch { return false; } } }
-        public static bool Any { get { return Songs || Art || Achievements || OldTasks || GetArt || SquareKey; } }
+        public static bool Any { get { return Art || Achievements || OldTasks || GetArt || SquareKey; } }
 
         public static bool ForGroup(string group)
         {
             // (only where the setting that owns the work is listed: combined downloads show it all under Games)
-            if (group == "Sound & music") return Songs && MediaDownloads.ShowSetting("songsetup");
             if (group == "Spotlight") return Art && (MediaDownloads.ShowSetting("artdownload") || MediaDownloads.ShowSetting("trailerdownload"));
-            if (group == "Games") return Achievements || GetArt || (MediaDownloads.Unified && (Art || Songs));
+            if (group == "Games") return Achievements || GetArt || (MediaDownloads.Unified && Art);
             if (group == "Advanced") return OldTasks;
             if (group == "Look") return SquareKey;
             return false;
@@ -44,10 +42,9 @@ namespace Selene
         // the setting that owns the running work
         public static bool ForOption(string key)
         {
-            if (key == "songsetup") return Songs;
             if (key == "trailerdownload" || key == "artdownload") return Art;
             if (key == "achievements") return Achievements;
-            if (key == "gamesget") return GetArt || (MediaDownloads.Unified && (Art || Songs));
+            if (key == "gamesget") return GetArt || (MediaDownloads.Unified && Art);
             if (key == "legacytasks") return OldTasks;
             if (key == "steamgridkey") return SquareKey;
             return false;
@@ -61,7 +58,6 @@ namespace Selene
 
         // how far each is, 0..1 (below 0: not running), for the bar under the setting
         public static double ArtProgress() { try { return TrailerFetch.Progress; } catch { return -1; } }
-        public static double SongsProgress() { try { return SongSetup.Progress; } catch { return -1; } }
         public static double AchievementsProgress()
         {
             try { int n, all; double part; Guid? on; return AchievementsData.Checking(out n, out all, out part, out on) && all > 0 ? (double)n / all : -1; }

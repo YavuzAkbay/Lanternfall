@@ -28,6 +28,11 @@ namespace SeleneBrowser
         static string id;
         static string name;
         static bool read;
+        // what the last parse of profiles.json gave, valid while the file's write time and length are unchanged
+        static bool cacheValid;
+        static string cachePath, cacheId, cacheName;
+        static DateTime cacheWritten;
+        static long cacheLength;
 
         // tiny local DTOs: only the three fields we need; JavaScriptSerializer ignores the rest.
         public class ProfilesFileDto
@@ -69,7 +74,27 @@ namespace SeleneBrowser
             try
             {
                 string path = FilePath();
-                if (path.Length > 0 && File.Exists(path))
+                bool fromCache = false;
+                DateTime written = DateTime.MinValue;
+                long length = -1;
+                if (path.Length > 0)
+                {
+                    var info = new FileInfo(path);
+                    if (info.Exists)
+                    {
+                        written = info.LastWriteTimeUtc;
+                        length = info.Length;
+                        // the watcher calls this every 2 s: an unchanged file is not read and parsed again
+                        lock (lk)
+                        {
+                            if (cacheValid && cachePath == path && cacheWritten == written && cacheLength == length)
+                            {
+                                nextId = cacheId; nextName = cacheName; fromCache = true;
+                            }
+                        }
+                    }
+                }
+                if (!fromCache && length >= 0)
                 {
                     string text;
                     using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
@@ -100,6 +125,11 @@ namespace SeleneBrowser
                                 }
                             }
                         }
+                    }
+                    lock (lk)
+                    {
+                        cacheValid = true; cachePath = path; cacheWritten = written; cacheLength = length;
+                        cacheId = nextId; cacheName = nextName;
                     }
                 }
             }

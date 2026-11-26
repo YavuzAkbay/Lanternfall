@@ -49,7 +49,7 @@ namespace SeleneBrowser
         private const string SearchAction = "https://www.google.com/search";
         private const string SearchUrl = SearchAction + "?q=";
         private const double ZoomStep = 0.5;
-        private static readonly object fileLock = new object();
+        internal static readonly object fileLock = new object();   // guards bookmarks.json / history.json (CardInfo reads them too)
 
         private const int MaxTabs = 5;
         private readonly List<BrowserTab> tabs = new List<BrowserTab>();
@@ -218,7 +218,35 @@ namespace SeleneBrowser
             };
             v.PageNotice += delegate(string message) { if (tab == active && shown) Toast(message); };
             var edge = v as EdgeView;
-            if (edge != null) { edge.InitFailed += delegate { OnEdgeInitFailed(tab); }; HookEdgeTools(tab, edge); }
+            if (edge != null)
+            {
+                edge.InitFailed += delegate { OnEdgeInitFailed(tab); };
+                edge.BrowserProcessGone += delegate { OnTabEngineGone(tab, edge); };
+                HookEdgeTools(tab, edge);
+            }
+        }
+
+        // The WebView2 browser process died: every call on that view would fail quietly from now on. Replace the engine (the page comes
+        // back from its address). A tab that is not in front gets its new engine when it is switched to; a second death within
+        // 30 s is not retried.
+        private void OnTabEngineGone(BrowserTab tab, EdgeView edge)
+        {
+            try
+            {
+                if (tab.ViewDisposed || !object.ReferenceEquals(tab.View, edge) || !tabs.Contains(tab)) return;
+                int now = Environment.TickCount;
+                if (tab.EngineRestarted && unchecked(now - tab.EngineRestartAt) < 30000)
+                {
+                    logger.Warn("SeleneBrowser: page engine died again within 30 s, not restarting it");
+                    return;
+                }
+                tab.EngineRestarted = true;
+                tab.EngineRestartAt = now;
+                logger.Warn("SeleneBrowser: page engine process exited, replacing it");
+                DisposeTab(tab);
+                if (tab == active && shown) RecreateTab(tab);   // hidden: OnShown brings it back
+            }
+            catch (Exception ex) { logger.Error(ex, "SeleneBrowser: engine restart"); }
         }
 
         private void OnTabAddress(BrowserTab tab, string url)
@@ -246,8 +274,19 @@ namespace SeleneBrowser
                 && history[0].Title != title)
             {
                 history[0].Title = title;
-                SaveList(HistoryFile, history);
+                // a page that animates its title would rewrite the file every tick: save once it settles (and when the browser is parked)
+                historySave.Stop();
+                historySave.Start();
             }
+        }
+
+        private readonly DispatcherTimer historySave = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+
+        private void FlushHistorySave()
+        {
+            if (!historySave.IsEnabled) return;
+            historySave.Stop();
+            SaveList(HistoryFile, history);
         }
 
         private void OnTabFullScreen(BrowserTab tab)
@@ -296,6 +335,7 @@ namespace SeleneBrowser
             scroller = new PageScroller(delegate(string js) { var v = view; if (v != null && v.IsReady) v.ExecuteScript(js); });
 
             poll.Tick += OnPollTick;
+            historySave.Tick += delegate { FlushHistorySave(); };
             // closed for good (hidden / unloaded for a while): free the page engine; Loaded / OnShown bring it back
             disposeTimer.Tick += delegate { DisposeView(); };
             Unloaded += delegate { Park(); };
@@ -365,6 +405,7 @@ namespace SeleneBrowser
         private void Park()
         {
             shown = false;
+            FlushHistorySave();
             if (scroller != null) scroller.Stop();
             BarsStop();
             poll.Stop();
@@ -1121,25 +1162,44 @@ namespace SeleneBrowser
                 lock (fileLock)
                 {
                     if (File.Exists(file))
-                        return new JavaScriptSerializer().Deserialize<List<BrowserEntry>>(File.ReadAllText(file, Encoding.UTF8)) ?? new List<BrowserEntry>();
+                    {
+                        try
+                        {
+                            return new JavaScriptSerializer().Deserialize<List<BrowserEntry>>(File.ReadAllText(file, Encoding.UTF8)) ?? new List<BrowserEntry>();
+                        }
+                        catch
+                        {
+                            // unreadable: keep a copy before the next save replaces it with the (empty or default) list
+                            try { File.Copy(file, file + ".bad", true); } catch { }
+                            throw;
+                        }
+                    }
                 }
             }
             catch (Exception ex) { logger.Error(ex, "SeleneBrowser: cannot read " + file); }
             return new List<BrowserEntry>();
         }
 
+        // The newest serialized list per file that has not been written yet. Writes run on workers one at a time and always take the
+        // newest pending text, so quick successive saves can never leave an older snapshot behind.
+        private static readonly Dictionary<string, string> pendingSaves = new Dictionary<string, string>();
+
         // Serializes on the UI thread, writes on a worker so the UI never waits for the disk.
         private static void SaveList(string file, List<BrowserEntry> list)
         {
             string json = new JavaScriptSerializer().Serialize(list);
+            lock (fileLock) pendingSaves[file] = json;
             Task.Run(delegate
             {
                 try
                 {
                     lock (fileLock)
                     {
+                        string newest;
+                        if (!pendingSaves.TryGetValue(file, out newest)) return;   // an earlier worker already wrote the newest text
+                        pendingSaves.Remove(file);
                         Directory.CreateDirectory(Path.GetDirectoryName(file));
-                        File.WriteAllText(file, json, Encoding.UTF8);
+                        AtomicFile.WriteAllText(file, newest, Encoding.UTF8);
                     }
                 }
                 catch (Exception ex) { logger.Error(ex, "SeleneBrowser: cannot write " + file); }
@@ -1270,7 +1330,7 @@ namespace SeleneBrowser
             AddBarItem(bar, addrPill.Pill, EditAddress, true);
             AddBarItem(bar, "Zoom -", 0xE900, delegate { ZoomBy(-ZoomStep); });   // zoom_out
             AddBarItem(bar, "Zoom +", 0xE8FF, delegate { ZoomBy(ZoomStep); });    // zoom_in
-            AddBarItem(bar, "New tab", 0xE145, delegate { ActivateTab(NewTab(null, true)); EnterFocus(false); });   // add
+            AddBarItem(bar, "New tab", 0xE145, delegate { BrowserTab nt = NewTab(null, true); ActivateTab(nt); GoHome(nt); EnterFocus(false); });   // add
             AddBarItem(bar, "Close tab", 0xE5C9, delegate { CloseTab(active); EnterFocus(false); });               // cancel
             barItems[7].Margin = new Thickness(21, 0, 5, 0);   // the tab buttons sit apart from the zoom buttons
             // the clock at the right end: only while the bar is on screen and wide enough
@@ -1810,7 +1870,7 @@ window.addEventListener('wheel',stopScroll,true);
             catch (Exception ex)
             {
                 logger.Error(ex, "SeleneBrowser: plugin data folder");
-                DataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Nomad");
+                DataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lanternfall");
             }
             // Chromium flags cannot be added here: Playnite initializes CEF before plugins load, so
             // trusted input events from CefView replace the old autoplay-policy switch.

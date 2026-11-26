@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
@@ -84,8 +85,14 @@ namespace Selene
             Directory.CreateDirectory(folder);
             var wav = Path.Combine(folder, (info.FullName.ToLowerInvariant().GetHashCode() ^ info.Length.GetHashCode() ^ info.LastWriteTimeUtc.Ticks.GetHashCode()).ToString("x8") + ".wav");
             if (File.Exists(wav) && new FileInfo(wav).Length > 44) return wav;
-            // only the few most recent ones are kept
-            try { foreach (var old in new DirectoryInfo(folder).GetFiles("*.wav")) if (old.LastWriteTimeUtc < DateTime.UtcNow.AddDays(-2)) old.Delete(); } catch { }
+            // only the few most recent ones are kept (a minute of sound is ~10 MB): the 7 newest, none older than 2 days
+            try
+            {
+                int kept = 0;
+                foreach (var old in new DirectoryInfo(folder).GetFiles("*.wav").OrderByDescending(f => f.LastWriteTimeUtc))
+                    if (++kept > 7 || old.LastWriteTimeUtc < DateTime.UtcNow.AddDays(-2)) { try { old.Delete(); } catch { } }
+            }
+            catch { }
             var sw = System.Diagnostics.Stopwatch.StartNew();
             MFStartup(0x00020070, 0);
             IMFSourceReader reader = null;

@@ -1,7 +1,7 @@
 [
   {
     "Id": "selene",
-    "Name": "Selene",
+    "Name": "Lanternfall",
     "Mode": "dark",
     "Accent": "#9CCBFF",
     "Background": "#0A142C",
@@ -23,7 +23,7 @@
     "Accent": "#1e66f5",
     "Background": "#eff1f5",
     "Foreground": "#4c4f69",
-    "Wallpaper": "Wallpapers/catppuccin-latte/1-color-fade.png",
+    "Wallpaper": "Wallpapers/catppuccin-latte/1-lanternfall.jpg",
     "Swatches": [
       "#eff1f5",
       "#dce0e8",
@@ -44,7 +44,7 @@
     "Accent": "#89b4fa",
     "Background": "#1e1e2e",
     "Foreground": "#cdd6f4",
-    "Wallpaper": "Wallpapers/catppuccin/1-totoro.png",
+    "Wallpaper": "Wallpapers/catppuccin/1-lanternfall.jpg",
     "Swatches": [
       "#1e1e2e",
       "#313244",
@@ -65,7 +65,7 @@
     "Accent": "#7d82d9",
     "Background": "#060B1E",
     "Foreground": "#ffcead",
-    "Wallpaper": "Wallpapers/ethereal/1-cosmic.jpg",
+    "Wallpaper": "Wallpapers/ethereal/1-lanternfall.jpg",
     "Swatches": [
       "#060b1e",
       "#131a3a",
@@ -86,7 +86,7 @@
     "Accent": "#7fbbb3",
     "Background": "#2d353b",
     "Foreground": "#d3c6aa",
-    "Wallpaper": "Wallpapers/everforest/1-tree-tops.jpg",
+    "Wallpaper": "Wallpapers/everforest/1-lanternfall.jpg",
     "Swatches": [
       "#2d353b",
       "#343f44",
@@ -107,7 +107,7 @@
     "Accent": "#205EA6",
     "Background": "#FFFCF0",
     "Foreground": "#100F0F",
-    "Wallpaper": "Wallpapers/flexoki-light/1-orb.png",
+    "Wallpaper": "Wallpapers/flexoki-light/1-lanternfall.jpg",
     "Swatches": [
       "#fffcf0",
       "#e6e4d9",
@@ -149,7 +149,7 @@
     "Accent": "#82FB9C",
     "Background": "#0B0C16",
     "Foreground": "#ddf7ff",
-    "Wallpaper": "Wallpapers/hackerman/1-synth-scape.jpg",
+    "Wallpaper": "Wallpapers/hackerman/1-lanternfall.jpg",
     "Swatches": [
       "#0b0c16",
       "#151828",
@@ -192,7 +192,7 @@
     "Accent": "#b59790",
     "Background": "#0c0b0c",
     "Foreground": "#FAFCFB",
-    "Wallpaper": "Wallpapers/last-horizon/1-eyes-wide.jpg",
+    "Wallpaper": "Wallpapers/last-horizon/1-lanternfall.jpg",
     "Swatches": [
       "#0c0b0c",
       "#fafcfb",
@@ -211,7 +211,7 @@
     "Accent": "#8bc9eb",
     "Background": "#16242d",
     "Foreground": "#d6e2ee",
-    "Wallpaper": "Wallpapers/lumon/01-united-in-severance.jpg",
+    "Wallpaper": "Wallpapers/lumon/1-lanternfall.jpg",
     "Swatches": [
       "#16242d",
       "#1b2d40",
@@ -231,7 +231,7 @@
     "Accent": "#3264eb",
     "Background": "#fafafa",
     "Foreground": "#212121",
-    "Wallpaper": "Wallpapers/lupine/01-cherry-blossom-bokeh.jpg",
+    "Wallpaper": "Wallpapers/lupine/1-lanternfall.jpg",
     "Swatches": [
       "#fafafa",
       "#f5f5f5",
@@ -251,7 +251,7 @@
     "Accent": "#e68e0d",
     "Background": "#121212",
     "Foreground": "#bebebe",
-    "Wallpaper": "Wallpapers/matte-black/0-ship-at-sea.jpg",
+    "Wallpaper": "Wallpapers/matte-black/1-lanternfall.jpg",
     "Swatches": [
       "#121212",
       "#1e1e1e",
@@ -270,7 +270,7 @@
     "Accent": "#78824b",
     "Background": "#222222",
     "Foreground": "#c2c2b0",
-    "Wallpaper": "Wallpapers/miasma/01-nature-of-fear.jpg",
+    "Wallpaper": "Wallpapers/miasma/1-lanternfall.jpg",
     "Swatches": [
       "#222222",
       "#2c2c2c",
@@ -291,7 +291,7 @@
     "Accent": "#81a1c1",
     "Background": "#2e3440",
     "Foreground": "#d8dee9",
-    "Wallpaper": "Wallpapers/nord/0-black-moon.jpg",
+    "Wallpaper": "Wallpapers/nord/1-lanternfall.jpg",
     "Swatches": [
       "#2e3440",
       "#3b4252",
@@ -312,7 +312,7 @@
     "Accent": "#509475",
     "Background": "#111c18",
     "Foreground": "#C1C497",
-    "Wallpaper": "Wallpapers/osaka-jade/1-glowing-city.jpg",
+    "Wallpaper": "Wallpapers/osaka-jade/1-lanternfall.jpg",
     "Swatches": [
       "#111c18",
       "#23372b",
@@ -333,7 +333,7 @@
     "Accent": "#faa968",
     "Background": "#05182e",
     "Foreground": "#f6dcac",
-    "Wallpaper": "Wallpapers/retro-82/1-in-the-groove.jpg",
+    "Wallpaper": "Wallpapers/retro-82/1-lanternfall.jpg",
     "Swatches": [
       "#05182e",
       "#0a2540",
@@ -353,7 +353,7 @@
     "Accent": "#f38d70",
     "Background": "#2c2525",
     "Foreground": "#e6d9db",
-    "Wallpaper": "Wallpapers/ristretto/0-launch.png",
+    "Wallpaper": "Wallpapers/ristretto/1-lanternfall.jpg",
     "Swatches": [
       "#2c2525",
       "#3d2f2a",
@@ -374,7 +374,7 @@
     "Accent": "#56949f",
     "Background": "#faf4ed",
     "Foreground": "#575279",
-    "Wallpaper": "Wallpapers/rose-pine/1-funky-shapes.jpg",
+    "Wallpaper": "Wallpapers/rose-pine/1-lanternfall.jpg",
     "Swatches": [
       "#faf4ed",
       "#f2e9e1",
@@ -395,7 +395,7 @@
     "Accent": "#798186",
     "Background": "#101315",
     "Foreground": "#cacccc",
-    "Wallpaper": "Wallpapers/solitude/1-on-pole.jpg",
+    "Wallpaper": "Wallpapers/solitude/1-lanternfall.jpg",
     "Swatches": [
       "#101315",
       "#cacccc",
@@ -414,7 +414,7 @@
     "Accent": "#7aa2f7",
     "Background": "#1a1b26",
     "Foreground": "#a9b1d6",
-    "Wallpaper": "Wallpapers/tokyo-night/0-winding-road.jpg",
+    "Wallpaper": "Wallpapers/tokyo-night/1-lanternfall.jpg",
     "Swatches": [
       "#1a1b26",
       "#24283b",
@@ -435,7 +435,7 @@
     "Accent": "#8d8d8d",
     "Background": "#000000",
     "Foreground": "#ffffff",
-    "Wallpaper": "Wallpapers/vantablack/0-dot-hands.jpg",
+    "Wallpaper": "Wallpapers/vantablack/1-lanternfall.jpg",
     "Swatches": [
       "#000000",
       "#1a1a1a",
@@ -456,7 +456,7 @@
     "Accent": "#6e6e6e",
     "Background": "#ffffff",
     "Foreground": "#000000",
-    "Wallpaper": "Wallpapers/white/1-white.jpg",
+    "Wallpaper": "Wallpapers/white/1-lanternfall.jpg",
     "Swatches": [
       "#ffffff",
       "#c0c0c0",

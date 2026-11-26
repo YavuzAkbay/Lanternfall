@@ -27,7 +27,6 @@ namespace SeleneBrowser
 
         /// <summary>A scroll is going on (or gliding to a stop).</summary>
         public bool Active { get { return active; } }
-        public double SpeedX { get { return vx; } }
         public double SpeedY { get { return vy; } }
 
         /// <summary>-1..1 to -1..1: gentle near the middle, so slow scrolling is easy, full speed at the edge.</summary>

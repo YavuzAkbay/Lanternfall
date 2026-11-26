@@ -146,8 +146,6 @@ namespace Selene
             return lists.TryGetValue(key, out l) ? l : new List<StoreItem>();
         }
 
-        public static bool Has(string key) { return lists.ContainsKey(key); }
-
         // ---------------- more as you scroll ----------------
         // the lists that page: each gives its next batch for page 1, 2, 3... (an empty batch: that's all of it)
         private static readonly Dictionary<string, Func<int, List<StoreItem>>> Pagers = new Dictionary<string, Func<int, List<StoreItem>>>
@@ -203,7 +201,7 @@ namespace Selene
         {
             var res = System.Windows.Application.Current.Resources;
             bool page = Features.On("storepage");
-            res["SeleneStoreAbout"] = page ? "Free games, sales and new releases from your stores. You buy in the store's own app." : "Find something new in the store apps on this PC. Selene is here when you come back.";
+            res["SeleneStoreAbout"] = page ? "Free games, sales and new releases from your stores. You buy in the store's own app." : "Find something new in the store apps on this PC. Lanternfall is here when you come back.";
             StoreShowcase.FillChips();
             if (!page) return;
             var later = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(8) };
@@ -260,7 +258,7 @@ namespace Selene
         // ---------------- sources ----------------
         private static object Get(string url)
         {
-            using (var web = new WebClient { Encoding = Encoding.UTF8 })
+            using (var web = new TimedWebClient { Encoding = Encoding.UTF8 })
             {
                 web.Headers[HttpRequestHeader.UserAgent] = Agent;
                 var text = web.DownloadString(url);
@@ -564,9 +562,11 @@ namespace Selene
             Task.Run(() =>
             {
                 Details d = null;
+                bool failed = false;
                 try { d = FetchDetails(item); }
-                catch (Exception ex) { HomeNav.Log("store details " + item.Title + ": " + ex.Message); }
-                ui.BeginInvoke(new Action(() => { detailsCache[key] = d; done(d); }));
+                catch (Exception ex) { failed = true; HomeNav.Log("store details " + item.Title + ": " + ex.Message); }
+                // a failed lookup is not remembered for the session: the next time the page opens it asks again
+                ui.BeginInvoke(new Action(() => { if (!failed) detailsCache[key] = d; done(d); }));
             });
         }
 

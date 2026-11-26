@@ -154,7 +154,7 @@ namespace SeleneBrowser
                 });
                 return;
             }
-            firewallMessage = "Windows will ask for permission on the desktop. Answer it with a mouse or keyboard.";
+            firewallMessage = PhoneFirewall.Elevated ? "Setting it up..." : "Windows will ask for permission on the desktop. Answer it with a mouse or keyboard.";
             Task.Run(delegate
             {
                 string error;

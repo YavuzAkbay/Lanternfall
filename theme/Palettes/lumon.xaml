@@ -5,7 +5,7 @@
     <sys:String x:Key="SeleneThemeId">lumon</sys:String>
     <sys:String x:Key="SeleneThemeName">Frost</sys:String>
     <sys:String x:Key="SeleneThemeMode">dark</sys:String>
-    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/lumon/01-united-in-severance.jpg</sys:String>
+    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/lumon/1-lanternfall.jpg</sys:String>
 
     <Color x:Key="GlyphColor">#FF8BC9EB</Color>
     <Color x:Key="GlyphLightColor">#FFF2FCFF</Color>

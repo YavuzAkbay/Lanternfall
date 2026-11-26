@@ -68,7 +68,7 @@ namespace Selene
             var names = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             try
             {
-                using (var web = new WebClient())
+                using (var web = new TimedWebClient())
                 {
                     web.Headers[HttpRequestHeader.UserAgent] = "Selene";
                     web.Encoding = System.Text.Encoding.UTF8;
@@ -86,7 +86,7 @@ namespace Selene
         private static string Download(string addonId, Version sdk, Dictionary<string, string> mirror, Action<double> part)
         {
             string json;
-            using (var web = new WebClient())
+            using (var web = new TimedWebClient())
             {
                 web.Headers[HttpRequestHeader.UserAgent] = "Selene";
                 web.Encoding = System.Text.Encoding.UTF8;
@@ -121,6 +121,7 @@ namespace Selene
             var file = Path.Combine(folder, addonId + ".pext");
             var request = (HttpWebRequest)WebRequest.Create(url);
             request.UserAgent = "Selene";
+            request.Timeout = 30000; request.ReadWriteTimeout = 30000;   // (playnite.link is slow, not stalled)
             using (var response = (HttpWebResponse)request.GetResponse())
             using (var input = response.GetResponseStream())
             using (var output = File.Create(file))

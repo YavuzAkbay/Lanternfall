@@ -100,7 +100,7 @@ namespace Selene
         private static void Download()
         {
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
-            using (var web = new WebClient())
+            using (var web = new TimedWebClient { MaxBytes = 200L * 1024 * 1024 })
             {
                 web.Headers[HttpRequestHeader.UserAgent] = "Selene-Core";
                 var release = Serialization.FromJson<Release>(web.DownloadString("https://api.github.com/repos/mtkennerly/ludusavi/releases/latest"));

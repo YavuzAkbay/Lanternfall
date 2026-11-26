@@ -229,38 +229,14 @@ namespace Selene
             catch (Exception ex) { HomeNav.Log("pad tap guard: " + (ex.InnerException ?? ex).Message); broken = true; }
         }
 
-        // The press and its release through Playnite's own button handling (the same call its look at the pad makes), so the
-        // events, the simulated keys and the held-button repeat all behave as for a press it saw itself.
-        private static MethodInfo process;
-        private static FieldInfo controllers;
-        private static PropertyInfo managerProperty;
-
+        // The press and its release the way Playnite sends a real pad's (PlaynitePad), both at once. (This used to look for Playnite's
+        // controller manager on WPF's Application.Current, which has none, so no tap was ever replayed; and Playnite's own
+        // ProcessButtonState called from here posts its event behind the simulated key, which then counted as a second press.)
         private static bool Press(string name)
         {
-            var app = Application.Current;
-            if (app == null) return false;
-            if (managerProperty == null)
-                for (var t = app.GetType(); t != null && managerProperty == null; t = t.BaseType)
-                    managerProperty = t.GetProperty("GameController", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-            var manager = managerProperty != null ? managerProperty.GetValue(app, null) : null;
-            if (manager == null) return false;
-            if (process == null) process = manager.GetType().GetMethod("ProcessButtonState", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            if (controllers == null) controllers = manager.GetType().GetField("Controllers", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            if (process == null || controllers == null) { broken = true; HomeNav.Log("pad tap guard: Playnite's controller handling not found, off"); return false; }
-            ControllerInput button;
-            if (!Enum.TryParse(name, out button)) return false;
-            object controller = null;
-            var list = controllers.GetValue(manager) as IEnumerable;
-            if (list != null)
-                foreach (var c in list)
-                {
-                    var pad = c as IGamepad;
-                    if (pad != null && pad.Enabled) { controller = c; break; }
-                }
-            if (controller == null) return false;
-            // both at once: Playnite's own next look then finds the button as it left it (up) and sends nothing more
-            process.Invoke(manager, new object[] { (byte)1, button, controller });
-            process.Invoke(manager, new object[] { (byte)0, button, controller });
+            if (!PlaynitePad.Available) { broken = true; HomeNav.Log("pad tap guard: Playnite's controller handling not found, off"); return false; }
+            if (!PlaynitePad.Press(name, true)) return false;
+            PlaynitePad.Press(name, false);
             return true;
         }
     }

@@ -5,7 +5,7 @@
     <sys:String x:Key="SeleneThemeId">catppuccin-latte</sys:String>
     <sys:String x:Key="SeleneThemeName">Catppuccin Latte</sys:String>
     <sys:String x:Key="SeleneThemeMode">light</sys:String>
-    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/catppuccin-latte/1-color-fade.png</sys:String>
+    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/catppuccin-latte/1-lanternfall.jpg</sys:String>
 
     <Color x:Key="GlyphColor">#FF1E66F5</Color>
     <Color x:Key="GlyphLightColor">#FF4C4F69</Color>

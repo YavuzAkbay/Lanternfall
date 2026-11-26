@@ -66,7 +66,12 @@ namespace Selene
                         catch (Exception ex) { HomeNav.Log("hltb: page refresh failed: " + ex.Message); }
                     }));
                 }
-                catch (Exception ex) { HomeNav.Log("hltb: fetch failed for " + game.Name + ": " + (ex.InnerException ?? ex).Message); }
+                catch (Exception ex)
+                {
+                    HomeNav.Log("hltb: fetch failed for " + game.Name + ": " + (ex.InnerException ?? ex).Message);
+                    // a failed lookup (offline) is not "asked": the next visit to the page tries again
+                    dispatcher.BeginInvoke(new Action(() => asked.Remove(game.Id)));
+                }
             });
         }
 

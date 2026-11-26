@@ -79,14 +79,17 @@ namespace Selene
             if (map.Count == 0 || appSettings == null) return;
             object fullscreen = null;
             try { fullscreen = appSettings.GetType().GetProperty("Fullscreen").GetValue(appSettings, null); } catch { }
+            // a value that could not be put back stays written down (it is the user's own, and the next start tries again)
+            var left = new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (var kv in map)
             {
                 int dot = kv.Key.IndexOf('.');
                 if (dot < 0) continue;
                 var owner = kv.Key.Substring(0, dot) == "Fullscreen" ? fullscreen : appSettings;
                 if (owner != null && Put(owner, kv.Key.Substring(dot + 1), kv.Value)) HomeNav.Log("playnite look: " + kv.Key + " back to " + kv.Value + " (Playnite without Selene)");
+                else left[kv.Key] = kv.Value;
             }
-            Write(new Dictionary<string, string>());
+            Write(left);
         }
 
         private static bool Put(object owner, string property, string text)

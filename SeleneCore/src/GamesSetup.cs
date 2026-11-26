@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Windows.Media;
@@ -9,7 +9,7 @@ namespace Selene
     // imported from Steam) have only what Playnite itself downloaded. Selene's art, screenshots and trailers are optional
     // downloads that ask first (DownloadConsent); this asks once for all of them together, saying where they come from and where
     // they are saved, instead of making a new user find five separate switches. Yes is the consent for those categories; Not now
-    // leaves everything off, and each one stays in Selene settings. Songs are not part of it (they need about 130 MB of tools).
+    // leaves everything off, and each one stays in Selene settings.
     // Asked once, only when there are games, none of these downloads is allowed yet and no Selene art is on disk. Switch: Games >
     // Offer to get art for a new library.
     public static class GamesSetup

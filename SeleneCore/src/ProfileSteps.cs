@@ -1013,7 +1013,6 @@ namespace Selene
             private readonly List<string> groups = new List<string>();
             private readonly Later apply = new Later(450);   // once you rest on one: applied between quick moves, the swap landed in the next glide (it stuttered)
             private int index, generation;
-            private bool hasArt;   // the library has a game whose art the preview can show
 
             public BackgroundStep(ProfileSteps owner) : base(owner)
             {
@@ -1092,7 +1091,6 @@ namespace Selene
 
             public override void Shown()
             {
-                hasArt = false;   // (the preview draws its own sample home; nothing is put on the real one)
                 Fill();
                 RefreshPreviewLater();
                 look.Select(previewLook == "wallpaper" ? 1 : 0, false);

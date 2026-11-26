@@ -160,8 +160,22 @@ namespace Selene
         {
             target.SetValue(property, Of(key, alpha));
             live.Add(new Live { Target = new WeakReference<DependencyObject>(target), Property = property, Key = key, Alpha = alpha });
+            // the list was only cleaned when the colors changed, so an always-on screen grew it for good: clean it as it doubles
+            if (live.Count > pruneAt)
+            {
+                live.RemoveAll(l =>
+                {
+                    DependencyObject t;
+                    if (!l.Target.TryGetTarget(out t)) return true;
+                    var f = t as Freezable;
+                    return f != null && f.IsFrozen;
+                });
+                pruneAt = Math.Max(512, live.Count * 2);
+            }
             return target;
         }
+
+        private static int pruneAt = 512;
 
         public static void Refresh()
         {
@@ -174,6 +188,7 @@ namespace Selene
                 target.SetValue(l.Property, Of(l.Key, l.Alpha));
                 return false;
             });
+            pruneAt = Math.Max(512, live.Count * 2);
         }
     }
 }

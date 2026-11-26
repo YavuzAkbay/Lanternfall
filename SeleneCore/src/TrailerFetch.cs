@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -188,12 +188,7 @@ namespace Selene
             var mpd = string.IsNullOrEmpty(steamId()) ? null : ManifestUrl(steamId());
             if (mpd == null)
             {
-                // not on Steam, or no trailer there: the official one from YouTube
-                if (YouTubeTrailer.Fetch(g, file))
-                {
-                    Application.Current.Dispatcher.BeginInvoke(new Action(() => { HomeNav.TrailerReady(id); LibraryStage.TrailerReady(id); }));
-                    return true;
-                }
+                // not on Steam, or no trailer there: nothing to fetch (asked again after a week)
                 System.IO.File.WriteAllText(none, g.Name);
                 return false;
             }
@@ -710,7 +705,14 @@ namespace Selene
                 for (int n = first; n < first + count; n++)
                 {
                     try { chunks.Add(web.DownloadData(baseUrl + Fill((string)tpl.Attribute("media"), repId, n))); }
-                    catch (WebException) { break; }   // past the end
+                    catch (WebException ex)
+                    {
+                        // past the end is a 404/403; a timeout, reset or 429 midway must not pass as the end (a short trailer would be saved for good)
+                        var http = ex.Response as HttpWebResponse;
+                        int status = http != null ? (int)http.StatusCode : 0;
+                        if (status == 404 || status == 403) break;
+                        throw;
+                    }
                 }
             }
         }
@@ -736,7 +738,7 @@ namespace Selene
             if (!DownloadConsent.Allowed(permission)) throw new OperationCanceledException("Media downloads are off or were not confirmed.");
             asked = true;
             try { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12; } catch { }   // (as Selene's other downloads)
-            var wc = new WebClient { Encoding = System.Text.Encoding.UTF8 };
+            var wc = new TimedWebClient { Encoding = System.Text.Encoding.UTF8 };
             wc.Headers[HttpRequestHeader.UserAgent] = "Mozilla/5.0";
             return wc;
         }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.IO;
 using System.Reflection;
@@ -32,6 +32,12 @@ class BugsCheck
         foreach (var key in new[] { "SeleneInkColor", "SeleneFocusColor", "GlyphColor" }) app.Resources[key] = Colors.White;
         foreach (var key in new[] { "SeleneGlassColor", "SeleneScrimColor", "SeleneOnFocusColor" }) app.Resources[key] = Colors.Black;
         Features.Init(new SeleneSettings(), () => {}); Features.Set("sounds", false);
+        // Lanternfall: nothing the settings pages show may still say Selene (every label, caption and choice name passes ForkBrand)
+        foreach (var f in Features.All)
+        {
+            var shown = ForkBrand.Text(f.Label + " | " + f.About + " | " + string.Join(" | ", f.Names ?? new string[0]));
+            Assert(!System.Text.RegularExpressions.Regex.IsMatch(shown, @"\bSelene\b|\bSELENE\b|\bNomad\b"), "Setting '" + f.Key + "' shows the old name");
+        }
         var window = new Window { Width = 1920, Height = 1080, Left = -32000, Top = -32000, Opacity = 0, ShowActivated = false, ShowInTaskbar = false };
         try
         {
@@ -191,7 +197,6 @@ class BugsCheck
             foreach (var key in new[] { "artdownload", "screenshotsdownload", "trailerdownload", "metadatacomplete" }) Assert(DownloadConsent.Allowed(key), "Yes to the games question consents to " + key);
             Assert(Features.Value("trailerdownload") == "browse", "Trailers are for the games you select, not the whole library");
             Assert(Features.Remembered("gamesask-done") == "yes" && !GamesSetup.Pending && !Background.ForOption("gamesget"), "The question is asked once, and a yes leaves no dot");
-            Assert(!DownloadConsent.Allowed("songsetup"), "The games question never covers the song tools");
             foreach (var key in new[] { "artdownload", "screenshotsdownload", "metadatacomplete" }) { Features.Set(key, false); DownloadConsent.Revoke(key); }
             Features.SetValue("trailerdownload", "off"); DownloadConsent.Revoke("trailerdownload"); Features.Remember("gamesask-done", "");
             // Not now: remembered, a red dot in the menu, the Games group and the row, and the row reopens the question
@@ -333,28 +338,22 @@ class BugsCheck
                 var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(rendered)); using (var output = File.Create(Path.Combine(args[0], correct ? "preview-art-fit.png" : "preview-art-stretch.png"))) png.Save(output);
             }
             Features.Set("previewartfit", true);
-            var songCountRoot = Path.Combine(scratch, "song-count");
-            var visibleSong = Guid.NewGuid(); var removedSong = Guid.NewGuid();
-            foreach (var id in new[] { visibleSong, removedSong }) { var dir = Path.Combine(songCountRoot, id.ToString()); Directory.CreateDirectory(dir); File.WriteAllText(Path.Combine(dir, "song.mp3"), "test"); }
-            var countSongs = typeof(SongSetup).GetMethod("CountLibrarySongs", BindingFlags.Static | BindingFlags.NonPublic);
-            Assert((int)countSongs.Invoke(null, new object[] { songCountRoot, new[] { visibleSong, visibleSong } }) == 1, "Song progress excludes removed/hidden games and duplicate IDs");
-            Assert((int)countSongs.Invoke(null, new object[] { songCountRoot, new[] { Guid.NewGuid() } }) == 0, "Unrelated cached songs cannot make a missing-song library appear complete");
             var media = typeof(HomeNav).Assembly.GetType("Selene.MediaDownloads");
             media.GetMethod("Revoke", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, null); Features.Set("downloadprogress", true);
             Assert(!(bool)media.GetProperty("Enabled").GetValue(null, null), "Combined UI alone never grants permissions");
-            foreach (var key in new[] { "artdownload", "screenshotsdownload", "trailerdownload", "songsetup", "metadatacomplete" })
+            foreach (var key in new[] { "artdownload", "screenshotsdownload", "trailerdownload", "metadatacomplete" })
                 Assert(!(bool)media.GetMethod("ShowSetting").Invoke(null, new object[] { key }), "Combined UI hides separate " + key);
             var combined = new SettingsScreen(false, "Games", "gamesget"); window.Content = combined.Root; Pump(); combined.Shown(); Pump();
             var combinedRows = (IList)Field(combined, "rows"); var selectedIndex = (int)Field(combined, "index");
             Assert(((UIElement)((IList)Field(combined, "tracks"))[selectedIndex]).Visibility == Visibility.Collapsed, "Action rows have no redundant right-hand label");
             var conciseConsent = (string)media.GetMethod("Details").Invoke(null, null);
-            Assert(conciseConsent.Length < 150 && conciseConsent.Split('\n').Length == 2 && conciseConsent.Contains("130 MB") && conciseConsent.Contains("UniPlaySong") && conciseConsent.Contains("20 MB"), "Two-line consent retains scope and material requirements");
+            Assert(conciseConsent.Length < 150 && conciseConsent.Split('\n').Length == 2 && conciseConsent.Contains("Steam") && conciseConsent.Contains("20 MB") && !conciseConsent.Contains("songs"), "Two-line consent retains scope and material requirements");
             ((UIElement)combinedRows[selectedIndex]).RaiseEvent(new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice, 0, System.Windows.Input.MouseButton.Left) { RoutedEvent = UIElement.MouseLeftButtonUpEvent });
-            Assert(Field(combined, "ask") is Dialog && !DownloadConsent.Allowed("songsetup"), "Mouse click opens consent before granting downloads");
+            Assert(Field(combined, "ask") is Dialog && !DownloadConsent.Allowed("artdownload"), "Mouse click opens consent before granting downloads");
             Pump();
             Assert(((FrameworkElement)Field(Field(combined, "ask"), "panel")).ActualWidth == 900 && ((FrameworkElement)Field(Field(combined, "ask"), "panel")).ActualHeight < 500, "Download confirmation is wide and compact");
             combined.Handle("A"); Pump();
-            Assert((bool)media.GetProperty("Enabled").GetValue(null, null) && Features.Value("trailerdownload") == "all" && DownloadConsent.Allowed("songsetup"), "Explicit Download grants all library scopes including songs");
+            Assert((bool)media.GetProperty("Enabled").GetValue(null, null) && Features.Value("trailerdownload") == "all" && DownloadConsent.Allowed("metadatacomplete") && !DownloadConsent.IsControlled("songsetup"), "Explicit Download grants all library scopes, and never songs");
             Assert(Field(combined, "ask") == null && typeof(HomeNav).Assembly.GetType("Selene.DownloadProgressModal") == null, "Download returns directly to settings without a progress modal");
             var totalField = typeof(TrailerFetch).GetField("libraryTotal", BindingFlags.NonPublic | BindingFlags.Static);
             var checkedField = typeof(TrailerFetch).GetField("libraryChecked", BindingFlags.NonPublic | BindingFlags.Static);
@@ -365,10 +364,10 @@ class BugsCheck
             var sharedBar = inlineRow.GetType().GetField("Bar").GetValue(inlineRow);
             Assert(Math.Abs((double)Field(sharedBar, "share") - (double)media.GetMethod("Progress").Invoke(null, null)) < .001, "Inline bar follows the combined media progress");
             var overall = media.GetMethod("OverallProgress", BindingFlags.NonPublic | BindingFlags.Static);
-            Assert(Math.Abs((double)overall.Invoke(null, new object[] { 1.0, .4, 1.0, true }) - .8) < .001, "Songs still downloading hold the bar below finished art");
-            Assert(Math.Abs((double)overall.Invoke(null, new object[] { 4 / 11.0, 0.0, 1.0, true }) - (4 / 11.0 + 1) / 3) < .001, "Finished details count while songs haven't started");
-            Assert((double)overall.Invoke(null, new object[] { 1.0, 1.0, 1.0, true }) < 1, "Bar never shows 100% while any stage is busy");
-            Assert((double)overall.Invoke(null, new object[] { 1.0, 1.0, 1.0, false }) == 1, "Bar reaches 100% once every stage is idle");
+            Assert(Math.Abs((double)overall.Invoke(null, new object[] { 1.0, .4, true }) - .7) < .001, "Details still filling hold the bar below finished art");
+            Assert(Math.Abs((double)overall.Invoke(null, new object[] { 4 / 11.0, 1.0, true }) - (4 / 11.0 + 1) / 2) < .001, "Finished details count while art is still coming");
+            Assert((double)overall.Invoke(null, new object[] { 1.0, 1.0, true }) < 1, "Bar never shows 100% while any stage is busy");
+            Assert((double)overall.Invoke(null, new object[] { 1.0, 1.0, false }) == 1, "Bar reaches 100% once every stage is idle");
             Features.Remember("steamgriddb-key", ""); Features.Remember("squarekey-skipped", "yes");
             Assert(Background.ForOption("steamgridkey") && Background.ForGroup("Look") && Background.Any, "Skipped SteamGridDB key shows a red dot on its setting");
             Features.Remember("steamgriddb-key", new string('a', 32));
@@ -400,14 +399,14 @@ class BugsCheck
             combined.Shown(); Pump(); Assert(timer.IsEnabled, "Returning resumes inline updates");
             combined.Handle("A"); Assert(Field(combined, "ask") is Dialog, "Enabled download row offers explicit stop confirmation");
             combined.Handle("B"); Assert((bool)media.GetProperty("Enabled").GetValue(null, null) && Field(combined, "ask") == null, "B keeps downloads running and returns to inline progress");
-            var songWorkers = typeof(SongSetup).GetField("songWorkers", BindingFlags.NonPublic | BindingFlags.Static);
-            songWorkers.SetValue(null, 1);
+            var artWorker = typeof(TrailerFetch).GetField("worker", BindingFlags.NonPublic | BindingFlags.Static);
+            artWorker.SetValue(null, new System.Threading.Thread(() => { }));
             combined.Handle("A"); Assert(Field(combined, "ask") == null, "A does nothing on the download row while downloads run");
-            songWorkers.SetValue(null, 0);
+            artWorker.SetValue(null, null);
             combined.Handle("A"); combined.Handle("DPadRight"); combined.Handle("A");
-            foreach (var key in new[] { "artdownload", "screenshotsdownload", "trailerdownload", "songsetup", "metadatacomplete" }) Assert(!DownloadConsent.Allowed(key), "Stop revokes " + key);
+            foreach (var key in new[] { "artdownload", "screenshotsdownload", "trailerdownload", "metadatacomplete" }) Assert(!DownloadConsent.Allowed(key), "Stop revokes " + key);
             combined.Hidden(); Features.Set("downloadprogress", false);
-            Assert((bool)media.GetMethod("ShowSetting").Invoke(null, new object[] { "songsetup" }), "Fallback restores separate download settings");
+            Assert((bool)media.GetMethod("ShowSetting").Invoke(null, new object[] { "artdownload" }), "Fallback restores separate download settings");
             Features.Set("downloadprogress", true);
             Assert(Array.TrueForAll(Features.All, option => option.About == null || option.About.Length <= 140), "Setting captions stay concise");
             var filterOption = Array.Find(Features.All, option => option.Key == "filtertabs");

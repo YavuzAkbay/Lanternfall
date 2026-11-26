@@ -78,10 +78,12 @@ namespace Selene
                             Game game = null;
                             ui.Invoke(new Action(() => game = api.Database.Games.Get(id)));
                             if (game == null) { checkedGames++; continue; }
+                            networkFailed = false;
                             try { if (Fill(api, game, order, ui)) filled++; }
-                            catch (Exception ex) { HomeNav.Log("game info: " + game.Name + ": " + ex.Message); }
+                            catch (Exception ex) { networkFailed = true; HomeNav.Log("game info: " + game.Name + ": " + ex.Message); }
                             checkedGames++;
-                            tried[id] = DateTime.UtcNow;
+                            // a lookup that failed (offline, a provider erroring) is asked again tomorrow, not in two weeks
+                            tried[id] = networkFailed ? DateTime.UtcNow.AddDays(-13) : DateTime.UtcNow;
                         }
                         WriteTried(tried);
                         int done = filled;
@@ -137,6 +139,8 @@ namespace Selene
         }
 
         // one game: each empty field from the first add-on that has it; true when anything was filled
+        private static bool networkFailed;   // the lookup for the current game hit an error (the library worker does one game at a time)
+
         private static bool Fill(Playnite.SDK.IPlayniteAPI api, Game game, Dictionary<MetadataField, List<MetadataPlugin>> order, Dispatcher ui)
         {
             var providers = new Dictionary<Guid, OnDemandMetadataProvider>();
@@ -154,7 +158,7 @@ namespace Selene
                     var pr = provider(p);
                     if (pr == null || (pr.AvailableFields != null && !pr.AvailableFields.Contains(field))) continue;
                     object v = null;
-                    try { v = get(pr); } catch { }
+                    try { v = get(pr); } catch { networkFailed = true; }
                     if (v is string && string.IsNullOrWhiteSpace((string)v)) v = null;
                     if (v is IEnumerable && !(v is string) && !((IEnumerable)v).Cast<object>().Any()) v = null;
                     if (v != null) return v;
@@ -225,7 +229,7 @@ namespace Selene
         private static object Json(string url)
         {
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
-            using (var web = new WebClient { Encoding = System.Text.Encoding.UTF8 })
+            using (var web = new TimedWebClient { Encoding = System.Text.Encoding.UTF8 })
             {
                 web.Headers[HttpRequestHeader.UserAgent] = "Mozilla/5.0";
                 return new System.Web.Script.Serialization.JavaScriptSerializer { MaxJsonLength = int.MaxValue }.DeserializeObject(web.DownloadString(url));
@@ -294,7 +298,7 @@ namespace Selene
                     wants[MetadataField.BackgroundImage] = fetch(asset("library_hero")) ?? fetch(cdn + "library_hero.jpg") ?? fetch(Convert.ToString(At(data, "background_raw")));
                 HomeNav.Log("game info: " + name + ": Steam store page " + appId);
             }
-            catch (Exception ex) { HomeNav.Log("game info: " + name + ": Steam store: " + ex.Message); }
+            catch (Exception ex) { networkFailed = true; HomeNav.Log("game info: " + name + ": Steam store: " + ex.Message); }
         }
 
         // a picture from an add-on as a file on disk (its bytes, a web address downloaded, or a path as it is); null without one
@@ -310,7 +314,8 @@ namespace Selene
                 if (file.Path.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
                     ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
-                    using (var web = new WebClient()) web.DownloadFile(file.Path, temp);
+                    try { using (var web = new TimedWebClient()) web.DownloadFile(file.Path, temp); }
+                    catch { try { File.Delete(temp); } catch { } throw; }
                     return temp;
                 }
                 return File.Exists(file.Path) ? file.Path : null;

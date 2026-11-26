@@ -249,7 +249,17 @@ namespace Selene
             if (!any) return false;
             if (changed)
             {
-                File.WriteAllLines(ini, lines, enc);
+                // beside it and swapped in whole (a crash or a virus scanner's lock mid-write must not leave the game's settings cut off);
+                // the file as the player had it is kept once as .selene.bak
+                var temp = ini + ".selene.tmp";
+                try
+                {
+                    File.WriteAllLines(temp, lines, enc);
+                    var bak = ini + ".selene.bak";
+                    if (!File.Exists(bak)) File.Copy(ini, bak);
+                    File.Replace(temp, ini, null);
+                }
+                catch { try { if (File.Exists(temp)) File.Delete(temp); } catch { } throw; }
                 HomeNav.Log("resolution: " + name + " (Unreal) " + ox + "x" + oy + " -> " + w + "x" + h);
             }
             return true;

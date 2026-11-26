@@ -26,17 +26,24 @@ namespace Selene
             finally { CloseHandle(h); }
         }
 
+        // folders that hold many games (not one): looking inside them would find OTHER games' anti-cheat next to this one
+        // (a game in "Program Files (x86)\Foo" was taken for online because "Program Files (x86)\EasyAntiCheat_EOS" sits beside it)
+        private static readonly string[] LibraryFolders = { "program files", "program files (x86)", "common", "steamapps", "games", "epic games", "gog games", "windowsapps", "xboxgames", "apps", "steamlibrary", "library" };
+
         private static bool HasAntiCheat(string exe)
         {
             try
             {
                 var dir = new System.IO.DirectoryInfo(System.IO.Path.GetDirectoryName(exe));
                 for (int up = 0; up < 3 && dir != null && dir.Parent != null; up++, dir = dir.Parent)
+                {
+                    if (up > 0 && Array.IndexOf(LibraryFolders, dir.Name.ToLowerInvariant()) >= 0) break;   // above the game's own folder
                     foreach (var e in dir.EnumerateFileSystemInfos())
                     {
                         var n = e.Name.ToLowerInvariant();
                         foreach (var m in AntiCheatMarks) if (n.Contains(m)) return true;
                     }
+                }
             }
             catch { }
             return false;

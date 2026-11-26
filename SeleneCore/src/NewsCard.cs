@@ -143,7 +143,7 @@ namespace Selene
                     }
                 });
             }
-            CardShowcase.Set("nav:news", "News", "News from the games you love", "Pick a feed to follow. Add your own in Selene settings: Spotlight, News feeds. Down to browse sources.", entries);
+            CardShowcase.Set("nav:news", "News", "News from the games you love", Lang.T("Pick a feed to follow. Add your own in Selene settings: Spotlight, News feeds. Down to browse sources."), entries);
         }
 
         // four headlines, newest first; with several sources no one of them fills more than half
@@ -251,7 +251,12 @@ namespace Selene
                     return file;
                 }
             }
-            catch (Exception ex) { HomeNav.Log("news picture: " + url + ": " + ex.Message); return null; }
+            catch (Exception ex)
+            {
+                var web = ex as System.Net.WebException;
+                if (web != null && web.Response != null) { try { web.Response.Close(); } catch { } }
+                HomeNav.Log("news picture: " + url + ": " + ex.Message); return null;
+            }
         }
 
         private static string Short(string text, int max) { return text.Length <= max ? text : text.Substring(0, max - 1).TrimEnd() + "…"; }

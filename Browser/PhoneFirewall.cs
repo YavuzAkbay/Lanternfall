@@ -30,6 +30,41 @@ namespace SeleneBrowser
             get { try { return Process.GetCurrentProcess().MainModule.FileName; } catch { return null; } }
         }
 
+        private static volatile bool ensured;
+
+        /// <summary>True when this program already runs with administrator rights, so the firewall rule needs no Windows box.</summary>
+        public static bool Elevated
+        {
+            get
+            {
+                try
+                {
+                    using (System.Security.Principal.WindowsIdentity id = System.Security.Principal.WindowsIdentity.GetCurrent())
+                        return new System.Security.Principal.WindowsPrincipal(id).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+                }
+                catch { return false; }
+            }
+        }
+
+        /// <summary>
+        /// Run just before the phone link starts listening. When this program is already elevated it adds the missing allow rule by
+        /// itself, so Windows never shows its "Allow access?" box (which a pad cannot answer). Otherwise it does nothing: the box or the
+        /// Settings row stays the way. Once per run; blocks for a moment, so keep it off the UI thread where possible.
+        /// </summary>
+        public static void EnsureQuietly()
+        {
+            if (ensured || !Elevated) return;
+            ensured = true;
+            try
+            {
+                FirewallState s = Check();
+                if (s != FirewallState.Missing && s != FirewallState.Blocked) return;
+                string error;
+                Setup(out error);
+            }
+            catch { }
+        }
+
         /// <summary>Asks Windows Firewall; blocks for a moment, so call it on a worker thread.</summary>
         public static FirewallState Check()
         {
@@ -99,10 +134,19 @@ namespace SeleneBrowser
             {
                 FileName = "cmd.exe",
                 Arguments = "/s /c \"" + del + " & " + add + "\"",
-                Verb = "runas",
-                UseShellExecute = true,
                 WindowStyle = ProcessWindowStyle.Hidden
             };
+            if (Elevated)
+            {
+                // already an administrator (UAC off, or Playnite started "as administrator"): no Windows box at all
+                psi.UseShellExecute = false;
+                psi.CreateNoWindow = true;
+            }
+            else
+            {
+                psi.Verb = "runas";
+                psi.UseShellExecute = true;
+            }
             try
             {
                 using (Process p = Process.Start(psi))

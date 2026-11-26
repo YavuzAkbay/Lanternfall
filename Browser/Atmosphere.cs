@@ -28,7 +28,7 @@ namespace SeleneBrowser
         private readonly DispatcherTimer watch = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(900) };
         private bool artOnA = true;
         private ImageSource currentArt;
-        private double artStrength = 0.5;
+        private const double artStrength = 0.5;   // how strongly the ambient art shows
         private double shade = 0.6;   // Selene's auto shade runs 0.42..0.88; a middle value reads well on any wallpaper
 
         public Atmosphere()
@@ -67,13 +67,6 @@ namespace SeleneBrowser
         }
 
         private void OnThemeChanged() { Paint(); }
-
-        /// <summary>How strongly the ambient art shows (0 hides it).</summary>
-        public double ArtStrength
-        {
-            get { return artStrength; }
-            set { artStrength = Math.Max(0, Math.Min(1, value)); if (currentArt != null) FadeTo(currentArt); }
-        }
 
         /// <summary>How dark the three scrims are (0..1, default 0.6). A busy page (the player's chrome) may want more.</summary>
         public double Shade

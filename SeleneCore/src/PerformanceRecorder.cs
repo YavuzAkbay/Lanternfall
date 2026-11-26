@@ -18,7 +18,7 @@ namespace Selene
         public static string LastPath { get; private set; }
         public static string LastError { get; private set; }
         public static bool Recording { get { return current != null && !current.StopRequested; } }
-        public static string Note() { return Recording ? "Recording while you use Selene. Turn off when finished." : LastError != null ? "Stopped: couldn't write the performance log." : "Off. Saves a local performance log; nothing is uploaded."; }
+        public static string Note() { return Recording ? Lang.T("Recording while you use Selene. Turn off when finished.") : LastError != null ? "Stopped: couldn't write the performance log." : "Off. Saves a local performance log; nothing is uploaded."; }
 
         public static void SetRecording(bool on)
         {

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -446,10 +446,22 @@ namespace Selene
             foreach (var img in Inner(fe).ToList())
             {
                 if (!watched.Add(img)) continue;
-                DependencyPropertyDescriptor.FromProperty(Image.SourceProperty, typeof(Image)).AddValueChanged(img, (s, e) =>
+                var descriptor = DependencyPropertyDescriptor.FromProperty(Image.SourceProperty, typeof(Image));
+                var shown = img;
+                EventHandler changed = (s, e) =>
                 {
-                    if (snapCovering && img.Source != null) fe.Dispatcher.BeginInvoke(new Action(MeltSnapshot), DispatcherPriority.Loaded);
-                });
+                    if (snapCovering && shown.Source != null) fe.Dispatcher.BeginInvoke(new Action(MeltSnapshot), DispatcherPriority.Loaded);
+                };
+                descriptor.AddValueChanged(img, changed);
+                // a picture element that leaves the tree is let go (the watch roots it); it is watched again when it is back
+                RoutedEventHandler gone = null;
+                gone = (s, e) =>
+                {
+                    shown.Unloaded -= gone;
+                    try { descriptor.RemoveValueChanged(shown, changed); } catch { }
+                    watched.Remove(shown);
+                };
+                img.Unloaded += gone;
             }
         }
 
@@ -471,7 +483,7 @@ namespace Selene
             var fe = art as FrameworkElement;
             if (fe == null || artSnap == null || video != null || !fe.IsVisible) return;
             if (snapCovering) { snapFallback.Stop(); snapFallback.Start(); return; }   // still covering from the last move: that still stays
-            if (watched.Count == 0) WatchInnerImages(fe);
+            WatchInnerImages(fe);   // (the ones already watched are skipped; any that came back after leaving are watched again)
             var showing = Inner(fe).FirstOrDefault(i => i.Source != null && i.Opacity > 0.5 && i.IsVisible);
             if (showing == null) return;
             artSnap.Source = showing.Source;
@@ -531,8 +543,6 @@ namespace Selene
                         if (video != player) return;
                         Fade(true);
                         HomeNav.SetMusic("trailer");   // the game's song comes with its trailer
-                        var gidProp = game.GetType().GetProperty("Id");
-                        if (gidProp != null && gidProp.GetValue(game, null) is Guid) SongSetup.NoteMissing((Guid)gidProp.GetValue(game, null));
                         if (rsHint != null && videoHasSound) rsHint.Text = "Trailer sound";
                     });
                 };
@@ -625,19 +635,6 @@ namespace Selene
                 return Math.Min(1.45, h / (double)(h - 2 * band));
             }
             catch { return 1; }
-        }
-
-        // entering Collection: its art fades in on its own, a moment after the screen (Playnite's image pops in without
-        // a fade here, mid-way through the screen's fade-in)
-        public static void FadeArtIn()
-        {
-            if (art == null) return;
-            var keys = new DoubleAnimationUsingKeyFrames();
-            keys.KeyFrames.Add(new DiscreteDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.Zero)));
-            keys.KeyFrames.Add(new DiscreteDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(180))));
-            keys.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(620)), new CubicEase { EasingMode = EasingMode.EaseOut }));
-            keys.Completed += (s, e) => { if (video == null) art.BeginAnimation(UIElement.OpacityProperty, null); };
-            art.BeginAnimation(UIElement.OpacityProperty, keys);
         }
 
         public static void Stop() { Stop(false); }

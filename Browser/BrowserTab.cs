@@ -12,6 +12,8 @@ namespace SeleneBrowser
         public double Zoom;
         public string ResumeUrl;
         public bool ViewDisposed;
+        public bool EngineRestarted;    // the page engine died and was replaced once already ...
+        public int EngineRestartAt;     // ... at this Environment.TickCount (a second death soon after is not retried: no restart loop)
         public long LastUsed;
         public BrowserTab Opener;       // the tab whose pop-up this is: B on its first page closes it and returns there
         public ImageSource Thumb;       // a small picture of the page, for the tab switcher

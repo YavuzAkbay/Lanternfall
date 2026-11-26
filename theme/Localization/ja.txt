@@ -1,4 +1,4 @@
-# Selene starter translation: common navigation and settings. Missing phrases use English.
+# Lanternfall starter translation: common navigation and settings. Missing phrases use English.
 Settings = 設定
 Back = 戻る
 Select = 選択

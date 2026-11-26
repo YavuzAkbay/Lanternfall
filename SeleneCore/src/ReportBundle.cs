@@ -59,7 +59,7 @@ namespace Selene
             var api = HomeNav.Api;
             var lines = new List<string>
             {
-                "Selene " + Brand.Version,
+                ForkBrand.Name + " " + Brand.Version,
                 "Playnite " + (api != null ? api.ApplicationInfo.ApplicationVersion.ToString() : "?") + (api != null && api.ApplicationInfo.IsPortable ? " (portable)" : "") + ", mode " + (api != null ? api.ApplicationInfo.Mode.ToString() : "?"),
                 "Windows " + Environment.OSVersion.Version + (Environment.Is64BitOperatingSystem ? " 64-bit" : ""),
                 "Playnite runs as administrator: " + LocalGames.IsElevated(System.Diagnostics.Process.GetCurrentProcess().Id),

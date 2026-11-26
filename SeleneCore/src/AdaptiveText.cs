@@ -18,24 +18,54 @@ namespace Selene
     public static class AdaptiveText
     {
         private static readonly List<WeakReference> texts = new List<WeakReference>();
-        // the dark halo behind bright-backed text (on: the darkness taken off was the screen-edge shading)
-        private const bool HaloOn = true;
         private static bool hooked;
         private static DispatcherTimer batch;
+
+        // the handlers hooked on one tracked text, so they can be taken off again when it leaves the screen
+        // (AddValueChanged keeps the text alive: without this every recycled text block stayed in memory for good)
+        private sealed class Hooks
+        {
+            public RoutedEventHandler Unloaded;
+            public DependencyPropertyChangedEventHandler Visible;
+            public EventHandler Changed;
+        }
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<TextBlock, Hooks> hooks = new System.Runtime.CompilerServices.ConditionalWeakTable<TextBlock, Hooks>();
 
         // text on the home or in Collection (over the art): true when it is taken care of here
         public static bool Track(TextBlock t)
         {
             if (t == null || !OverTheArt(t)) return false;
             Hook();
-            if (!texts.Any(r => ReferenceEquals(r.Target, t)))
+            Hooks h;
+            if (!hooks.TryGetValue(t, out h))
             {
+                h = new Hooks();
+                h.Visible = (s, e) => { if ((bool)e.NewValue) Soon(); };
+                h.Changed = (s, e) => Soon();
+                h.Unloaded = (s, e) => Untrack(s as TextBlock);
+                hooks.Add(t, h);
                 texts.Add(new WeakReference(t));
-                t.IsVisibleChanged += (s, e) => { if ((bool)e.NewValue) Soon(); };
-                System.ComponentModel.DependencyPropertyDescriptor.FromProperty(TextBlock.TextProperty, typeof(TextBlock)).AddValueChanged(t, (s, e) => Soon());
+                t.IsVisibleChanged += h.Visible;
+                t.Unloaded += h.Unloaded;
+                System.ComponentModel.DependencyPropertyDescriptor.FromProperty(TextBlock.TextProperty, typeof(TextBlock)).AddValueChanged(t, h.Changed);
             }
             Soon();
             return true;
+        }
+
+        // the text left the screen: let go of it (it is tracked again when it is loaded again)
+        private static void Untrack(TextBlock t)
+        {
+            if (t == null) return;
+            Hooks h;
+            if (hooks.TryGetValue(t, out h))
+            {
+                t.IsVisibleChanged -= h.Visible;
+                t.Unloaded -= h.Unloaded;
+                try { System.ComponentModel.DependencyPropertyDescriptor.FromProperty(TextBlock.TextProperty, typeof(TextBlock)).RemoveValueChanged(t, h.Changed); } catch { }
+                hooks.Remove(t);
+            }
+            texts.RemoveAll(r => { var x = r.Target; return x == null || ReferenceEquals(x, t); });
         }
 
         // a block of text (the empty-tab message...): every piece of text in it
@@ -99,7 +129,7 @@ namespace Selene
                 var q = quiet.GetValue(t, x => { var b = x.Foreground as SolidColorBrush; return new Quiet { Opacity = b != null && b.Opacity < 0.8 ? b.Opacity : -1 }; });
                 double was = q.Opacity;
                 if (was >= 0) t.Foreground = Ink.Brush("SeleneInkColor", was + (0.95 - was) * k);
-                if (k < 0.08 || !HaloOn) { Plain(t); return; }   // readable as it is (or the halo off): nothing added
+                if (k < 0.08) { Plain(t); return; }   // readable as it is: nothing added
                 Halo(t, 8 + 18 * k, 0.35 + 0.4 * k, 1);   // one blur only: a light touch, a little more over brighter spots
             }
             catch (Exception ex) { HomeNav.Log("readable: " + ex.Message); }
@@ -145,6 +175,10 @@ namespace Selene
             }
             double W = t.ActualWidth, H = t.ActualHeight;
             if ((t.Text ?? "").Trim().Length == 0 || W < 2 || H < 2) { t.Background = null; return; }
+            // nothing changed since the halo on it was drawn (same words, size, font, strength, color): keep it
+            string sig = t.Text + "|" + W.ToString("0.#") + "|" + H.ToString("0.#") + "|" + Math.Round(blur, 1) + "|" + Math.Round(opacity, 2) + "|" + Ink.Of("SeleneScrimColor") + "|" + t.FontSize + "|" + t.FontFamily + "|" + t.FontWeight + "|" + t.TextAlignment + "|" + t.TextWrapping;
+            HaloDrawn drawn;
+            if (halos.TryGetValue(t, out drawn) && drawn.Sig == sig && drawn.Brush != null && ReferenceEquals(t.Background, drawn.Brush)) return;
             // the copy: same words, same font and wrapping, in the shade color, blurred
             var copy = new TextBlock
             {
@@ -178,7 +212,14 @@ namespace Selene
             var brush = new ImageBrush(pic) { Stretch = Stretch.Fill };
             brush.Freeze();
             t.Background = brush;
+            var rec = halos.GetOrCreateValue(t);
+            rec.Sig = sig;
+            rec.Brush = brush;
         }
+
+        // what a text's halo was last drawn for (see Halo)
+        private sealed class HaloDrawn { public string Sig; public Brush Brush; }
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<TextBlock, HaloDrawn> halos = new System.Runtime.CompilerServices.ConditionalWeakTable<TextBlock, HaloDrawn>();
 
         // each text's own quietness (a grey hint's opacity; -1 for full-strength text), remembered before it is brightened
         private sealed class Quiet { public double Opacity; }

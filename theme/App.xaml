@@ -45,7 +45,7 @@
         <ResourceDictionary Source="Views/ItemSelection.xaml" />
         <ResourceDictionary Source="Views/CustomMenus.xaml" />
       </ResourceDictionary.MergedDictionaries>
-      <!-- Nomad sandbox: the browser overlay starts hidden -->
+      <!-- the browser overlay starts hidden -->
       <Visibility x:Key="SeleneBrowserOverlayVis">Collapsed</Visibility>
       <Visibility x:Key="SeleneYouTubeOverlayVis">Collapsed</Visibility>
       <Visibility x:Key="SeleneGameNewsVis">Collapsed</Visibility>

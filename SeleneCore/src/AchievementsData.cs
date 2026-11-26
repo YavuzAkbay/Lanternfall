@@ -432,14 +432,6 @@ namespace Selene
             catch { return null; }
         }
 
-        // ---- words ----
-        public static string RarityLine(Item i)
-        {
-            if (!i.Rarity.HasValue) return i.Tier;
-            var pct = i.Rarity.Value < 1 ? i.Rarity.Value.ToString("0.0") : Math.Round(i.Rarity.Value).ToString("0");
-            return (i.Tier.Length > 0 ? i.Tier + "  ·  " : "") + pct + "%";
-        }
-
         // ---- the add-on set up without its desktop page ----
         // Playnite Achievements checks nothing on its own until its first-time page (desktop mode only) is gone through; from
         // the couch it never is, so only games played since showed up. Once: that page is marked done and every game it has

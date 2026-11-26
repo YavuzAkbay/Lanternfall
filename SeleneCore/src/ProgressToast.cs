@@ -29,8 +29,8 @@ namespace Selene
 
         // a note's or task's card: a compact strip as a console's (a 48 px icon, two lines), as wide as its words between these;
         // the session card alone is a panel
-        private const double CardWidth = 520, CardMinWidth = 240, CardHeight = 84, Edge = 28, ShadowRoom = 24, Drift = 26;
-        private const int MinShownMs = 3000, AfterDoneMs = 1100, InMs = 260, OutMs = 220;
+        private const double CardWidth = 520, CardMinWidth = 240, CardHeight = 84, Edge = 28, ShadowRoom = 24;
+        private const int MinShownMs = 3000, AfterDoneMs = 1100;
         private static Window hiddenProgress;   // Playnite's own window, kept out of sight
         private static DateTime busyUntil = DateTime.MinValue;
 
@@ -907,14 +907,16 @@ namespace Selene
             if (!DownloadConsent.Allowed("artdownload")) return;
             var file = SteamFile(appId, name);
             if (System.IO.File.Exists(file)) return;
+            // its own temporary name: two session cards for the same game fetching at once must not write one file
+            var part = file + "." + Guid.NewGuid().ToString("N") + ".part";
             try
             {
                 try { System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12; } catch { }
-                using (var web = new System.Net.WebClient()) web.DownloadFile("https://cdn.akamai.steamstatic.com/steam/apps/" + appId + "/" + name, file + ".part");
+                using (var web = new TimedWebClient()) web.DownloadFile("https://cdn.akamai.steamstatic.com/steam/apps/" + appId + "/" + name, part);
                 if (System.IO.File.Exists(file)) System.IO.File.Delete(file);
-                System.IO.File.Move(file + ".part", file);
+                System.IO.File.Move(part, file);
             }
-            catch (Exception ex) { HomeNav.Log("session card: no " + name + " for " + appId + " (" + ex.Message + ")"); try { System.IO.File.Delete(file + ".part"); } catch { } }
+            catch (Exception ex) { HomeNav.Log("session card: no " + name + " for " + appId + " (" + ex.Message + ")"); try { System.IO.File.Delete(part); } catch { } }
         }
 
         // one of the session card's figures: the value, its words after it on the same line

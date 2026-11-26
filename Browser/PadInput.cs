@@ -45,11 +45,9 @@ namespace SeleneBrowser
             if (broken) return false;
             try
             {
-                for (int i = 0; i < 4; i++)
+                XState s;
+                if (ReadFirst(out s))
                 {
-                    XState s;
-                    int r = use910 ? GetState910(i, out s) : GetState14(i, out s);
-                    if (r != 0) continue;
                     Connected = true;
                     Buttons = s.Buttons;
                     LeftTrigger = s.LeftTrigger / 255.0;
@@ -67,6 +65,29 @@ namespace SeleneBrowser
             return false;
         }
 
+        private int slotHint;       // the slot that answered last
+        private int lastFullScan = Environment.TickCount - 2000;
+
+        // The first connected pad. Slot 0 and the slot that answered last are asked every time; the other slots are slow to answer
+        // when empty (some drivers), so a keyboard-only PC would pay for three failing calls on every tick: they are looked at once a second.
+        private bool ReadFirst(out XState s)
+        {
+            s = default(XState);
+            int now = Environment.TickCount;
+            bool full = unchecked(now - lastFullScan) >= 1000;
+            if (full) lastFullScan = now;
+            for (int i = 0; i < 4; i++)
+            {
+                if (i != 0 && i != slotHint && !full) continue;
+                int r = use910 ? GetState910(i, out s) : GetState14(i, out s);
+                if (r != 0) continue;
+                slotHint = i;
+                return true;
+            }
+            slotHint = 0;
+            return false;
+        }
+
         /// <summary>
         /// A fresh look at the pad right now (Update's numbers are up to one tick old). Used to tell a real D-pad press from the left
         /// stick: Playnite reports both as "DPad..." presses. Connected is false when no XInput pad answers (a keyboard, another pad type).
@@ -77,17 +98,14 @@ namespace SeleneBrowser
             if (broken) return;
             try
             {
-                for (int i = 0; i < 4; i++)
+                XState s;
+                if (ReadFirst(out s))
                 {
-                    XState s;
-                    int r = use910 ? GetState910(i, out s) : GetState14(i, out s);
-                    if (r != 0) continue;
                     connected = true;
                     buttons = s.Buttons;
                     double x, y;
                     Stick(s.LX / 32767.0, s.LY / 32767.0, out x, out y);
                     leftStickPushed = x != 0 || y != 0;
-                    return;
                 }
             }
             catch (DllNotFoundException) { if (use910) broken = true; else use910 = true; }

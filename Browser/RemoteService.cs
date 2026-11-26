@@ -48,7 +48,7 @@ namespace SeleneBrowser
         /// <summary>At startup: the link comes back when the user had switched it on.</summary>
         public static void AutoStart()
         {
-            if (BrowserSettings.PhoneRemote) StartNow();
+            if (BrowserSettings.PhoneRemote) System.Threading.Tasks.Task.Run(delegate { StartNow(); });   // the firewall step can take a moment
         }
 
         /// <summary>The user chose Phone remote on the TV: switch it on (remembered) and start listening.</summary>
@@ -89,6 +89,7 @@ namespace SeleneBrowser
         private static string StartNow()
         {
             string error;
+            if (!Remote.Running) PhoneFirewall.EnsureQuietly();   // before the first listen, or Windows shows its Allow box
             lock (gate)
             {
                 PhoneRemote r = Remote;
@@ -107,10 +108,12 @@ namespace SeleneBrowser
             try
             {
                 if (!BrowserSettings.PhoneRemote) return;
+                IPAddress now = PhoneNet.PickLanAddress();   // adapter enumeration, kept outside the lock
                 lock (gate)
                 {
+                    // Disable() may have run while the address was looked up: then the link must stay off
+                    if (!BrowserSettings.PhoneRemote) return;
                     PhoneRemote r = Remote;
-                    IPAddress now = PhoneNet.PickLanAddress();
                     if (r.Running && now != null && r.BoundAddress != null && !r.BoundAddress.Equals(now)) r.Stop();
                     if (!r.Running) lastError = r.Start();
                     else lastError = null;
@@ -130,35 +133,155 @@ namespace SeleneBrowser
     internal sealed class RemoteHost : IRemoteHost
     {
         private static MethodInfo cast;
+        private static Type castType;
         private static bool looked;
+        private static readonly Dictionary<string, MethodInfo> castMethods = new Dictionary<string, MethodInfo>();
+        private const string Outdated = "The theme needs updating before the phone remote works (Lanternfall Core).";
 
         private static T OnUi<T>(Func<T> call)
         {
             Application app = Application.Current;
             if (app == null) throw new InvalidOperationException("no UI");
-            return (T)app.Dispatcher.Invoke(DispatcherPriority.Normal, TimeSpan.FromSeconds(8), call);
+            // Dispatcher.Invoke gives null when the 8 seconds run out, which a string result would read as "done, no problem": check
+            // that the call really finished and refuse otherwise (the phone is told it did not work)
+            bool finished = false;
+            object result = app.Dispatcher.Invoke(DispatcherPriority.Normal, TimeSpan.FromSeconds(8), new Func<object>(delegate
+            {
+                T value = call();
+                finished = true;
+                return value;
+            }));
+            if (!finished) throw new TimeoutException("The TV did not answer in time");
+            return (T)result;
         }
 
         // Selene.PhoneCast.Receive(kind, value): null = done, otherwise a sentence for the phone
         private static string Core(string kind, string value)
         {
-            if (!looked)
-            {
-                looked = true;
-                foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    try
-                    {
-                        Type t = a.GetType("Selene.PhoneCast", false);
-                        MethodInfo m = t == null ? null : t.GetMethod("Receive", new[] { typeof(string), typeof(string) });
-                        if (m != null) { cast = m; break; }
-                    }
-                    catch { }
-                }
-            }
-            if (cast == null) return "The theme needs updating before the phone remote works (Lanternfall Core).";
+            Look();
+            if (cast == null) return Outdated;
             try { return cast.Invoke(null, new object[] { kind, value }) as string; }
             catch (TargetInvocationException ex) { return "The TV could not do that: " + (ex.InnerException ?? ex).Message; }
+        }
+
+        private static void Look()
+        {
+            if (looked) return;
+            looked = true;
+            foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                try
+                {
+                    Type t = a.GetType("Selene.PhoneCast", false);
+                    MethodInfo m = t == null ? null : t.GetMethod("Receive", new[] { typeof(string), typeof(string) });
+                    if (m != null) { cast = m; castType = t; break; }
+                }
+                catch { }
+            }
+        }
+
+        // a newer PhoneCast method (Pad, State, Games, CoverPath, Launch); null when the installed Core is older than this add-on
+        private static MethodInfo CoreMethod(string name, Type[] args)
+        {
+            Look();
+            if (castType == null) return null;
+            MethodInfo m;
+            lock (castMethods)
+            {
+                if (!castMethods.TryGetValue(name, out m)) { m = castType.GetMethod(name, args); castMethods[name] = m; }
+            }
+            return m;
+        }
+
+        private static object CoreCall(string name, Type[] args, object[] values)
+        {
+            MethodInfo m = CoreMethod(name, args);
+            if (m == null) return null;
+            try { return m.Invoke(null, values); }
+            catch (TargetInvocationException ex) { throw ex.InnerException ?? ex; }
+        }
+
+        private static bool CoreHas(string name, Type[] args) { return CoreMethod(name, args) != null; }
+
+        private static readonly Type[] OneString = { typeof(string) };
+
+        public string Pad(string button)
+        {
+            if (!CoreHas("Pad", OneString)) return Outdated;
+            return OnUi<string>(delegate { return CoreCall("Pad", OneString, new object[] { button }) as string; });
+        }
+
+        public string Launch(string id)
+        {
+            if (!CoreHas("Launch", OneString)) return Outdated;
+            string r = OnUi<string>(delegate { return CoreCall("Launch", OneString, new object[] { id }) as string; });
+            if (r == null) RemoteService.RaiseSent();
+            return r;
+        }
+
+        public List<Dictionary<string, object>> Games(out string error)
+        {
+            error = null;
+            if (!CoreHas("Games", Type.EmptyTypes)) { error = Outdated; return null; }
+            var list = OnUi<List<Dictionary<string, object>>>(delegate { return CoreCall("Games", Type.EmptyTypes, new object[0]) as List<Dictionary<string, object>>; });
+            if (list == null) error = "The TV could not list the games.";
+            return list;
+        }
+
+        // covers are shrunk to phone size once and kept in memory (a big library over Wi-Fi stays quick)
+        private static readonly Dictionary<string, byte[]> covers = new Dictionary<string, byte[]>();
+        private static readonly Queue<string> coverOrder = new Queue<string>();
+        private static readonly SemaphoreSlim shrinking = new SemaphoreSlim(3);
+
+        public byte[] Cover(string id)
+        {
+            if (!CoreHas("CoverPath", OneString)) return null;
+            string path = OnUi<string>(delegate { return CoreCall("CoverPath", OneString, new object[] { id }) as string; });
+            if (string.IsNullOrEmpty(path)) return null;
+            string key;
+            try { key = path + "|" + File.GetLastWriteTimeUtc(path).Ticks.ToString(CultureInfo.InvariantCulture); }
+            catch { return null; }
+            lock (covers) { byte[] hit; if (covers.TryGetValue(key, out hit)) return hit; }
+            byte[] jpg;
+            if (!shrinking.Wait(10000)) return null;
+            try { jpg = Shrink(path, 300); }
+            finally { shrinking.Release(); }
+            if (jpg == null) return null;
+            lock (covers)
+            {
+                if (!covers.ContainsKey(key))
+                {
+                    covers[key] = jpg;
+                    coverOrder.Enqueue(key);
+                    while (coverOrder.Count > 600) covers.Remove(coverOrder.Dequeue());
+                }
+            }
+            return jpg;
+        }
+
+        private static byte[] Shrink(string path, int width)
+        {
+            try
+            {
+                var fi = new FileInfo(path);
+                if (fi.Length > 40L * 1024 * 1024) return null;
+                var img = new System.Windows.Media.Imaging.BitmapImage();
+                img.BeginInit();
+                img.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                img.CreateOptions = System.Windows.Media.Imaging.BitmapCreateOptions.IgnoreColorProfile;
+                img.UriSource = new Uri(path);
+                img.DecodePixelWidth = width;
+                img.EndInit();
+                img.Freeze();
+                var enc = new System.Windows.Media.Imaging.JpegBitmapEncoder { QualityLevel = 82 };
+                enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(img));
+                using (var ms = new MemoryStream())
+                {
+                    enc.Save(ms);
+                    return ms.ToArray();
+                }
+            }
+            catch { return null; }
         }
 
         public string PlayVideo(string id)
@@ -219,6 +342,14 @@ namespace SeleneBrowser
                 if (yt != null && yt.RemoteShown) { d = yt.RemoteStatus(); d["ctx"] = "youtube"; }
                 else if (br != null && br.RemoteShown) { d = br.RemoteInfo(); d["ctx"] = "browser"; }
                 else d = new Dictionary<string, object> { { "ctx", "home" } };
+                // the theme's own screen (home, Collection, a menu, a game running) and its accent colour
+                try
+                {
+                    var core = CoreCall("State", Type.EmptyTypes, new object[0]) as Dictionary<string, object>;
+                    if (core != null) foreach (var kv in core) if (!d.ContainsKey(kv.Key)) d[kv.Key] = kv.Value;
+                }
+                catch { }
+                d["pad"] = CoreHas("Pad", OneString);
                 return d;
             });
         }

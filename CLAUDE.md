@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Lanternfall is a Playnite fullscreen theme with a controller-only Browser and YouTube add-on. It started from [Selene](https://github.com/mattxslv/Selene) (MIT) and is now an independent project: its own repo (not a GitHub fork), no upstream remote, no automatic merging from Selene. The only remote is `origin` = Lanternfall. It is a Windows-only, WPF, .NET Framework 4.x project with **no dotnet SDK / MSBuild**: everything compiles with the `csc.exe` that ships with Windows, as **C# 5** (no `$""` interpolation, `?.`, `nameof`, `=>` members, `out var`, tuples, pattern `is T x`, local functions). CI (`.github/workflows/build.yml`) compiles SeleneCore on Linux through `tools/linux-check` with the same restrictions.
 
-The parent folder (`..\`, "Nomad") is not a repo. It holds the portable sandbox Playnite (`..\Sandbox\Playnite`) and pre-git copies of this code (`..\src`, `..\scripts`) that are **stale — edit only this repo**. `docs/lanternfall/SPEC.md` and `DEVLOG.md` still mention those old `src\...` paths.
+The parent folder (`..\`, "Nomad") is not a repo. It holds the portable sandbox Playnite (`..\Sandbox\Playnite`) and backups (`..\Backups`, `..\backup`). The old pre-git copies (`..\src`, `..\scripts`) were deleted on 2026-11-26; `docs/lanternfall/SPEC.md` and `DEVLOG.md` still mention those old `src\...` paths.
 
 ## Three deliverables
 
@@ -25,10 +25,9 @@ The parent folder (`..\`, "Nomad") is not a repo. It holds the portable sandbox 
 ```powershell
 tools\build.ps1                       # Core
 Browser\build.ps1                     # Browser add-on
-tools\test.ps1 [-SkipBuild]           # build + every suite + python + node tests; nonzero exit on any failure
+tools\test.ps1 [-SkipBuild]           # build + every suite + node test; nonzero exit on any failure
 tools\tests\bugs.ps1                  # one suite (also: check, interaction, library, security, backgroundchanger)
-python -m unittest discover -s tools/tests -p "test_*.py" -v     # release-tool tests
-node --test tools/tests/release-notify.test.cjs                  # release-notification tests
+node tools/tests/trailer-loop.cjs                               # trailer canvas pause/resume test
 tools\update-youtubejs.ps1 [-Version x.y.z] [-TestOnly]          # update the bundled YouTube.js; real-playback check, rolls back on failure (network)
 ```
 

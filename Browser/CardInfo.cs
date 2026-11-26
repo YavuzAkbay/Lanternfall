@@ -168,8 +168,12 @@ namespace SeleneBrowser
         {
             try
             {
-                if (!File.Exists(file)) return null;
-                return new JavaScriptSerializer().Deserialize<List<BrowserEntry>>(File.ReadAllText(file, Encoding.UTF8)) ?? new List<BrowserEntry>();
+                // the same lock the browser writes under, so a half-written file is never read (it would show the starter tiles)
+                lock (BrowserControl.fileLock)
+                {
+                    if (!File.Exists(file)) return null;
+                    return new JavaScriptSerializer().Deserialize<List<BrowserEntry>>(File.ReadAllText(file, Encoding.UTF8)) ?? new List<BrowserEntry>();
+                }
             }
             catch { return null; }
         }

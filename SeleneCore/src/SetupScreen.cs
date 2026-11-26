@@ -159,6 +159,7 @@ namespace Selene
             for (int i = 0; i < cards.Count; i++) Ui.Rise(cards[i].Root, 140 + i * 45);
             ShowFocus();
             // things change behind the screen (an add-on installed or turned on): check again every few seconds
+            if (recheck != null) recheck.Stop();   // (shown again: the earlier timer must not keep ticking)
             recheck = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
             recheck.Tick += (s, e) => Recheck();
             recheck.Start();
@@ -170,6 +171,7 @@ namespace Selene
         {
             if (recheck != null) recheck.Stop();
             if (openingWait != null) { openingWait.Stop(); openingWait = null; }
+            if (installWait != null) { installWait.Stop(); installWait = null; }   // (it would go on installing add-ons under another screen)
             var w = Application.Current.MainWindow;
             if (w != null) w.Activated -= OnActivated;
         }
@@ -236,14 +238,14 @@ namespace Selene
                 // which add-ons the button installs, by name (the button itself is right below)
                 var missing = Missing();
                 if (missing.Count > 0) info.Show("\uE74C", Tone.Accent, "Install all", missing.Count + " to go", string.Join(" \u00B7 ", missing.Select(m => m.Name)), "Playnite asks for each one. They work after a restart.");
-                else info.Show("\uE74C", Tone.Success, "Install all", "Done", "Every add-on that comes with Selene is installed.", "");
+                else info.Show("\uE74C", Tone.Success, "Install all", "Done", Lang.T("Every add-on that comes with Selene is installed."), "");
             }
             else
             {
                 // how far setup is, and what's left
                 int ready = items.Count(i => i.State == SetupState.Ready || i.State == SetupState.Optional);
                 var left = items.Where(i => i.State == SetupState.Missing || i.State == SetupState.Warning).Select(i => i.Title).ToList();
-                if (left.Count == 0) info.Show("\uE73E", Tone.Success, "All set", "Ready", firstRun ? "Everything Selene needs is here. Next: your profile." : "Everything Selene needs is here.", "");
+                if (left.Count == 0) info.Show("\uE73E", Tone.Success, "All set", "Ready", firstRun ? Lang.T("Everything Selene needs is here. Next: your profile.") : Lang.T("Everything Selene needs is here."), "");
                 else info.Show("\uE72A", Tone.Accent, ready + " of " + items.Count + " ready", left.Count + " left", "Still to do: " + string.Join(", ", left) + ".", "You can finish this later from the menu: Setup check.");
             }
         }
@@ -330,7 +332,7 @@ namespace Selene
             if (index == ButtonsStart + 1)
             {
                 Ui.Confirm();
-                Action profile = () => LoginScene.Show(new ProfileSteps(null, () => new SetupScreen(true), p => LoginScene.Show(new WhoScreen(p.Id), 1)), 1);
+                Action profile = () => LoginScene.Show(new ProfileSteps(null, () => new SetupScreen(true), p => LoginScene.Show(Personalize.Start(p, () => LoginScene.Show(new WhoScreen(p.Id), 1)), 1)), 1);   // then: topics, news, YouTube channels
                 if (firstRun && SquareKeyScreen.Wanted) LoginScene.Show(new SquareKeyScreen(profile), 1);   // square tile art needs the user's own key
                 else if (firstRun) profile();
                 else LoginScene.Finish();

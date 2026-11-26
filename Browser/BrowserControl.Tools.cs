@@ -175,7 +175,6 @@ namespace SeleneBrowser
             else open();
         }
 
-        private void OpenMainMenu() { ShowMainMenu(); }
 
         private void ShowMainMenu()
         {
@@ -187,7 +186,7 @@ namespace SeleneBrowser
                 items.Add(new MenuEntry { Label = "Open link in new tab", Run = delegate { OpenInNewTab(link); return true; } });
                 items.Add(new MenuEntry { Label = "Copy link", Run = delegate { CopyText(link, "Link copied"); return true; } });
             }
-            items.Add(new MenuEntry { Label = "New tab", Run = delegate { ActivateTab(NewTab(null, true)); return true; } });
+            items.Add(new MenuEntry { Label = "New tab", Run = delegate { BrowserTab nt = NewTab(null, true); ActivateTab(nt); GoHome(nt); return true; } });
             items.Add(new MenuEntry { Label = "All tabs", Run = delegate { OpenTabSwitcher(); return true; } });
             items.Add(new MenuEntry { Label = "Close tab", Run = delegate { CloseTab(active); return true; } });
             if (!IsHome && view.Address.Length > 0)
@@ -454,6 +453,14 @@ namespace SeleneBrowser
                 return;
             }
             pendingDownload = r;
+            r.Expired = delegate
+            {
+                // refused after a minute without an answer: take the question off the screen
+                if (pendingDownload != r) return;
+                pendingDownload = null;
+                if (panelKind == PanelKind.DownloadAsk) ClosePanel(shown);
+                if (shown) Toast("The download question timed out and the file was not saved");
+            };
             string name = DownloadNames.Shown(r.Name);
             string note = name + (r.Size >= 0 ? "  (" + DownloadNames.Size(r.Size) + ")" : "")
                 + (DownloadNames.IsProgram(r.Name) ? "\nThis is a program. Only save it if you trust the site: Windows checks it again before it runs." : "");
@@ -473,10 +480,11 @@ namespace SeleneBrowser
             pendingDownload = null;
             if (r == null) return;
             if (!ok) { r.Decide(false, null); return; }
-            var item = new DownloadItem { Name = r.Name, Path = r.Path, Size = r.Size };
+            var item = new DownloadItem { Name = r.Name, Size = r.Size };
+            // the question may have timed out already: then nothing is saved, so nothing is listed or announced
+            if (!r.Decide(true, item)) { Toast("That download was refused because the question timed out"); return; }
             downloads.Insert(0, item);
             if (downloads.Count > 30) downloads.RemoveRange(30, downloads.Count - 30);
-            r.Decide(true, item);
             Toast("Downloading " + DownloadNames.Shown(r.Name));
         }
 

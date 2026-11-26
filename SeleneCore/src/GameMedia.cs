@@ -378,7 +378,10 @@ namespace Selene
                 try { using (var wc = Client()) wc.DownloadFile(urls[i], f); files.Add(f); PerformanceRecorder.Mark("download", "screenshots game=" + id + " bytes=" + new System.IO.FileInfo(f).Length + " trigger=cache-fill"); }
                 catch { try { System.IO.File.Delete(f); } catch { } }
             }
-            System.IO.File.WriteAllText(files.Count > 0 ? done : System.IO.Path.Combine(dir, "none.txt"), string.Join(Environment.NewLine, urls));
+            // "nothing found, ask again in a week" only when the store really listed no pictures; when it listed some and every
+            // download failed (offline, a stall) nothing is recorded, so the next look tries again
+            if (files.Count > 0) System.IO.File.WriteAllText(done, string.Join(Environment.NewLine, urls));
+            else if (urls.Count == 0) System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "none.txt"), "");
             HomeNav.Log("screenshots " + name + ": " + files.Count + " cached");
             return files;
         }
@@ -622,7 +625,7 @@ namespace Selene
 
         private static WebClient Client()
         {
-            var wc = new WebClient { Encoding = System.Text.Encoding.UTF8 };
+            var wc = new TimedWebClient { Encoding = System.Text.Encoding.UTF8 };
             wc.Headers[HttpRequestHeader.UserAgent] = "Mozilla/5.0";
             return wc;
         }

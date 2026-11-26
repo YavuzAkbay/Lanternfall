@@ -11,17 +11,18 @@ namespace SeleneBrowser
     internal sealed class DownloadRequest
     {
         public string Name;          // the file name the page suggested
-        public string Path;          // where it will be saved
         public long Size;            // bytes, -1 when the page did not say
-        /// <summary>true = save it, false = refuse it. Call once, on the UI thread.</summary>
-        public Action<bool, DownloadItem> Decide;
+        /// <summary>true = save it, false = refuse it. Call once, on the UI thread. Returns true when the answer was applied;
+        /// false when the question had already been answered (e.g. it timed out), so the caller must not list or announce a download.</summary>
+        public Func<bool, DownloadItem, bool> Decide;
+        /// <summary>Raised when nobody answered in time and the download was refused, so the host can drop its question.</summary>
+        public Action Expired;
     }
 
     /// <summary>One download of this session, as the Downloads list shows it.</summary>
     internal sealed class DownloadItem
     {
         public string Name;
-        public string Path;
         public long Received;
         public long Size = -1;
         public string State = "downloading";   // downloading | done | failed | cancelled

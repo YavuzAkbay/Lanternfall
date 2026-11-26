@@ -142,7 +142,7 @@ namespace Selene
                 About = addon.About,
                 AddonId = installed ? null : addon.Id,
                 State = on ? SetupState.Ready : SetupState.Missing,
-                Detail = on ? "Installed" : installed ? "Turned off · turn it on in Add-ons" : "Comes with Selene · not installed yet"
+                Detail = on ? "Installed" : installed ? "Turned off · turn it on in Add-ons" : Lang.T("Comes with Selene · not installed yet")
             };
         }
 

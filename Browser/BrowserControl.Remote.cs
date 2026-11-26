@@ -64,7 +64,7 @@ namespace SeleneBrowser
             return "Unknown action.";
         }
 
-        /// <summary>back, forward, reload, home, up, down, zoomin, zoomout, newtab, closetab. Null when done, otherwise a sentence for the phone.</summary>
+        /// <summary>back, forward, reload, home, up, down, zoomin, zoomout, newtab, closetab, address. Null when done, otherwise a sentence for the phone.</summary>
         internal string RemoteBrowse(string command)
         {
             PadActivity.Mark();
@@ -79,8 +79,9 @@ namespace SeleneBrowser
                 case "down": ScrollPage(1); ScrollPage(1); return null;
                 case "zoomin": ZoomBy(ZoomStep); return null;
                 case "zoomout": ZoomBy(-ZoomStep); return null;
-                case "newtab": ActivateTab(NewTab(null, true)); return null;
+                case "newtab": { BrowserTab nt = NewTab(null, true); ActivateTab(nt); GoHome(nt); return null; }
                 case "closetab": CloseTab(active); return null;
+                case "address": if (!keyboard.IsOpen) EditAddress(); return null;   // the address keyboard: the phone gets it as its typing box
             }
             return "Unknown command.";
         }

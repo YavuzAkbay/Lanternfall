@@ -57,14 +57,12 @@ namespace Selene
             var have = Cached(file);
             if (have != null) return have;
             string result = null;
-            using (var gate = new ManualResetEvent(false))
-            {
-                lock (queue) queue.Enqueue(new KeyValuePair<string, Action<string>>(file, p => { result = p; gate.Set(); }));
-                Start();
-                wake.Set();
-                gate.WaitOne(timeoutMs);
-            }
-            return result;
+            // not disposed: after a timeout the worker still calls back, and Set() on a disposed event would throw on the UI dispatcher
+            var gate = new ManualResetEvent(false);
+            lock (queue) queue.Enqueue(new KeyValuePair<string, Action<string>>(file, p => { result = p; try { gate.Set(); } catch (ObjectDisposedException) { } }));
+            Start();
+            wake.Set();
+            return gate.WaitOne(timeoutMs) ? result : null;
         }
 
         private static void Start()
@@ -139,7 +137,15 @@ namespace Selene
         {
             var enc = new JpegBitmapEncoder { QualityLevel = 85 };
             enc.Frames.Add(BitmapFrame.Create(bmp));
-            using (var s = File.Create(path)) enc.Save(s);
+            // a half-written still would count as a cache hit for good: write beside it, then move it into place
+            var part = path + ".part";
+            try
+            {
+                using (var s = File.Create(part)) enc.Save(s);
+                if (File.Exists(path)) File.Delete(path);
+                File.Move(part, path);
+            }
+            catch { try { File.Delete(part); } catch { } throw; }
         }
 
         // ---- Windows' thumbnail (IShellItemImageFactory, thumbnails only: no file icons) ----
@@ -215,15 +221,20 @@ namespace Selene
             try
             {
                 // from the given second on, the most telling of the next frames (not a fade or a cut)
-                var psi = new ProcessStartInfo(exe, "-v error -y -ss " + seconds + " -i \"" + file + "\" -frames:v 1 -vf \"thumbnail=24,scale=" + Width + ":-2\" \"" + path + "\"")
+                var part = path + ".part.jpg";   // a killed ffmpeg must not leave a broken still under the cache name
+                try { if (File.Exists(part)) File.Delete(part); } catch { }
+                var psi = new ProcessStartInfo(exe, "-v error -y -ss " + seconds + " -i \"" + file + "\" -frames:v 1 -vf \"thumbnail=24,scale=" + Width + ":-2\" \"" + part + "\"")
                 {
                     UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden
                 };
                 using (var p = Process.Start(psi))
                 {
-                    if (!p.WaitForExit(15000)) { try { p.Kill(); } catch { } return false; }
+                    if (!p.WaitForExit(15000)) { try { p.Kill(); } catch { } try { p.WaitForExit(2000); File.Delete(part); } catch { } return false; }
                 }
-                return File.Exists(path);
+                if (!File.Exists(part)) return false;
+                if (File.Exists(path)) File.Delete(path);
+                File.Move(part, path);
+                return true;
             }
             catch (Exception ex) { HomeNav.Log("thumbnail (ffmpeg) " + Path.GetFileName(file) + ": " + ex.Message); return false; }
         }

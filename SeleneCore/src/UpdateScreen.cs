@@ -153,7 +153,7 @@ namespace Selene
                 var name = Files[index];
                 var target = Path.Combine(folder, name);
                 try { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12; } catch { }
-                web = new WebClient();
+                web = new TimedWebClient { MaxBytes = 300L * 1024 * 1024 };   // (stalls give up; the packages are well under this)
                 web.Headers[HttpRequestHeader.UserAgent] = "Selene-Playnite";
                 int at = index;
                 web.DownloadProgressChanged += (s, e) =>

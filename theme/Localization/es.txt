@@ -1,4 +1,4 @@
-# Selene starter translation: common navigation and settings. Missing phrases use English.
+# Lanternfall starter translation: common navigation and settings. Missing phrases use English.
 Settings = Ajustes
 Back = Atrás
 Select = Seleccionar

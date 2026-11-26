@@ -15,7 +15,14 @@ namespace Selene
         private static IPlayniteAPI api;
         private static SeleneSettings settings;
 
-        public static void Init(Plugin owner, IPlayniteAPI playnite, SeleneSettings s) { plugin = owner; api = playnite; settings = s; themeDir = null; }
+        public static void Init(Plugin owner, IPlayniteAPI playnite, SeleneSettings s)
+        {
+            plugin = owner; api = playnite; settings = s; themeDir = null;
+            lock (madeDirs) madeDirs.Clear();
+        }
+
+        // folders already created this run (Media is asked for on every selection: no filesystem call each time)
+        private static readonly HashSet<string> madeDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         // downloaded art, preview clips, screenshots: the user's choice, else the add-on's own data folder
         public static string Media(string sub)
@@ -24,7 +31,11 @@ namespace Selene
                 ? settings.MediaFolder
                 : Path.Combine(plugin != null ? plugin.GetPluginUserDataPath() : Path.GetTempPath(), "Media");
             var dir = Path.Combine(root, sub);
-            if (Path.GetExtension(sub) == "") { try { Directory.CreateDirectory(dir); } catch { } }
+            if (Path.GetExtension(sub) == "")
+            {
+                lock (madeDirs) { if (madeDirs.Contains(dir)) return dir; }
+                try { Directory.CreateDirectory(dir); lock (madeDirs) madeDirs.Add(dir); } catch { }
+            }
             return dir;
         }
 
@@ -78,25 +89,31 @@ namespace Selene
         }
 
         // the signed-in Steam account (loginusers.vdf, most recent): its avatar file and display name
-        private static string steamId, steamName;
+        private static string steamId;
+        private static readonly object steamLock = new object();
         private static void ReadSteamUser()
         {
             if (steamId != null) return;
-            steamId = ""; steamName = "";
-            try
+            lock (steamLock)
             {
-                var steam = Path.GetDirectoryName(SteamUserdata);
-                var vdf = File.ReadAllText(Path.Combine(steam, "config", "loginusers.vdf"));
-                foreach (Match m in Regex.Matches(vdf, "\"(\\d{17})\"\\s*\\{(.*?)\\}", RegexOptions.Singleline))
+                if (steamId != null) return;
+                // work in a local and publish last, so a concurrent caller never sees the half-way ""
+                var id = "";
+                try
                 {
-                    var body = m.Groups[2].Value;
-                    var name = Regex.Match(body, "\"PersonaName\"\\s*\"([^\"]*)\"");
-                    bool recent = Regex.IsMatch(body, "\"MostRecent\"\\s*\"1\"");
-                    if (steamId == "" || recent) { steamId = m.Groups[1].Value; steamName = name.Success ? name.Groups[1].Value : ""; }
-                    if (recent) break;
+                    var steam = Path.GetDirectoryName(SteamUserdata);
+                    var vdf = File.ReadAllText(Path.Combine(steam, "config", "loginusers.vdf"));
+                    foreach (Match m in Regex.Matches(vdf, "\"(\\d{17})\"\\s*\\{(.*?)\\}", RegexOptions.Singleline))
+                    {
+                        var body = m.Groups[2].Value;
+                        bool recent = Regex.IsMatch(body, "\"MostRecent\"\\s*\"1\"");
+                        if (id == "" || recent) id = m.Groups[1].Value;
+                        if (recent) break;
+                    }
                 }
+                catch { }
+                steamId = id;
             }
-            catch { }
         }
 
         public static string SteamId { get { ReadSteamUser(); return steamId; } }
@@ -110,16 +127,6 @@ namespace Selene
                 if (steamId == "") return null;
                 var p = Path.Combine(Path.GetDirectoryName(SteamUserdata), "config", "avatarcache", steamId + ".png");
                 return File.Exists(p) ? p : null;
-            }
-        }
-
-        public static string UserName
-        {
-            get
-            {
-                if (settings != null && !string.IsNullOrWhiteSpace(settings.DisplayName)) return settings.DisplayName;
-                ReadSteamUser();
-                return steamName != "" ? steamName : Environment.UserName;
             }
         }
 

@@ -529,8 +529,6 @@ namespace SeleneBrowser
             res.Continuation = cont;
         }
 
-        static void SafeInv(Action a) { try { a(); } catch { } }
-
         // ---------------------------------------------------------- Search
         public static Task<PageResult<VideoItem>> Search(string query, string continuation)
         {
@@ -856,11 +854,6 @@ namespace SeleneBrowser
         }
 
         // ---------------------------------------------------------- Streams
-        public static Task<Result<StreamInfo>> GetStreams(string videoId)
-        {
-            return Task.Run(() => GetStreamsSync(videoId));
-        }
-
         static readonly Regex LiveNowRx = new Regex("\"liveNow\"\\s*:\\s*true", RegexOptions.Compiled);
         static readonly Regex HlsUrlRx = new Regex("\"hlsUrl\"\\s*:\\s*\"[^\"]+", RegexOptions.Compiled);
 
@@ -1023,8 +1016,8 @@ namespace SeleneBrowser
             }
             if (itLive == null)
             {
-                // YouTube's own web route (BotGuard tokens in a hidden WebView2, as FreeTube does): before Invidious, whose
-                // instances are few and sometimes serve expired links
+                // the optional web route (YouTubeWeb, only when its files are present): before Invidious, whose instances
+                // are few and sometimes serve expired links
                 StreamInfo web = TryWeb(videoId, ref err);
                 if (web != null) return Result<StreamInfo>.Success(web);
             }
@@ -1110,7 +1103,7 @@ namespace SeleneBrowser
         {
             try
             {
-                if (!YouTubeWeb.Available) return WebProblem(videoId, "unavailable (no WebView2 runtime or ytweb files)", true);
+                if (!YouTubeWeb.Available) return WebProblem(videoId, "unavailable (no WebView2 runtime or ytweb files)", false);
                 System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
                 string why;
                 string json = YouTubeWeb.Resolve(videoId, 40000, out why);
@@ -1304,11 +1297,6 @@ namespace SeleneBrowser
         }
 
         // ---------------------------------------------------------- SponsorBlock
-        public static Task<List<SponsorSegment>> SponsorSegments(string videoId)
-        {
-            return Task.Run(() => SponsorSegmentsSync(videoId));
-        }
-
         public static List<SponsorSegment> SponsorSegmentsSync(string videoId)
         {
             List<SponsorSegment> res = new List<SponsorSegment>();

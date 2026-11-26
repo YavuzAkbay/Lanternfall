@@ -54,8 +54,10 @@ namespace SeleneBrowser
             var result = new List<FeedCard>();
             var seenUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             int limit = Math.Max(0, max);
-            foreach (var group in new[] { bookmarks, recent })
+            var groups = new[] { bookmarks, recent };
+            for (int g = 0; g < groups.Length; g++)
             {
+                var group = groups[g];
                 if (group == null) continue;
                 foreach (var e in group)
                 {
@@ -67,7 +69,8 @@ namespace SeleneBrowser
                     result.Add(new FeedCard
                     {
                         Title = PageName(e, host),
-                        Sub = host + Relative(e.Time),
+                        // a bookmark's time is when it was saved (the starter set says "just now" forever): only visited pages show their age
+                        Sub = g == 0 ? host + " · Bookmark" : host + Relative(e.Time),
                         Key = e.Url,
                         Host = host
                     });

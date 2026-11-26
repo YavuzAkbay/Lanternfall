@@ -5,7 +5,7 @@
     <sys:String x:Key="SeleneThemeId">ristretto</sys:String>
     <sys:String x:Key="SeleneThemeName">Ristretto</sys:String>
     <sys:String x:Key="SeleneThemeMode">dark</sys:String>
-    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/ristretto/0-launch.png</sys:String>
+    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/ristretto/1-lanternfall.jpg</sys:String>
 
     <Color x:Key="GlyphColor">#FFF38D70</Color>
     <Color x:Key="GlyphLightColor">#FFE6D9DB</Color>

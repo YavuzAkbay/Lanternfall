@@ -17,7 +17,7 @@ namespace Selene
     // one at a time (the page glides up), Left / Right move along a band, A opens what's picked, Up / B come back up.
     public static class DetailsStage
     {
-        private const double BandTop = 720, BandPitch = 230;   // (the next band starts at the foot of the screen: it peeks in, cut off and blurred)
+        private const double BandPitch = 230;   // (the next band starts at the foot of the screen: it peeks in, cut off and blurred)
         private static FrameworkElement details;
         private static TranslateTransform shift;
         private static readonly List<Tile>[] tiles = { new List<Tile>(), new List<Tile>(), new List<Tile>() };   // screenshots, captures, more

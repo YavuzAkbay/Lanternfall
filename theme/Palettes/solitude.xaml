@@ -5,7 +5,7 @@
     <sys:String x:Key="SeleneThemeId">solitude</sys:String>
     <sys:String x:Key="SeleneThemeName">Solitude</sys:String>
     <sys:String x:Key="SeleneThemeMode">dark</sys:String>
-    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/solitude/1-on-pole.jpg</sys:String>
+    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/solitude/1-lanternfall.jpg</sys:String>
 
     <Color x:Key="GlyphColor">#FF798186</Color>
     <Color x:Key="GlyphLightColor">#FFA5AEB4</Color>

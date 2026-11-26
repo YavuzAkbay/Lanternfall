@@ -585,7 +585,7 @@ namespace Selene
             if (items.Count == 0)
             {
                 note.Text = all.Count > 0 ? (filter == 1 ? "No screenshots here. LB / RB show the clips, or everything." : "No clips here. LB / RB show the screenshots, or everything.")
-                    : "No screenshots or clips found. Selene looks in Steam's screenshot folders, Videos\\Captures (Xbox Game Bar), Videos\\NVIDIA (the NVIDIA app), Videos\\Radeon ReLive (AMD Software) and the folders you add under Captures in Selene Core's settings.";
+                    : Lang.T("No screenshots or clips found. Selene looks in Steam's screenshot folders, Videos\\Captures (Xbox Game Bar), Videos\\NVIDIA (the NVIDIA app), Videos\\Radeon ReLive (AMD Software) and the folders you add under Captures in Selene Core's settings.");
                 return;
             }
             note.Text = "";

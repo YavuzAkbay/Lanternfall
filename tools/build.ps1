@@ -18,8 +18,8 @@ $version = $Matches[1]
 $metadata = Join-Path $core 'obj\ReleaseMetadata.cs'
 @"
 using System.Reflection;
-[assembly: AssemblyCompany("Selene contributors")]
-[assembly: AssemblyProduct("Selene Core")]
+[assembly: AssemblyCompany("Lanternfall contributors")]
+[assembly: AssemblyProduct("Lanternfall Core")]
 [assembly: AssemblyVersion("$version.0")]
 [assembly: AssemblyFileVersion("$version.0")]
 [assembly: AssemblyInformationalVersion("$version")]

@@ -5,7 +5,7 @@
     <sys:String x:Key="SeleneThemeId">tokyo-night</sys:String>
     <sys:String x:Key="SeleneThemeName">Tokyo Night</sys:String>
     <sys:String x:Key="SeleneThemeMode">dark</sys:String>
-    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/tokyo-night/0-winding-road.jpg</sys:String>
+    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/tokyo-night/1-lanternfall.jpg</sys:String>
 
     <Color x:Key="GlyphColor">#FF7AA2F7</Color>
     <Color x:Key="GlyphLightColor">#FFC0CAF5</Color>

@@ -1,17 +1,17 @@
-<p align="center"><sub><a href="README.md">Guide</a> · <a href="getting-started.md">Getting started</a> · <a href="spotlight.md">Spotlight</a> · <a href="cards.md">Cards</a> · <a href="store.md">Store</a> · <a href="details-collection.md">Details &amp; Collection</a> · <a href="playing.md">Playing</a> · <a href="menu.md">Menu</a> · <a href="profiles.md">Profiles</a> · <a href="settings.md">Settings</a> · <a href="themes.md">Themes</a> · <a href="troubleshooting.md">Help</a></sub></p>
+<p align="center"><sub><a href="README.md">Guide</a> · <a href="getting-started.md">Getting started</a> · <a href="spotlight.md">Spotlight</a> · <a href="cards.md">Cards</a> · <a href="store.md">Store</a> · <a href="details-collection.md">Details &amp; Collection</a> · <a href="playing.md">Playing</a> · <a href="browser-youtube.md">Browser &amp; YouTube</a> · <a href="menu.md">Menu</a> · <a href="profiles.md">Profiles</a> · <a href="settings.md">Settings</a> · <a href="themes.md">Themes</a> · <a href="troubleshooting.md">Help</a></sub></p>
 
 # Getting started
 
 ## Install
-1. Download `Selene.pthm` and `SeleneCore.pext` from the [Releases](../../../../releases) page.
+1. Download `Lanternfall.pthm`, `LanternfallCore.pext` and `LanternfallBrowser.pext` from the [Releases](../../../../releases) page.
 2. Open each file (or drag it onto Playnite) and confirm. Restart Playnite.
-3. Fullscreen mode → **Menu → Playnite settings → Appearance → Theme → Selene**.
+3. Fullscreen mode → **Menu → Playnite settings → Appearance → Theme → Lanternfall**.
 
-Selene Core only does something while the Selene theme is in use. Playnite 10 or newer, Windows 10 / 11.
+Lanternfall Core only does something while the Lanternfall theme is in use. Playnite 10 or newer, Windows 10 / 11.
 
 ## The first start
-The crescent intro, then **Who's playing?** Make a profile: a name, an avatar (415 to pick from, or your own picture),
-a theme and a background, previewed live on your real home. Then the **setup check** offers the add-ons Selene works
+The lantern intro, then **Who's playing?** Make a profile: a name, an avatar (36 to pick from, or your own picture),
+a theme and a background, previewed live on your real home. Then the **setup check** offers the add-ons Lanternfall works
 with (logos and trailers, save backups, HowLongToBeat, achievements, music), one word on each. **Install all** does
 the rest; you can run it again any time from the menu.
 
@@ -26,7 +26,7 @@ the rest; you can run it again any time from the menu.
 | **LT / RT** | Start / end of the row | – | – |
 | **R3** | Trailer sound on / off | Trailer sound | – |
 | **View** | Collection (hold: Find a game) | Spotlight (hold: Find a game) | – |
-| **Start** | Menu (hold: Selene settings) | Menu | – |
+| **Start** | Menu (hold: Lanternfall settings) | Menu | – |
 | **Guide** | – | – | Back to the home while a game runs, and back into it |
 
 The keyboard works too: arrows, Enter, Esc, typing in Find a game.

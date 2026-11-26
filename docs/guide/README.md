@@ -1,7 +1,5 @@
-<p align="center"><img src="../readme/intro.gif" alt="Selene" width="100%"></p>
-
-<h1 align="center">Selene guide</h1>
-<p align="center">Everything Selene does, screen by screen, and how to make it yours.<br>
+<h1 align="center">Lanternfall guide</h1>
+<p align="center">Everything Lanternfall does, screen by screen, and how to make it yours.<br>
 <sub>Back to the <a href="../../README.md">front page</a></sub></p>
 
 <table>
@@ -16,13 +14,18 @@
     <td valign="top"><h3><a href="playing.md">Playing a game</a></h3>Play, the loading screen, Guide, Close Game, what runs on its own.</td>
   </tr>
   <tr>
-    <td valign="top"><h3><a href="menu.md">Menu &amp; Playnite settings</a></h3>The control-center row, power, Playnite's settings in Selene's look.</td>
+    <td valign="top"><h3><a href="menu.md">Menu &amp; Playnite settings</a></h3>The control-center row, power, Playnite's settings in Lanternfall's look.</td>
     <td valign="top"><h3><a href="profiles.md">Profiles &amp; first launch</a></h3>Who's playing, avatars, the setup check.</td>
-    <td valign="top"><h3><a href="settings.md">Selene settings</a></h3>Every switch and choice, grouped as in the menu.</td>
+    <td valign="top"><h3><a href="settings.md">Lanternfall settings</a></h3>Every switch and choice, grouped as in the menu.</td>
   </tr>
   <tr>
     <td valign="top"><h3><a href="themes.md">Themes &amp; your own art</a></h3>23 color themes, wallpapers, hero art and tiles per game.</td>
-    <td valign="top"><h3><a href="troubleshooting.md">Help</a></h3>When something's off: logs, add-ons Selene works with, known limits.</td>
+    <td valign="top"><h3><a href="troubleshooting.md">Help</a></h3>When something's off: logs, add-ons Lanternfall works with, known limits.</td>
     <td valign="top"><h3><a href="building.md">Building from source</a></h3>The build scripts, the dev loop, releasing.</td>
+  </tr>
+  <tr>
+    <td valign="top"><h3><a href="browser-youtube.md">Browser &amp; YouTube</a></h3>The web and YouTube on the pad, the phone remote, controller rest.</td>
+    <td valign="top"><h3><a href="downloads.md">Optional downloads</a></h3>What Lanternfall fetches for your games, and only with your yes.</td>
+    <td></td>
   </tr>
 </table>

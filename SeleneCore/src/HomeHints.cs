@@ -102,20 +102,6 @@ namespace Selene
             if (!HintPeek.OwnsOpacity) bar.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0.3, 1, TimeSpan.FromMilliseconds(180)) { EasingFunction = Ui.Out() });
         }
 
-        // a hint whose button is a solid icon (View, Menu) instead of a letter, as bold as the letters beside it
-        private static StackPanel IconPrompt(int icon, double size, string label)
-        {
-            var prompt = Ui.Prompt(Ui.Icon(icon), label);
-            var dot = prompt.Children[0] as Grid;
-            if (dot != null && dot.Children.Count > 1)
-            {
-                // an icon font glyph (the letter shape is drawn in the body font, which has no icons)
-                dot.Children.RemoveAt(1);
-                dot.Children.Add(new TextBlock { Text = Ui.Icon(icon), FontFamily = Ui.Icons, FontSize = size, Foreground = Ink.Brush("SeleneScrimColor"), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center });
-            }
-            return prompt;
-        }
-
         // a hint with what holding the button does, small under its label
         private static StackPanel Hold(StackPanel prompt, string hold)
         {

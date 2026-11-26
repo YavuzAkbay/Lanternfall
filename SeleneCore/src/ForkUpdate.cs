@@ -35,7 +35,7 @@ namespace Selene
                 if (!string.IsNullOrEmpty(tag))
                 {
                     try { System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12; } catch { }
-                    using (var web = new System.Net.WebClient { Encoding = System.Text.Encoding.UTF8 })
+                    using (var web = new TimedWebClient { Encoding = System.Text.Encoding.UTF8 })
                     {
                         web.Headers[System.Net.HttpRequestHeader.UserAgent] = "Selene-Playnite";
                         var m = buildInfoLine.Match(web.DownloadString(ForkBrand.RepoUrl + "/releases/download/v" + tag + "/BUILDINFO.txt"));
@@ -107,10 +107,10 @@ namespace Selene
         public static double[] Weights(double[] all) { return BrowserOnly ? new[] { 1.0 } : all; }
 
         // "Selene 1.5.9" for a whole update, "Lanternfall Browser 0.4.1" for a Browser-only one
-        public static string Name(string whole) { return BrowserOnly ? "Lanternfall Browser " + ReleaseBrowser : whole; }
+        public static string Name(string whole) { return BrowserOnly ? "Lanternfall Browser " + ReleaseBrowser : ForkBrand.Text(whole); }
 
         // "You have 1.5.8." / "You have Browser 0.4.0."
-        public static string Have(string whole) { return BrowserOnly ? "Browser " + Installed() : whole; }
+        public static string Have(string whole) { return BrowserOnly ? "Browser " + Installed() : ForkBrand.Text(whole); }
 
         private static Version Parse(string v)
         {

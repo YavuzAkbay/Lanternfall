@@ -5,7 +5,7 @@
     <sys:String x:Key="SeleneThemeId">white</sys:String>
     <sys:String x:Key="SeleneThemeName">White</sys:String>
     <sys:String x:Key="SeleneThemeMode">light</sys:String>
-    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/white/1-white.jpg</sys:String>
+    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/white/1-lanternfall.jpg</sys:String>
 
     <Color x:Key="GlyphColor">#FF6E6E6E</Color>
     <Color x:Key="GlyphLightColor">#FF000000</Color>

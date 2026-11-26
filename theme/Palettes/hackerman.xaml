@@ -5,7 +5,7 @@
     <sys:String x:Key="SeleneThemeId">hackerman</sys:String>
     <sys:String x:Key="SeleneThemeName">Hackerman</sys:String>
     <sys:String x:Key="SeleneThemeMode">dark</sys:String>
-    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/hackerman/1-synth-scape.jpg</sys:String>
+    <sys:String x:Key="SeleneDefaultWallpaper">Wallpapers/hackerman/1-lanternfall.jpg</sys:String>
 
     <Color x:Key="GlyphColor">#FF82FB9C</Color>
     <Color x:Key="GlyphLightColor">#FFDDF7FF</Color>
