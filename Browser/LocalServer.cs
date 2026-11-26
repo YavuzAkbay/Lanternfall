@@ -836,6 +836,16 @@ namespace SeleneBrowser
                 if (r.Headers.TryGetValue("Range", out range))
                 {
                     Match m = Regex.Match(range, @"^bytes=(\d*)-(\d*)$");
+                    // a big closed range (a whole DASH subsegment, up to ~180 MB for 4K VP9): fetched as parallel pieces
+                    if (!head && te.Kind == "" && m.Success && m.Groups[1].Value.Length > 0 && m.Groups[2].Value.Length > 0)
+                    {
+                        long ra = long.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), rb = long.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture);
+                        if (rb - ra + 1 > PieceMin)
+                        {
+                            bool? done = ProxyPieces(ns, te, ra, rb, keep);
+                            if (done.HasValue) return done.Value;
+                        }
+                    }
                     if (m.Success && m.Groups[1].Value.Length > 0)
                     {
                         long a = long.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
@@ -905,6 +915,121 @@ namespace SeleneBrowser
                 return false;
             }
             finally { if (resp != null) { try { resp.Close(); } catch { } } }
+        }
+
+        // ---------------------------------------------------------------- big ranges: parallel pieces
+        // googlevideo paces each connection (~30-45 Mbit/s measured on a line that does ~85 with 4 connections), which is
+        // barely above 4K VP9's ~27 Mbit/s: one long request per subsegment meant stalls and ABR drops. A big range is
+        // fetched as PieceSize pieces, PieceParallel at a time, and written to the player in order. A piece that breaks
+        // (connection reset, short read) is retried on its own instead of the player throwing away the whole subsegment.
+        const long PieceMin = 6L * 1024 * 1024;
+        const long PieceSize = 3L * 1024 * 1024;
+        const int PieceParallel = 4;
+
+        class Piece { public int Status; public byte[] Data; public string ContentType; public string Total; }
+        class CancelBox { public volatile bool Cancelled; }
+
+        /// <summary>Serves bytes a-b of te's url from parallel pieces. null = nothing was sent (the caller does a plain
+        /// pass-through instead); otherwise the keep-alive result.</summary>
+        static bool? ProxyPieces(NetworkStream ns, TokenEntry te, long a, long b, bool keep)
+        {
+            int n = (int)((b - a) / PieceSize) + 1;
+            Task<Piece>[] tasks = new Task<Piece>[n];
+            CancelBox cancel = new CancelBox();
+            string url = te.Url, ua = te.Ua ?? Http.VrUA;
+            int next = 0;
+            Func<int, Task<Piece>> start = delegate (int i)
+            {
+                long s = a + i * PieceSize, e = Math.Min(b, s + PieceSize - 1);
+                return Task.Run(() => FetchPiece(url, ua, s, e, cancel));
+            };
+            try
+            {
+                for (; next < n && next < PieceParallel; next++) tasks[next] = start(next);
+                Piece first = tasks[0].Result;
+                if (first.Status != 206)
+                {
+                    cancel.Cancelled = true;
+                    if (first.Status == 403 || first.Status == 404 || first.Status == 410 || first.Status == 416)
+                    {
+                        SendText(ns, first.Status, "text/plain", "Upstream answered HTTP " + first.Status, false, keep);   // expired: the page reloads with fresh urls
+                        return keep;
+                    }
+                    return null;   // anything odd (200 without range, network down): plain pass-through decides
+                }
+                StringBuilder h = new StringBuilder();
+                h.Append("HTTP/1.1 206 Partial Content\r\n");
+                h.Append("Content-Type: ").Append(string.IsNullOrEmpty(first.ContentType) ? "application/octet-stream" : first.ContentType).Append("\r\n");
+                h.Append("Content-Range: bytes ").Append(a).Append('-').Append(b).Append('/').Append(first.Total).Append("\r\n");
+                h.Append("Accept-Ranges: bytes\r\nAccess-Control-Allow-Origin: *\r\nCache-Control: no-store\r\n");
+                h.Append("Content-Length: ").Append(b - a + 1).Append("\r\n");
+                h.Append(keep ? "Connection: keep-alive\r\n" : "Connection: close\r\n");
+                h.Append("\r\n");
+                byte[] hb = Encoding.ASCII.GetBytes(h.ToString());
+                ns.Write(hb, 0, hb.Length);
+                for (int i = 0; i < n; i++)
+                {
+                    Piece p = tasks[i].Result;
+                    tasks[i] = null;
+                    if (next < n) { tasks[next] = start(next); next++; }
+                    if (p.Status != 206) { cancel.Cancelled = true; return false; }   // headers are out: closing tells the player to retry
+                    ns.Write(p.Data, 0, p.Data.Length);
+                }
+                ns.Flush();
+                return keep;
+            }
+            catch { cancel.Cancelled = true; return false; }   // the player went away (seek) or the write failed
+        }
+
+        // One piece, up to 3 tries. An expired/forbidden url (403/404/410) is not retried: it will not get better.
+        static Piece FetchPiece(string url, string ua, long s, long e, CancelBox cancel)
+        {
+            Piece res = new Piece();
+            int want = (int)(e - s + 1);
+            for (int attempt = 0; attempt < 3 && !cancel.Cancelled; attempt++)
+            {
+                if (attempt > 0) Thread.Sleep(400 * attempt);
+                HttpWebResponse resp = null;
+                try
+                {
+                    HttpWebRequest req = Http.Create("GET", url, 20000, ua);
+                    req.AutomaticDecompression = DecompressionMethods.None;
+                    req.AllowAutoRedirect = true;
+                    req.KeepAlive = true;
+                    req.Headers["Accept-Encoding"] = "identity";
+                    req.AddRange(s, e);
+                    try { resp = (HttpWebResponse)req.GetResponse(); }
+                    catch (WebException wex)
+                    {
+                        resp = wex.Response as HttpWebResponse;
+                        if (resp == null) { res.Status = 0; continue; }
+                    }
+                    res.Status = (int)resp.StatusCode;
+                    if (res.Status != 206)
+                    {
+                        if (res.Status == 403 || res.Status == 404 || res.Status == 410 || res.Status == 416 || res.Status == 200) return res;
+                        continue;   // 5xx etc: try again
+                    }
+                    res.ContentType = resp.ContentType;
+                    string cr = resp.Headers["Content-Range"] ?? "";
+                    int slash = cr.LastIndexOf('/');
+                    res.Total = slash >= 0 ? cr.Substring(slash + 1).Trim() : "*";
+                    byte[] data = new byte[want];
+                    int got = 0, k;
+                    using (Stream rs = resp.GetResponseStream())
+                        while (got < want && (k = rs.Read(data, got, want - got)) > 0)
+                        {
+                            got += k;
+                            if (cancel.Cancelled) { res.Status = 0; return res; }
+                        }
+                    if (got == want) { res.Data = data; return res; }
+                    res.Status = 0;   // short read: retry
+                }
+                catch (Exception) { res.Status = 0; }
+                finally { if (resp != null) { try { resp.Close(); } catch { } } }
+            }
+            if (res.Status == 206) res.Status = 0;
+            return res;
         }
     }
 }

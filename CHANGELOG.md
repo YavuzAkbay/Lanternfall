@@ -2,6 +2,11 @@
 
 Selene (theme) and Selene Core (add-on) share one version number and are released together.
 
+## 1.5.14-1 - 2026-11-26 (Lanternfall Core 1.5.14; Lanternfall Browser 0.7.1)
+
+- YouTube buffers far less and keeps its quality. YouTube sends each connection only about as fast as a 4K video plays, so high-quality videos stalled in the middle and the picture dropped to a lower quality by itself. Big parts of a video now download over several connections at once (about twice as fast), and a part whose connection breaks is fetched again on its own instead of the player starting the whole part over.
+- The player no longer gives up on a slow but working download after 30 seconds (one part of a 4K video can be very large), which caused endless buffering on some videos. A download that stops sending anything still fails and is retried.
+
 ## 1.5.14 - 2026-11-26 (Lanternfall Core 1.5.14; Lanternfall Browser 0.7.0)
 
 - Quick controller taps that Playnite misses are caught again. The quick-tap catcher (setting "tapguard") looked for Playnite's controller handling in the wrong place, so it never actually replayed a missed tap. It now replays them the same way a real press arrives, so a rescued tap counts once.

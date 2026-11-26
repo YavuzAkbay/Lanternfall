@@ -142,9 +142,14 @@ var CFG = /*NOMAD_CFG*/;
       try {
         player.configure({ textDisplayFactory: function(){ return new shaka.text.UITextDisplayer(video, document.getElementById('tc')); } });
       } catch (e) {}
+      // No overall request timeout: one 4K VP9 subsegment can be ~180 MB, and shaka's default 30 s limit threw away a slow
+      // but healthy download and started it over (endless buffering mid-video). A request with no bytes for 15 s still fails.
+      var rp = { maxAttempts: 5, baseDelay: 800, backoffFactor: 2, timeout: 0, stallTimeout: 15000, connectionTimeout: 15000 };
       player.configure({
         abr: { enabled: true, defaultBandwidthEstimate: 25000000 },
-        streaming: { bufferingGoal: 45, rebufferingGoal: 2, bufferBehind: 30, retryParameters: { maxAttempts: 4, baseDelay: 800, backoffFactor: 2 } }
+        // the manifest answer waits for the stream lookup (a fresh=1 reload can take tens of seconds): no stall limit there
+        manifest: { retryParameters: { maxAttempts: 3, baseDelay: 1000, backoffFactor: 2, timeout: 90000, stallTimeout: 0, connectionTimeout: 0 } },
+        streaming: { bufferingGoal: 45, rebufferingGoal: 2, bufferBehind: 30, retryParameters: rp }
       });
       // only CRITICAL (severity 2) errors matter; recoverable ones (1) are retried by shaka itself and must not touch the UI
       player.addEventListener('error', function(e){
