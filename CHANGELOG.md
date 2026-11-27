@@ -2,6 +2,14 @@
 
 Selene (theme) and Selene Core (add-on) share one version number and are released together.
 
+## 1.5.15 - 2026-11-27 (Lanternfall Core 1.5.15; Lanternfall Browser 0.8.0)
+
+- A new look for buttons, panels and focus, inspired by liquid glass. Every button is now a solid dark-gray glass with a thin rim that catches the light on its rounded ends and fades away along the straight edges. Every panel, dialog, menu, card and notice gets the same rim. It follows your color theme everywhere: the home screen, dialogs, settings, menus, the profile picker, the Browser and YouTube.
+- Focus matches it. The ring around a focused game, tile, profile picture, screenshot or card is now lit toward white on its curves and softer along the sides, in your theme's focus color (each profile in its own theme's color on Who's playing?). A focused button keeps its rim too, so it no longer looks flat. The same ring is used on web pages in the Browser.
+- Settings' section list, the tabs on the Achievements, Captures and News screens, and the focused row in pop-up menus are glass buttons now.
+- The Browser's top bar and hints fade softly into the page instead of ending in a hard line, and the start page fades in to meet them.
+- Screenshot and news tiles on the home screen have matching rounded corners again.
+
 ## 1.5.14-1 - 2026-11-26 (Lanternfall Core 1.5.14; Lanternfall Browser 0.7.1)
 
 - YouTube buffers far less and keeps its quality. YouTube sends each connection only about as fast as a 4K video plays, so high-quality videos stalled in the middle and the picture dropped to a lower quality by itself. Big parts of a video now download over several connections at once (about twice as fast), and a part whose connection breaks is fetched again on its own instead of the player starting the whole part over.
