@@ -67,6 +67,8 @@ namespace Selene
         {
             var border = new FrameworkElementFactory(typeof(Border));
             border.SetValue(Border.CornerRadiusProperty, new CornerRadius(10));
+            border.SetValue(Border.BorderBrushProperty, Liquid.Rim);
+            border.SetValue(Border.BorderThicknessProperty, Liquid.RimThickness);
             border.SetBinding(Border.BackgroundProperty, new System.Windows.Data.Binding("Background") { RelativeSource = System.Windows.Data.RelativeSource.TemplatedParent });
             border.SetBinding(Border.PaddingProperty, new System.Windows.Data.Binding("Padding") { RelativeSource = System.Windows.Data.RelativeSource.TemplatedParent });
             var presenter = new FrameworkElementFactory(typeof(ContentPresenter));
@@ -76,12 +78,12 @@ namespace Selene
             var button = new Button
             {
                 Content = new TextBlock { Text = label, FontSize = 17, FontFamily = Body, Foreground = Ink.Brush("SeleneInkColor") },
-                Background = Ink.Brush("SeleneGlassColor", 0.95), Padding = new Thickness(14, 7, 14, 7),
+                Background = Liquid.Fill(), Padding = new Thickness(14, 7, 14, 7),
                 Margin = new Thickness(3), MinWidth = 46, Focusable = false,
                 Template = new ControlTemplate(typeof(Button)) { VisualTree = border }
             };
             button.MouseEnter += (s, e) => button.Background = Ink.Brush("SeleneFocusColor", 0.35);
-            button.MouseLeave += (s, e) => button.Background = Ink.Brush("SeleneGlassColor", 0.95);
+            button.MouseLeave += (s, e) => button.Background = Liquid.Fill();
             button.Click += (s, e) => action();
             return button;
         }
@@ -501,7 +503,7 @@ namespace Selene
                 var pill = Lifted(new Border
                 {
                     CornerRadius = new CornerRadius(22), Padding = new Thickness(26, 11, 26, 13), MaxWidth = 900,
-                    Background = Ink.Brush("SeleneGlassColor", 0.94), BorderBrush = Ink.Brush("SeleneInkColor", 0.18), BorderThickness = new Thickness(1),
+                    Background = Ink.Brush("SeleneGlassColor", 0.94), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness,
                     HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, LegacyTasks.BannerUp ? 112 : 26, 0, 0),   // (under the old-tasks banner)
                     Child = new TextBlock { Text = text, FontSize = 19, FontFamily = Body, Foreground = Ink.Brush("SeleneInkColor"), TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center },
                     IsHitTestVisible = false
@@ -1027,8 +1029,8 @@ namespace Selene
             return new Border
             {
                 Child = row, CornerRadius = new CornerRadius(20), Padding = new Thickness(6, 6, 16, 6), Margin = new Thickness(0, 0, 10, 0),
-                Background = main ? Ink.Brush("SeleneFocusColor") : Ink.Brush("SeleneInkColor", 0.12),
-                BorderBrush = main ? Ink.Brush("SeleneFocusColor") : Ink.Brush("SeleneInkColor", 0.2), BorderThickness = new Thickness(1)
+                Background = main ? Ink.Brush("SeleneFocusColor") : Liquid.Fill(),
+                BorderBrush = main ? Liquid.FocusRim : Liquid.Rim, BorderThickness = Liquid.RimThickness
             };
         }
 
@@ -1119,6 +1121,96 @@ namespace Selene
         }
     }
 
+    // Liquid glass (approved 2026-11-27, theme\Constants.xaml has the same values for XAML): every button is the opaque
+    // SeleneButtonColor with the rim; every container (panel, card, dialog, bar) gets at least the rim. The rim is a thin line
+    // of plain white that catches the light on the curved ends (top-right, bottom-left) and all but vanishes along straight
+    // edges. A focused button keeps the focus color and its rim.
+    public static class Liquid
+    {
+        public const double RimWidth = 1.25;
+        public static Thickness RimThickness { get { return new Thickness(RimWidth); } }
+
+        private static Brush rim;
+        // plain white, the same on every theme: one frozen brush shared by everything
+        public static Brush Rim
+        {
+            get
+            {
+                if (rim != null) return rim;
+                var g = new LinearGradientBrush { StartPoint = new Point(1, 0), EndPoint = new Point(0, 1) };
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0x99, 255, 255, 255), 0));
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0x66, 255, 255, 255), 0.07));
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0x1A, 255, 255, 255), 0.2));
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0x0C, 255, 255, 255), 0.5));
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0x1A, 255, 255, 255), 0.8));
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0x66, 255, 255, 255), 0.93));
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0x8C, 255, 255, 255), 1));
+                g.Freeze();
+                rim = g;
+                return rim;
+            }
+        }
+
+        private static Brush focusRim;
+        // the rim of a focused button (a light solid focus fill): bright ends, a faint dark line between them
+        public static Brush FocusRim
+        {
+            get
+            {
+                if (focusRim != null) return focusRim;
+                var g = new LinearGradientBrush { StartPoint = new Point(1, 0), EndPoint = new Point(0, 1) };
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0xFF, 255, 255, 255), 0));
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0xCC, 255, 255, 255), 0.07));
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0x26, 0, 0, 0), 0.2));
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0x33, 0, 0, 0), 0.5));
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0x26, 0, 0, 0), 0.8));
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0xCC, 255, 255, 255), 0.93));
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0xF0, 255, 255, 255), 1));
+                g.Freeze();
+                focusRim = g;
+                return focusRim;
+            }
+        }
+
+        // the focus ring (cards, tiles, avatars, rows): the theme's SeleneFocusRingBrush, kept live on the element
+        public static void Ring(FrameworkElement b) { b.SetResourceReference(Border.BorderBrushProperty, "SeleneFocusRingBrush"); }
+
+        // the focus ring right now (for code that swaps a border's brush on focus; the next focus change picks up a new theme)
+        public static Brush FocusRing
+        {
+            get
+            {
+                var r = Application.Current != null ? Application.Current.TryFindResource("SeleneFocusRingBrush") as Brush : null;
+                return r ?? Ink.Brush("SeleneFocusColor");
+            }
+        }
+
+        // the same ring in a fixed color (each profile glows in its own theme's accent)
+        public static Brush RingOf(Color c)
+        {
+            var g = new LinearGradientBrush { StartPoint = new Point(1, 0), EndPoint = new Point(0, 1) };
+            Func<double, double, Color> at = (a, w) => Color.FromArgb((byte)Math.Round(a * 255), (byte)Math.Round(c.R * (1 - w) + 255 * w), (byte)Math.Round(c.G * (1 - w) + 255 * w), (byte)Math.Round(c.B * (1 - w) + 255 * w));
+            g.GradientStops.Add(new GradientStop(at(1, 0.55), 0));
+            g.GradientStops.Add(new GradientStop(at(1, 0), 0.1));
+            g.GradientStops.Add(new GradientStop(at(0.6, 0), 0.3));
+            g.GradientStops.Add(new GradientStop(at(0.45, 0), 0.5));
+            g.GradientStops.Add(new GradientStop(at(0.6, 0), 0.7));
+            g.GradientStops.Add(new GradientStop(at(1, 0), 0.9));
+            g.GradientStops.Add(new GradientStop(at(1, 0.45), 1));
+            g.Freeze();
+            return g;
+        }
+
+        // the opaque button fill (follows the theme)
+        public static SolidColorBrush Fill() { return Ink.Brush("SeleneButtonColor"); }
+
+        // the rim on any border (a container)
+        public static T Edge<T>(T b) where T : Border { b.BorderBrush = Rim; b.BorderThickness = RimThickness; return b; }
+
+        // a button's face: the opaque fill and the rim
+        public static T Button<T>(T b) where T : Border { b.Background = Fill(); return Edge(b); }
+    }
+
     // A choice between a few options, changed with one button: a label, the options in a glass pill (the chosen one
     // filled with the focus color), and the button badge
     public class Segmented
@@ -1152,7 +1244,7 @@ namespace Selene
             Root.Children.Add(new Border
             {
                 Child = track, CornerRadius = new CornerRadius(23), Padding = new Thickness(4),
-                Background = Ink.Brush("SeleneInkColor", 0.1), BorderBrush = Ink.Brush("SeleneInkColor", 0.18), BorderThickness = new Thickness(1)
+                Background = Liquid.Fill(), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness
             });
             var badge = new Grid { Width = 28, Height = 28, Margin = new Thickness(12, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
             badge.Children.Add(new Ellipse { Fill = Ink.Brush("SeleneInkColor", 0.9) });
@@ -1307,7 +1399,7 @@ namespace Selene
             panel = Ui.Lifted(new Border
             {
                 Child = col, Width = width, CornerRadius = new CornerRadius(28), Padding = new Thickness(40, 40, 40, 36),
-                Background = Ink.Brush("SeleneGlassColor", 0.96), BorderBrush = Ink.Brush("SeleneInkColor", 0.16), BorderThickness = new Thickness(1),
+                Background = Ink.Brush("SeleneGlassColor", 0.96), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness,
                 HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center
             }, 60, 0.55);   // (the shadow behind it: an Effect on the card blurred its words)
             Root.Children.Add(panel);
@@ -1373,14 +1465,15 @@ namespace Selene
             // glass, deep enough to read over a busy wallpaper (the near-clear face lost its words in the art)
             Face = new Border
             {
-                CornerRadius = new CornerRadius(radius), Background = Ink.Brush("SeleneGlassColor", 0.72),
-                BorderBrush = Ink.Brush("SeleneInkColor", 0.16), BorderThickness = new Thickness(1)
+                CornerRadius = new CornerRadius(radius), Background = Liquid.Fill(),   // liquid glass button
+                BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness
             };
             ring = new Border
             {
                 CornerRadius = new CornerRadius(radius + gap), Margin = new Thickness(-gap), BorderThickness = new Thickness(3),
-                BorderBrush = Ink.Brush("SeleneFocusColor"), Opacity = 0, IsHitTestVisible = false
+                Opacity = 0, IsHitTestVisible = false
             };
+            Liquid.Ring(ring);   // the liquid focus ring (lit on the curves), live with the theme
             // the ring's glow is a blur: it's on the ring only while the ring shows (hundreds of tiles each blurring an invisible
             // ring on every repaint made big grids crawl)
             glow = Ink.Track(new DropShadowEffect { ShadowDepth = 0, BlurRadius = 22, Opacity = 0.55 }, DropShadowEffect.ColorProperty, "SeleneFocusColor");
@@ -1397,7 +1490,7 @@ namespace Selene
         // a ring in a fixed color instead of the theme's focus color (each profile glows in its own theme's accent)
         public void Tint(Color color)
         {
-            ring.BorderBrush = new SolidColorBrush(color);
+            ring.BorderBrush = Liquid.RingOf(color);
             glow = new DropShadowEffect { ShadowDepth = 0, BlurRadius = 26, Opacity = 0.7, Color = color };
             if (Focused) ring.Effect = glow;
         }
@@ -1435,7 +1528,7 @@ namespace Selene
             Face = new Border
             {
                 Child = label, CornerRadius = new CornerRadius(27), Height = 54, MinWidth = minWidth, Padding = new Thickness(34, 0, 34, 2),
-                Background = Ink.Brush("SeleneGlassColor", 0.72), BorderBrush = Ink.Brush("SeleneInkColor", 0.22), BorderThickness = new Thickness(1),   // glass that reads over art
+                Background = Liquid.Fill(), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness,   // liquid glass button
                 UseLayoutRounding = true
             };
             // Ideal, not Display: Display's low-res glyph grid is upscaled by the Viewbox and reads as jagged
@@ -1455,8 +1548,8 @@ namespace Selene
         {
             if (on == Focused) return;
             Focused = on;
-            Face.Background = on ? Ink.Brush("SeleneFocusColor") : Ink.Brush("SeleneInkColor", 0.14);
-            Face.BorderBrush = on ? Ink.Brush("SeleneFocusColor") : Ink.Brush("SeleneInkColor", 0.22);
+            Face.Background = on ? Ink.Brush("SeleneFocusColor") : Liquid.Fill();
+            Face.BorderBrush = on ? Liquid.FocusRim : Liquid.Rim;
             label.Foreground = on ? Ink.Brush("SeleneOnFocusColor") : Ink.Brush("SeleneInkColor");
             halo.Effect = on ? Ink.Track(new DropShadowEffect { ShadowDepth = 0, BlurRadius = 22, Opacity = 0.4 }, DropShadowEffect.ColorProperty, "SeleneFocusColor") : null;
             halo.Visibility = on ? Visibility.Visible : Visibility.Collapsed;

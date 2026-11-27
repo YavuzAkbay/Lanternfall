@@ -78,8 +78,7 @@ namespace Selene
             card.Padding = new Thickness(30, 28, 30, 30);
             card.CornerRadius = new CornerRadius(28);
             card.Background = Ink.Brush("SeleneGlassColor", 0.98);
-            card.BorderBrush = Ink.Brush("SeleneInkColor", 0.16);
-            card.BorderThickness = new Thickness(1);
+            card.BorderBrush = Liquid.Rim; card.BorderThickness = Liquid.RimThickness;
             // Shadow on a separate surface keeps the choices and their text sharp.
             var host = card.Parent as Panel;
             if (host != null)
@@ -117,9 +116,9 @@ namespace Selene
             style.Setters.Add(new Setter(FrameworkElement.MinHeightProperty, 64.0));
             style.Setters.Add(new Setter(FrameworkElement.MarginProperty, new Thickness(0, 4, 0, 4)));
             style.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(20, 14, 20, 14)));
-            style.Setters.Add(new Setter(Control.BackgroundProperty, Ink.Brush("SeleneInkColor", 0.05)));
-            style.Setters.Add(new Setter(Control.BorderBrushProperty, Ink.Brush("SeleneInkColor", 0.12)));
-            style.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(1)));
+            style.Setters.Add(new Setter(Control.BackgroundProperty, Liquid.Fill()));
+            style.Setters.Add(new Setter(Control.BorderBrushProperty, Liquid.Rim));
+            style.Setters.Add(new Setter(Control.BorderThicknessProperty, Liquid.RimThickness));
             style.Setters.Add(new Setter(Control.ForegroundProperty, Ink.Brush("SeleneInkColor")));
             style.Setters.Add(new Setter(Control.FocusVisualStyleProperty, null));
             var hover = new Trigger { Property = UIElement.IsMouseOverProperty, Value = true };
@@ -128,7 +127,7 @@ namespace Selene
             var focus = new Trigger { Property = UIElement.IsKeyboardFocusWithinProperty, Value = true };
             focus.Setters.Add(new Setter(Control.BackgroundProperty, Ink.Brush("SeleneFocusColor")));
             focus.Setters.Add(new Setter(Control.ForegroundProperty, Ink.Brush("SeleneOnFocusColor")));
-            focus.Setters.Add(new Setter(Control.BorderBrushProperty, Ink.Brush("SeleneFocusColor")));
+            focus.Setters.Add(new Setter(Control.BorderBrushProperty, Liquid.FocusRim));
             style.Triggers.Add(focus);
             w.Resources["ItemSelectionButton"] = style;
             w.Resources["SeleneSelectionDressed"] = true;
@@ -154,7 +153,7 @@ namespace Selene
             card.Width = 640;
             card.MinWidth = 0;
             card.MaxWidth = double.PositiveInfinity;
-            card.BorderBrush = Ink.Brush("SeleneInkColor", 0.16);
+            card.BorderBrush = Liquid.Rim; card.BorderThickness = Liquid.RimThickness;
             card.Background = Ink.Brush("SeleneGlassColor", 0.96);   // a touch see-through, like Selene's own dialogs
             card.Child = null;
             var inside = new Grid();
@@ -472,7 +471,7 @@ namespace Selene
             return new Border
             {
                 Margin = new Thickness(0, 18, 0, 0), Padding = new Thickness(28, 18, 28, 18), CornerRadius = new CornerRadius(18),
-                Background = Ink.Brush("SeleneInkColor", 0.06), BorderBrush = Ink.Brush("SeleneInkColor", 0.10), BorderThickness = new Thickness(1),
+                Background = Ink.Brush("SeleneInkColor", 0.06), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness,
                 HorizontalAlignment = HorizontalAlignment.Center, MinWidth = 360,
                 Child = stack
             };

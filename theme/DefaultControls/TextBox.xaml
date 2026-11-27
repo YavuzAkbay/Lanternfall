@@ -17,7 +17,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
                     <!-- Selene: a rounded field with no outline at rest; focused, a ring in the focus color (as Selene's rows) (#44) -->
-                    <Border x:Name="Field" CornerRadius="14" Background="{TemplateBinding Background}" BorderThickness="2" BorderBrush="Transparent">
+                    <Border x:Name="Field" CornerRadius="14" Background="{TemplateBinding Background}" BorderThickness="2" BorderBrush="{DynamicResource SeleneLiquidRimBrush}">
                         <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
                                       VerticalScrollBarVisibility="{TemplateBinding VerticalScrollBarVisibility}"
                                       HorizontalScrollBarVisibility="{TemplateBinding HorizontalScrollBarVisibility}"/>
@@ -30,7 +30,7 @@
                             <Setter Property="Background" Value="{DynamicResource SeleneInk25Brush}" />
                         </Trigger>
                         <Trigger Property="IsFocused" Value="True">
-                            <Setter TargetName="Field" Property="BorderBrush" Value="{DynamicResource SeleneFocusBrush}" />
+                            <Setter TargetName="Field" Property="BorderBrush" Value="{DynamicResource SeleneFocusRingBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

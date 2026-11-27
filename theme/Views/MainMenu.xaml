@@ -4,10 +4,10 @@
     
     <!-- Selene: a glass panel on the right, rounded on its open side -->
     <Style x:Key="MainMenuBorder" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{DynamicResource SeleneLiquidRimBrush}" />
         <Setter Property="Background" Value="{DynamicResource OverlayMenuBackgroundBrush}" />
         <Setter Property="CornerRadius" Value="24,0,0,24" />
-        <Setter Property="BorderBrush" Value="{DynamicResource SeleneInk15Brush}" />
-        <Setter Property="BorderThickness" Value="1,0,0,0" />
+        <Setter Property="BorderThickness" Value="1.25,0,0,0" />
         <Setter Property="Padding" Value="14,0,14,0" />
     </Style>
 

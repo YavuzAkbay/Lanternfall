@@ -210,7 +210,7 @@ namespace Selene
             var line = new StackPanel { Orientation = Orientation.Horizontal };
             line.Children.Add(new TextBlock { Text = Ui.Icon(icon), FontFamily = Ui.Icons, FontSize = 20, Foreground = Ink.Brush("SeleneInkColor", 0.85), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) });
             line.Children.Add(new TextBlock { Text = text, FontSize = 17, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.85), VerticalAlignment = VerticalAlignment.Center });
-            return new Border { Child = line, CornerRadius = new CornerRadius(18), Padding = new Thickness(14, 7, 16, 8), Margin = new Thickness(0, 0, 10, 0), Background = Ink.Brush("SeleneInkColor", 0.1) };
+            return new Border { Child = line, CornerRadius = new CornerRadius(18), Padding = new Thickness(14, 7, 16, 8), Margin = new Thickness(0, 0, 10, 0), Background = Liquid.Fill(), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness };
         }
 
         // the picture going with it, which Up from the keys reaches: A leaves it out or puts it back
@@ -226,14 +226,14 @@ namespace Selene
             line.Children.Add(new Border { Width = 80, Height = 45, CornerRadius = new CornerRadius(6), Background = new ImageBrush(image) { Stretch = Stretch.UniformToFill }, Margin = new Thickness(0, 0, 10, 0) });
             shotLabel = new TextBlock { FontSize = 17, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.85), VerticalAlignment = VerticalAlignment.Center };
             line.Children.Add(shotLabel);
-            shotChip = new Border { Child = line, CornerRadius = new CornerRadius(14), Padding = new Thickness(6, 6, 16, 6), Background = Ink.Brush("SeleneInkColor", 0.1), BorderThickness = new Thickness(2), BorderBrush = Brushes.Transparent };
+            shotChip = new Border { Child = line, CornerRadius = new CornerRadius(14), Padding = new Thickness(6, 6, 16, 6), Background = Ink.Brush("SeleneInkColor", 0.1), BorderThickness = new Thickness(2), BorderBrush = Liquid.Rim };
             shotLabel.Text = "Picture of the screen included";
             return shotChip;
         }
 
         private void ShowTops()
         {
-            for (int i = 0; i < tops.Count; i++) tops[i].BorderBrush = i == onTop ? Ink.Brush("SeleneFocusColor") : Brushes.Transparent;
+            for (int i = 0; i < tops.Count; i++) tops[i].BorderBrush = i == onTop ? Liquid.FocusRing : Liquid.Rim;
             if (shotChip == null) return;
             shotLabel.Text = includeShot ? "Picture of the screen included" : "Picture left out";
             shotChip.Opacity = includeShot ? 1 : 0.55;

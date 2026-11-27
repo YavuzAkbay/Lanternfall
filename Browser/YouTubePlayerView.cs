@@ -165,8 +165,7 @@ namespace SeleneBrowser
 
             // paused: a glass disc with the pause mark (the word when the icon font is missing)
             pausedBadge.Background = Theme.GlassA(0.82);
-            pausedBadge.BorderBrush = Theme.InkA(0.18);
-            pausedBadge.BorderThickness = new Thickness(1);
+            Theme.Edge(pausedBadge);
             pausedBadge.HorizontalAlignment = HorizontalAlignment.Center;
             pausedBadge.VerticalAlignment = VerticalAlignment.Center;
             FrameworkElement pauseMark = Theme.Icon(0xE034, 64, Theme.Ink);   // pause

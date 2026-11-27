@@ -106,7 +106,7 @@ namespace Selene
             var field = new Border
             {
                 CornerRadius = new CornerRadius(14), Padding = new Thickness(22, 12, 22, 14), Margin = new Thickness(0, 24, 0, 0),
-                Background = Ink.Brush("SeleneGlassColor", 0.8), BorderBrush = Ink.Brush("SeleneFocusColor"), BorderThickness = new Thickness(2)
+                Background = Ink.Brush("SeleneGlassColor", 0.8), BorderBrush = Liquid.FocusRing, BorderThickness = new Thickness(2)
             };
             queryText = new TextBlock
             {
@@ -265,8 +265,8 @@ namespace Selene
             return new Border
             {
                 Child = line, CornerRadius = new CornerRadius(14), Padding = new Thickness(14, 10, 16, 10),
-                Margin = new Thickness(0, 0, 0, 8), BorderThickness = new Thickness(2), BorderBrush = Brushes.Transparent,
-                Background = Ink.Brush("SeleneGlassColor", 0.72)
+                Margin = new Thickness(0, 0, 0, 8), BorderThickness = new Thickness(2), BorderBrush = Liquid.Rim,
+                Background = Liquid.Fill()
             };
         }
 
@@ -275,8 +275,8 @@ namespace Selene
             for (int i = 0; i < rows.Count; i++)
             {
                 bool on = i == selected;
-                rows[i].BorderBrush = on ? Ink.Brush("SeleneFocusColor") : Brushes.Transparent;
-                rows[i].Background = Ink.Brush("SeleneGlassColor", on ? 0.95 : 0.72);
+                rows[i].BorderBrush = on ? Liquid.FocusRing : Liquid.Rim;
+                rows[i].Background = Liquid.Fill();
                 if (i < tiles.Count) tiles[i].Focus(on);
             }
             if (selected >= rows.Count) return;

@@ -2,6 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <Style x:Key="NotificationsMenuBorder" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{DynamicResource SeleneLiquidRimBrush}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource SeleneRimThickness}" />
         <Setter Property="Background" Value="{DynamicResource OverlayMenuBackgroundBrush}" />
     </Style>
 

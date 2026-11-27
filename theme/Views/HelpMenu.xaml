@@ -3,6 +3,8 @@
                     xmlns:pmrk="clr-namespace:Playnite.FullscreenApp.Markup;assembly=Playnite.FullscreenApp">
     
     <Style x:Key="HelpMenuBorder" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{DynamicResource SeleneLiquidRimBrush}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource SeleneRimThickness}" />
         <Setter Property="Background" Value="{DynamicResource OverlayMenuBackgroundBrush}" />
     </Style>
 

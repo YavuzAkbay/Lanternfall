@@ -20,6 +20,7 @@
     <Color x:Key="SeleneInkColor">#FFFFCEAD</Color>
     <Color x:Key="SeleneScrimColor">#FF030610</Color>
     <Color x:Key="SeleneGlassColor">#FF040816</Color>
+    <Color x:Key="SeleneButtonColor">#FF1A1D2A</Color>
     <Color x:Key="SeleneSuccessColor">#FF92A593</Color>
 
     <SolidColorBrush x:Key="TextBrush" Color="#FFFFCEAD" />
@@ -44,9 +45,20 @@
     <SolidColorBrush x:Key="SeleneGlassBrush" Color="#FF040816" Opacity="0.75" />
     <SolidColorBrush x:Key="SeleneGlassSolidBrush" Color="#FF040816" Opacity="0.88" />
     <SolidColorBrush x:Key="SeleneGlassLightBrush" Color="#FF040816" Opacity="0.45" />
+    <SolidColorBrush x:Key="SeleneGlassOpaqueBrush" Color="#FF040816" />
+    <SolidColorBrush x:Key="SeleneButtonBrush" Color="#FF1A1D2A" />
     <SolidColorBrush x:Key="SeleneSuccessBrush" Color="#FF92A593" />
     <DropShadowEffect x:Key="SeleneFocusGlow" ShadowDepth="0" BlurRadius="18" Color="#FF7D82D9" Opacity="0.35" />
     <DropShadowEffect x:Key="SeleneFocusGlowStrong" ShadowDepth="0" BlurRadius="18" Color="#FF7D82D9" Opacity="0.55" />
+    <LinearGradientBrush x:Key="SeleneFocusRingBrush" StartPoint="1,0" EndPoint="0,1">
+        <GradientStop Color="#FFC4C7EE" Offset="0" />
+        <GradientStop Color="#FF7D82D9" Offset="0.1" />
+        <GradientStop Color="#997D82D9" Offset="0.3" />
+        <GradientStop Color="#737D82D9" Offset="0.5" />
+        <GradientStop Color="#997D82D9" Offset="0.7" />
+        <GradientStop Color="#FF7D82D9" Offset="0.9" />
+        <GradientStop Color="#FFB8BAEA" Offset="1" />
+    </LinearGradientBrush>
     <LinearGradientBrush x:Key="SelectionBrush" StartPoint="0.5,-0.5" EndPoint="1,1.5">
         <GradientStop Color="#FF7D82D9" Offset="0" />
         <GradientStop Color="#FF7D82D9" Offset="1.0" />

@@ -17,6 +17,8 @@
     </Style>
 
     <Style x:Key="GameClientsBorder" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{DynamicResource SeleneLiquidRimBrush}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource SeleneRimThickness}" />
         <Setter Property="CornerRadius" Value="3" />
         <Setter Property="Width" Value="400" />
         <Setter Property="Background" Value="{DynamicResource OverlayMenuBackgroundBrush}" />
@@ -38,6 +40,8 @@
     </Style>
 
     <Style x:Key="SoftwareToolsBorder" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{DynamicResource SeleneLiquidRimBrush}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource SeleneRimThickness}" />
         <Setter Property="CornerRadius" Value="3" />
         <Setter Property="Width" Value="400" />
         <Setter Property="Background" Value="{DynamicResource OverlayMenuBackgroundBrush}" />
@@ -63,6 +67,8 @@
     </Style>
 
     <Style x:Key="ExtensionsBorder" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{DynamicResource SeleneLiquidRimBrush}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource SeleneRimThickness}" />
         <Setter Property="CornerRadius" Value="3" />
         <Setter Property="Width" Value="400" />
         <Setter Property="Background" Value="{DynamicResource OverlayMenuBackgroundBrush}" />

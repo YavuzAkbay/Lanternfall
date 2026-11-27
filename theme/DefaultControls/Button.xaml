@@ -32,7 +32,8 @@
                         </Trigger>
                         <Trigger Property="IsFocused" Value="True">
                             <Setter TargetName="Fill" Property="Background" Value="{DynamicResource SeleneFocusBrush}" />
-                            <Setter TargetName="Fill" Property="BorderBrush" Value="{DynamicResource SeleneFocusBrush}" />
+                            <Setter TargetName="Fill" Property="BorderBrush" Value="{DynamicResource SeleneLiquidFocusRimBrush}" />
+                            <Setter TargetName="Fill" Property="BorderThickness" Value="{DynamicResource SeleneRimThickness}" />
                             <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource SeleneOnFocusBrush}" />
                             <Setter TargetName="Fill" Property="Effect" Value="{DynamicResource SeleneFocusGlow}" />
                         </Trigger>

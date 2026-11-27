@@ -92,7 +92,12 @@ namespace SeleneBrowser
             sb.Append("<!doctype html><html><head><meta charset='utf-8'><title>Home</title><style>");
             sb.Append(":root{color-scheme:").Append(light ? "light" : "dark").Append(";--u:calc(100vw/1920);--ink:").Append(Rgba(ink, 1))
               .Append(";--ink60:").Append(Rgba(ink, 0.6)).Append(";--line:").Append(Rgba(ink, 0.16)).Append(";--glass:").Append(Rgba(glass, 0.72))
-              .Append(";--hot:").Append(Rgba(focus, 0.16)).Append(";--solid:").Append(Rgba(glass, 0.94)).Append(";--accent:").Append(Theme.AccentHex).Append("}");
+              .Append(";--hot:").Append(Rgba(focus, 0.16)).Append(";--solid:").Append(Rgba(glass, 0.94)).Append(";--accent:").Append(Theme.AccentHex)
+              // liquid glass (as Theme.ButtonFill / Theme.Rim): the opaque button fill, and the rim drawn as a gradient under a
+              // transparent border (the fill is clipped to the padding box, so only the border ring shows the rim)
+              .Append(";--btn:").Append(Rgba(Theme.ColorOf("SeleneButtonColor", "#FF282C32"), 1))
+              .Append(";--rim:linear-gradient(to bottom left,rgba(255,255,255,.6) 0%,rgba(255,255,255,.4) 7%,rgba(255,255,255,.1) 20%,rgba(255,255,255,.05) 50%,rgba(255,255,255,.1) 80%,rgba(255,255,255,.4) 93%,rgba(255,255,255,.55) 100%)")
+              .Append(";--rw:").Append(P(1.25)).Append("}");
             sb.Append("*{box-sizing:border-box}html{scrollbar-width:none;background:").Append(Rgba(scrim, 1)).Append("}::-webkit-scrollbar{display:none}");
             sb.Append("body{margin:0;min-height:100vh;color:var(--ink);font:400 ").Append(P(22)).Append(" 'Segoe UI',sans-serif;overflow-x:hidden}");
             // backdrop: the wallpaper, or the theme's gradient with the accent beam / wash / haze (as on the home screen)
@@ -112,6 +117,10 @@ namespace SeleneBrowser
               .Append("linear-gradient(90deg,").Append(Rgba(scrim, 0.528)).Append(" 0%,").Append(Rgba(scrim, 0.30)).Append(" 50%,").Append(Rgba(scrim, 0.09)).Append(" 100%),")
               .Append("linear-gradient(180deg,").Append(Rgba(scrim, 0)).Append(" 40%,").Append(Rgba(scrim, 0.54)).Append(" 100%),")
               .Append("linear-gradient(180deg,").Append(Rgba(scrim, 0.54)).Append(" 0%,").Append(Rgba(scrim, 0.264)).Append(" 10%,").Append(Rgba(scrim, 0)).Append(" 26%)}");
+            // the page's edges fade in from the scrim the Browser's bars fade out to (no hard line where the bars end)
+            sb.Append(".ft,.fb{position:fixed;left:0;right:0;height:").Append(P(150)).Append(";z-index:3;pointer-events:none}")
+              .Append(".ft{top:0;background:linear-gradient(180deg,").Append(Rgba(scrim, 1)).Append(" 0%,").Append(Rgba(scrim, 0.45)).Append(" 45%,").Append(Rgba(scrim, 0)).Append(" 100%)}")
+              .Append(".fb{bottom:0;background:linear-gradient(0deg,").Append(Rgba(scrim, 1)).Append(" 0%,").Append(Rgba(scrim, 0.45)).Append(" 45%,").Append(Rgba(scrim, 0)).Append(" 100%)}");
             sb.Append("main{position:relative;z-index:2;padding:").Append(P(36)).Append(" ").Append(P(64)).Append(" ").Append(P(90))
               .Append(";animation:rise .24s cubic-bezier(.215,.61,.355,1) both}@keyframes rise{from{opacity:0;transform:translateY(").Append(P(10)).Append(")}to{opacity:1;transform:none}}");
             sb.Append("header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:").Append(P(28)).Append("}");
@@ -121,20 +130,20 @@ namespace SeleneBrowser
             // search pill: the whole input is the pill, so the focus ring sits around all of it
             sb.Append("form{margin:0;position:relative}form svg{position:absolute;left:").Append(P(34)).Append(";top:50%;width:").Append(P(34)).Append(";height:").Append(P(34))
               .Append(";margin-top:").Append(P(-17)).Append(";fill:var(--ink60);pointer-events:none}");
-            sb.Append("input{display:block;width:100%;height:").Append(P(80)).Append(";border-radius:").Append(P(40)).Append(";border:1px solid var(--line);background:var(--glass);color:var(--ink);")
+            sb.Append("input{display:block;width:100%;height:").Append(P(80)).Append(";border-radius:").Append(P(40)).Append(";border:var(--rw) solid transparent;background:linear-gradient(var(--btn),var(--btn)) padding-box,var(--rim) border-box;color:var(--ink);")
               .Append("font:400 ").Append(P(26)).Append(" 'Segoe UI Variable Display','Segoe UI',sans-serif;padding:0 ").Append(P(40)).Append(" 0 ").Append(P(92)).Append(";outline:none}")
               .Append("input::placeholder{color:var(--ink60);opacity:1}");
             sb.Append("h2{margin:").Append(P(46)).Append(" 0 ").Append(P(18)).Append(";font:600 ").Append(P(20)).Append(" 'Segoe UI',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--ink60)}");
             sb.Append(".g{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:").Append(P(22)).Append("}");
             sb.Append(".g a{display:flex;flex-direction:column;justify-content:space-between;gap:").Append(P(14)).Append(";min-height:").Append(P(170)).Append(";padding:").Append(P(22)).Append(" ").Append(P(24))
-              .Append(";border-radius:").Append(P(18)).Append(";background:var(--glass);border:1px solid var(--line);color:var(--ink);text-decoration:none;overflow:hidden;")
+              .Append(";border-radius:").Append(P(18)).Append(";background:linear-gradient(var(--btn),var(--btn)) padding-box,var(--rim) border-box;border:var(--rw) solid transparent;color:var(--ink);text-decoration:none;overflow:hidden;")
               .Append("transition:transform .18s cubic-bezier(.215,.61,.355,1),background .18s}");
-            sb.Append(".g a.on{transform:scale(1.04);background:linear-gradient(var(--hot),var(--hot)),var(--solid)}");
+            sb.Append(".g a.on{transform:scale(1.04);background:linear-gradient(var(--hot),var(--hot)) padding-box,linear-gradient(var(--btn),var(--btn)) padding-box,var(--rim) border-box}");
             sb.Append(".g i{flex:none;width:").Append(P(56)).Append(";height:").Append(P(56)).Append(";border-radius:50%;background:var(--line);display:flex;align-items:center;justify-content:center;")
               .Append("font:600 ").Append(P(26)).Append(" 'Segoe UI Variable Display','Segoe UI',sans-serif;font-style:normal;color:var(--ink)}");
             sb.Append(".g b{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font:600 ").Append(P(22)).Append("/1.25 'Segoe UI Variable Display','Segoe UI',sans-serif}");
             sb.Append(".g small{display:block;margin-top:").Append(P(4)).Append(";font:400 ").Append(P(19)).Append(" 'Segoe UI',sans-serif;color:var(--ink60);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}");
-            sb.Append("</style></head><body><div class='bg'></div><div class='sh'></div><main>");
+            sb.Append("</style></head><body><div class='bg'></div><div class='sh'></div><div class='ft'></div><div class='fb'></div><main>");
             sb.Append("<header><h1>Browser</h1><div class='clk'><b id='t'></b><span id='d'></span></div></header>");
             sb.Append("<form action='").Append(WebUtility.HtmlEncode(searchAction)).Append("' method='get'>")
               .Append("<svg viewBox='0 0 24 24'><path d='M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/></svg>")

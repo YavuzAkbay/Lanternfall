@@ -4,9 +4,9 @@
     <!-- Playnite's message boxes (yes / no, an add-on install, errors), in Selene's shape: a glass card with rounded corners,
          the question as a title, the words under it, and pill buttons -->
     <Style x:Key="MessageBoxBorder" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{DynamicResource SeleneLiquidRimBrush}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource SeleneRimThickness}" />
         <Setter Property="Background" Value="{DynamicResource SeleneGlassSolidBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource SeleneInk15Brush}" />
-        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="22" />
         <Setter Property="Padding" Value="38,30,38,30" />
         <Setter Property="MinWidth" Value="560" />
@@ -52,7 +52,7 @@
                 <ControlTemplate TargetType="Button">
                     <Grid RenderTransformOrigin="0.5,0.5">
                         <Grid.RenderTransform><ScaleTransform x:Name="PillScale" ScaleX="1" ScaleY="1" /></Grid.RenderTransform>
-                        <Border x:Name="Pill" CornerRadius="25" Background="{DynamicResource SeleneInk15Brush}" BorderBrush="{DynamicResource SeleneInk15Brush}" BorderThickness="1" Padding="{TemplateBinding Padding}">
+                        <Border x:Name="Pill" CornerRadius="25" Background="{DynamicResource SeleneButtonBrush}" BorderBrush="{DynamicResource SeleneLiquidRimBrush}" BorderThickness="{DynamicResource SeleneRimThickness}" Padding="{TemplateBinding Padding}">
                             <ContentPresenter x:Name="Label" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,2"
                                               TextElement.Foreground="{DynamicResource SeleneInkBrush}" TextElement.FontSize="20" TextElement.FontFamily="{DynamicResource FontMain}" />
                         </Border>
@@ -60,7 +60,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsFocused" Value="True">
                             <Setter TargetName="Pill" Property="Background" Value="{DynamicResource SeleneFocusBrush}" />
-                            <Setter TargetName="Pill" Property="BorderBrush" Value="{DynamicResource SeleneFocusBrush}" />
+                            <Setter TargetName="Pill" Property="BorderBrush" Value="{DynamicResource SeleneLiquidFocusRimBrush}" />
                             <Setter TargetName="Label" Property="TextElement.Foreground" Value="{DynamicResource SeleneOnFocusBrush}" />
                             <Trigger.EnterActions><BeginStoryboard><Storyboard>
                                 <DoubleAnimation Storyboard.TargetName="PillScale" Storyboard.TargetProperty="ScaleX" To="1.06" Duration="0:0:0.15" />
@@ -72,7 +72,7 @@
                             </Storyboard></BeginStoryboard></Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Pill" Property="BorderBrush" Value="{DynamicResource SeleneFocusBrush}" />
+                            <Setter TargetName="Pill" Property="BorderBrush" Value="{DynamicResource SeleneFocusRingBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

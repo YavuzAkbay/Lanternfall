@@ -121,8 +121,8 @@ namespace SeleneBrowser
             var field = new Border
             {
                 Background = Theme.ScrimA(0.4),
-                BorderBrush = Theme.InkA(0.22),
-                BorderThickness = new Thickness(1),
+                BorderBrush = Theme.Rim,
+                BorderThickness = Theme.RimThickness,
                 CornerRadius = new CornerRadius(34),
                 Padding = new Thickness(28, 0, 28, 1),
                 Height = 68,

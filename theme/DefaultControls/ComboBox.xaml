@@ -7,7 +7,7 @@
     <Style TargetType="ComboBox">
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Foreground" Value="{DynamicResource SeleneInkBrush}" />
-        <Setter Property="Background" Value="{DynamicResource SeleneInk15Brush}" />
+        <Setter Property="Background" Value="{DynamicResource SeleneButtonBrush}" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Padding" Value="20,9,16,10" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -16,7 +16,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBox">
                     <Grid>
-                        <Border x:Name="Pill" CornerRadius="20" Background="{TemplateBinding Background}" />
+                        <Border x:Name="Pill" CornerRadius="20" Background="{TemplateBinding Background}" BorderBrush="{DynamicResource SeleneLiquidRimBrush}" BorderThickness="{DynamicResource SeleneRimThickness}" />
                         <ToggleButton x:Name="ToggleButton" Focusable="False" ClickMode="Press"
                                       IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
                             <ToggleButton.Template>
@@ -44,7 +44,7 @@
                                Placement="Bottom" VerticalOffset="8" Focusable="False" AllowsTransparency="True">
                             <Border MaxHeight="{TemplateBinding MaxDropDownHeight}"
                                     MinWidth="{TemplateBinding ActualWidth}"
-                                    CornerRadius="18" Padding="6" Background="{DynamicResource OverlayMenuBackgroundBrush}"
+                                    CornerRadius="18" Padding="6" Background="{DynamicResource OverlayMenuBackgroundBrush}" BorderBrush="{DynamicResource SeleneLiquidRimBrush}" BorderThickness="{DynamicResource SeleneRimThickness}"
                                     SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
                                 <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                                     <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
@@ -110,7 +110,7 @@
                             <Setter Property="FontWeight" Value="SemiBold" TargetName="TextContent" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource SeleneInk15Brush}" />
+                            <Setter Property="Background" Value="{DynamicResource SeleneButtonBrush}" />
                         </Trigger>
                         <Trigger Property="IsFocused" Value="True">
                             <Setter Property="Background" Value="{DynamicResource SeleneFocusBrush}" />

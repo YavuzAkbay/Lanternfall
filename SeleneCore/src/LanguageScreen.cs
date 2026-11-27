@@ -35,7 +35,7 @@ namespace Selene
             var list = new StackPanel { Margin = new Thickness(0, 24, 0, 0) };
             for (int i = 0; i < language.Choices.Length; i++)
             {
-                var row = new Border { Child = Ui.Text(language.Names[i], 23), Padding = new Thickness(20, 10, 20, 10), Margin = new Thickness(0, 0, 0, 6), CornerRadius = new CornerRadius(12), BorderThickness = new Thickness(2), Background = Ink.Brush("SeleneGlassColor", 0.8) };
+                var row = new Border { Child = Ui.Text(language.Names[i], 23), Padding = new Thickness(20, 10, 20, 10), Margin = new Thickness(0, 0, 0, 6), CornerRadius = new CornerRadius(12), BorderThickness = new Thickness(2), BorderBrush = Liquid.Rim, Background = Liquid.Fill() };
                 int selected = i;
                 row.MouseLeftButtonUp += (s, e) => { if (ask != null) return; index = selected; FocusRow(); e.Handled = true; Continue(); };   // (no Continue button: a click picks)
                 rows.Add(row); list.Children.Add(row);
@@ -43,7 +43,7 @@ namespace Selene
             panel.Children.Add(list);
             Root.Children.Add(panel); Root.Children.Add(Ui.Prompts(true, Ui.Prompt("A", "Continue"))); FocusRow();
         }
-        private void FocusRow() { for (int i = 0; i < rows.Count; i++) rows[i].BorderBrush = i == index ? Ink.Brush("SeleneFocusColor") : Brushes.Transparent; }
+        private void FocusRow() { for (int i = 0; i < rows.Count; i++) rows[i].BorderBrush = i == index ? Liquid.FocusRing : Liquid.Rim; }
         private void Continue()
         {
             if (ask != null) return;

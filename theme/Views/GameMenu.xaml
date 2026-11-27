@@ -17,16 +17,16 @@
                 <ControlTemplate TargetType="ButtonEx">
                     <Grid RenderTransformOrigin="0.5,0.5">
                         <Grid.RenderTransform><ScaleTransform x:Name="RowScale" ScaleX="1" ScaleY="1" /></Grid.RenderTransform>
-                        <Border x:Name="Fill" CornerRadius="14" Background="{DynamicResource SeleneGlassBrush}" BorderBrush="{DynamicResource SeleneInk15Brush}" BorderThickness="1" />
+                        <Border x:Name="Fill" CornerRadius="14" Background="{DynamicResource SeleneButtonBrush}" BorderBrush="{DynamicResource SeleneLiquidRimBrush}" BorderThickness="{DynamicResource SeleneRimThickness}" />
                         <ContentPresenter x:Name="Content" Margin="{TemplateBinding Padding}" HorizontalAlignment="Left" VerticalAlignment="Center" TextBlock.Foreground="{DynamicResource SeleneInkBrush}" />
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Fill" Property="BorderBrush" Value="{DynamicResource SeleneFocusBrush}" />
+                            <Setter TargetName="Fill" Property="BorderBrush" Value="{DynamicResource SeleneFocusRingBrush}" />
                         </Trigger>
                         <Trigger Property="IsFocused" Value="True">
                             <Setter TargetName="Fill" Property="Background" Value="{DynamicResource SeleneFocusBrush}" />
-                            <Setter TargetName="Fill" Property="BorderBrush" Value="{DynamicResource SeleneFocusBrush}" />
+                            <Setter TargetName="Fill" Property="BorderBrush" Value="{DynamicResource SeleneLiquidFocusRimBrush}" />
                             <Setter TargetName="Content" Property="TextBlock.Foreground" Value="{DynamicResource SeleneOnFocusBrush}" />
                             <Trigger.EnterActions><BeginStoryboard><Storyboard>
                                 <DoubleAnimation Storyboard.TargetName="RowScale" Storyboard.TargetProperty="ScaleX" To="1.03" Duration="0:0:0.15" />
@@ -47,12 +47,12 @@
     </Style>
 
     <Style x:Key="GameMenuBorder" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{DynamicResource SeleneLiquidRimBrush}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource SeleneRimThickness}" />
         <Setter Property="CornerRadius" Value="22" />
         <Setter Property="Width" Value="520" />
         <Setter Property="Padding" Value="0,0,0,8" />
         <Setter Property="Background" Value="{DynamicResource SeleneGlassSolidBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource SeleneInk15Brush}" />
-        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Effect">
             <Setter.Value>
                 <DropShadowEffect ShadowDepth="0" BlurRadius="40" Opacity="0.5" Color="Black" />

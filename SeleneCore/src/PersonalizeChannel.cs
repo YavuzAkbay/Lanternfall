@@ -144,7 +144,7 @@ namespace Selene
             field = new Border
             {
                 Width = 760, Height = 68, CornerRadius = new CornerRadius(34), Child = inside, HorizontalAlignment = HorizontalAlignment.Center, ClipToBounds = true,
-                Background = Ink.Brush("SeleneInkColor", 0.1), BorderBrush = Ink.Brush("SeleneFocusColor"), BorderThickness = new Thickness(2)
+                Background = Ink.Brush("SeleneInkColor", 0.1), BorderBrush = Liquid.FocusRing, BorderThickness = new Thickness(2)
             };
             layout.Children.Add(field);
             // the same keys as the name step (a letter row has an underscore where the name step has an apostrophe: handles use one)

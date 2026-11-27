@@ -178,7 +178,7 @@ namespace Selene
             card = new Border
             {
                 Width = 330, Padding = new Thickness(24, 22, 24, 22), CornerRadius = new CornerRadius(26),
-                Background = Ink.Brush("SeleneGlassColor", 0.95), BorderBrush = Ink.Brush("SeleneInkColor", 0.16), BorderThickness = new Thickness(1),
+                Background = Ink.Brush("SeleneGlassColor", 0.95), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness,
                 HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 36, 0),
                 Child = stack, Opacity = 0
             };

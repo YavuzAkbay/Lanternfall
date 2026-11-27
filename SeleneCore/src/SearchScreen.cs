@@ -75,7 +75,7 @@ namespace Selene
             field = new Border
             {
                 Width = 760, Height = 68, CornerRadius = new CornerRadius(34), Child = line, HorizontalAlignment = HorizontalAlignment.Center,
-                Background = Ink.Brush("SeleneInkColor", 0.1), BorderBrush = Ink.Brush("SeleneFocusColor"), BorderThickness = new Thickness(2)
+                Background = Ink.Brush("SeleneInkColor", 0.1), BorderBrush = Liquid.FocusRing, BorderThickness = new Thickness(2)
             };
             layout.Children.Add(field);
 

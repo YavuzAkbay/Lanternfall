@@ -263,7 +263,7 @@ namespace Selene
             sp.Children.Add(new TextBlock { Text = label, FontSize = 12, FontWeight = FontWeights.SemiBold, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.6) });
             sp.Children.Add(new TextBlock { Text = value, FontSize = 30, FontWeight = FontWeights.SemiBold, FontFamily = Ui.Display, Foreground = Ink.Brush("SeleneInkColor"), Margin = new Thickness(0, 2, 0, 0), MaxWidth = 320, TextTrimming = TextTrimming.CharacterEllipsis });
             sp.Children.Add(new TextBlock { Text = sub, FontSize = 14, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.55), Margin = new Thickness(0, 2, 0, 0) });
-            return new Border { Child = sp, CornerRadius = new CornerRadius(16), Padding = new Thickness(22, 14, 26, 16), Margin = new Thickness(0, 0, 14, 0), MinWidth = 200, Background = Ink.Brush("SeleneGlassColor", 0.55), BorderBrush = Ink.Brush("SeleneInkColor", 0.12), BorderThickness = new Thickness(1) };
+            return new Border { Child = sp, CornerRadius = new CornerRadius(16), Padding = new Thickness(22, 14, 26, 16), Margin = new Thickness(0, 0, 14, 0), MinWidth = 200, Background = Ink.Brush("SeleneGlassColor", 0.55), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness };
         }
 
         // ---- the latest unlocks: each one's own picture, its name, the game, its trophy ----
@@ -331,7 +331,7 @@ namespace Selene
                 words.Children.Add(new TextBlock { Text = g != null ? g.Name : s.Name, FontSize = 25, FontWeight = FontWeights.SemiBold, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor"), TextTrimming = TextTrimming.CharacterEllipsis });
                 var store = g != null && g.Source != null ? g.Source.Name : null;
                 if (!string.IsNullOrEmpty(store))
-                    words.Children.Add(new Border { CornerRadius = new CornerRadius(5), Padding = new Thickness(7, 1, 7, 2), Margin = new Thickness(0, 6, 0, 0), HorizontalAlignment = HorizontalAlignment.Left, BorderBrush = Ink.Brush("SeleneInkColor", 0.35), BorderThickness = new Thickness(1), Child = new TextBlock { Text = store, FontSize = 14, FontWeight = FontWeights.SemiBold, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.7) } });
+                    words.Children.Add(new Border { CornerRadius = new CornerRadius(5), Padding = new Thickness(7, 1, 7, 2), Margin = new Thickness(0, 6, 0, 0), HorizontalAlignment = HorizontalAlignment.Left, BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness, Child = new TextBlock { Text = store, FontSize = 14, FontWeight = FontWeights.SemiBold, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.7) } });
 
                 // the share, a short line under it, then the trophies
                 var side = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
@@ -359,7 +359,7 @@ namespace Selene
                 line.Children.Add(face);
                 line.Children.Add(side);
                 line.Children.Add(words);
-                var r = new Border { Child = line, CornerRadius = new CornerRadius(18), Padding = new Thickness(14, 12, 26, 12), Margin = new Thickness(0, 0, 0, 8), BorderThickness = new Thickness(2), BorderBrush = Brushes.Transparent, Background = Ink.Brush("SeleneGlassColor", 0.55) };
+                var r = new Border { Child = line, CornerRadius = new CornerRadius(18), Padding = new Thickness(14, 12, 26, 12), Margin = new Thickness(0, 0, 0, 8), BorderThickness = new Thickness(2), BorderBrush = Liquid.Rim, Background = Liquid.Fill() };
                 list.Children.Add(r);
                 gameRows.Add(r);
                 if (i < 5 && from == 0 && !reordering) Ui.Rise(r, 60 + i * 30, 12, 240);
@@ -388,8 +388,8 @@ namespace Selene
             for (int i = 0; i < gameRows.Count; i++)
             {
                 bool on = zone == 1 && i == row;
-                gameRows[i].BorderBrush = on ? Ink.Brush("SeleneFocusColor") : Brushes.Transparent;
-                gameRows[i].Background = Ink.Brush("SeleneGlassColor", on ? 0.9 : 0.55);
+                gameRows[i].BorderBrush = on ? Liquid.FocusRing : Liquid.Rim;
+                gameRows[i].Background = Liquid.Fill();
             }
             // the row of unlocks moves along once the focus goes past its first tiles
             recentShift.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(-Math.Max(0, col - 12) * Pitch, TimeSpan.FromMilliseconds(animate ? 240 : 0)) { EasingFunction = Ui.Out() });

@@ -565,7 +565,7 @@
                                                                 <Grid x:Name="TileHost" Tag="{DynamicResource SeleneAmbientMotionEnabled}">
                                                                     <!-- LayoutTransform, not RenderTransform: the zoomed tile must take up more room so the next tile is pushed aside instead of overlapped. -->
                                                                     <Grid.LayoutTransform><ScaleTransform x:Name="TileScale" ScaleX="1" ScaleY="1"/></Grid.LayoutTransform>
-                                                                    <Border x:Name="Tile" Margin="7" Width="160" Height="160" CornerRadius="14" BorderThickness="0" BorderBrush="{DynamicResource SeleneFocusBrush}" ClipToBounds="False" Background="{DynamicResource SeleneInk15Brush}">
+                                                                    <Border x:Name="Tile" Margin="7" Width="160" Height="160" CornerRadius="14" BorderThickness="0" BorderBrush="{DynamicResource SeleneFocusRingBrush}" ClipToBounds="False" Background="{DynamicResource SeleneInk15Brush}">
                                                                         <Border.Effect>
                                                                             <DropShadowEffect BlurRadius="18" ShadowDepth="0" Opacity="0.55" Color="Black"/>
                                                                         </Border.Effect>
@@ -619,17 +619,19 @@
                                                                                     </LinearGradientBrush>
                                                                                 </Border.OpacityMask>
                                                                             </Border>
-                                                                            <Border x:Name="CardFace" CornerRadius="12" Background="{DynamicResource SeleneGlassBrush}" BorderBrush="{DynamicResource SeleneInk15Brush}" BorderThickness="1" Visibility="Collapsed">
+                                                                            <Border x:Name="CardFace" CornerRadius="12" Background="{DynamicResource SeleneGlassBrush}" BorderBrush="{DynamicResource SeleneLiquidRimBrush}" BorderThickness="{DynamicResource SeleneRimThickness}" Visibility="Collapsed">
                                                                                 <Grid>
                                                                                 <TextBlock x:Name="CardGlyph" FontFamily="Segoe MDL2 Assets" FontSize="56" Foreground="{DynamicResource SeleneInkBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                                                 <!-- (a card whose mark is a Material icon: the trophy) -->
                                                                                 <TextBlock x:Name="CardIcon" FontFamily="{DynamicResource SeleneIconFont}" FontSize="60" Foreground="{DynamicResource SeleneInkBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
                                                                                 </Grid>
                                                                             </Border>
+                                                                            <!-- the liquid rim over the cover (every container gets it) -->
+                                                                            <Border CornerRadius="12" BorderBrush="{DynamicResource SeleneLiquidRimBrush}" BorderThickness="{DynamicResource SeleneRimThickness}" IsHitTestVisible="False"/>
                                                                         </Grid>
                                                                     </Border>
                                                                     <!-- selection ring with a highlight travelling around it; the glow shadow is static (no per-frame blur repaint) and the spin follows the display refresh rate -->
-                                                                    <Border x:Name="Ring" Margin="0" CornerRadius="19" BorderThickness="3" Opacity="0" IsHitTestVisible="False" BorderBrush="{DynamicResource SeleneFocusBrush}">
+                                                                    <Border x:Name="Ring" Margin="0" CornerRadius="19" BorderThickness="3" Opacity="0" IsHitTestVisible="False" BorderBrush="{DynamicResource SeleneFocusRingBrush}">
                                                                         <Border.Effect><DropShadowEffect x:Name="RingGlow" Color="{DynamicResource SeleneFocusColor}" BlurRadius="16" ShadowDepth="0" Opacity="0.4"/></Border.Effect>
                                                                         <Border.OpacityMask>
                                                                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
@@ -755,10 +757,13 @@
                                                 <Grid RenderTransformOrigin="0.5,0.5" VerticalAlignment="Center">
                                                     <Grid.RenderTransform><ScaleTransform x:Name="PillScale" ScaleX="1" ScaleY="1"/></Grid.RenderTransform>
                                                     <Border x:Name="Glow" CornerRadius="26" Background="{DynamicResource SeleneFocusBrush}" Opacity="0"><Border.Effect><DropShadowEffect ShadowDepth="0" BlurRadius="22" Color="{DynamicResource SeleneFocusColor}" Opacity="0.4"/></Border.Effect></Border>
-                                                    <Border x:Name="Pill" CornerRadius="26" Height="52" MinWidth="{TemplateBinding MinWidth}" Padding="{TemplateBinding Padding}" Background="{DynamicResource SeleneGlassBrush}" BorderBrush="{DynamicResource SeleneInk15Brush}" BorderThickness="1">
+                                                    <!-- liquid glass: the opaque button fill, a thin rim catching the light on two corners, then the label -->
+                                                    <Grid Height="52" MinWidth="{TemplateBinding MinWidth}">
+                                                        <Border x:Name="Pill" CornerRadius="26" Background="{DynamicResource SeleneButtonBrush}"/>
+                                                        <Border x:Name="Rim" CornerRadius="26" BorderThickness="{DynamicResource SeleneRimThickness}" BorderBrush="{DynamicResource SeleneLiquidRimBrush}" IsHitTestVisible="False"/>
                                                         <!-- the label inherits the Button's own Foreground (logical tree), not the presenter's: set it there -->
-                                                        <ContentPresenter x:Name="Label" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
+                                                        <ContentPresenter x:Name="Label" Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Grid>
                                                 </Grid>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsKeyboardFocused" Value="False">
@@ -766,7 +771,7 @@
                                                     </Trigger>
                                                     <Trigger Property="IsKeyboardFocused" Value="True">
                                                         <Setter TargetName="Pill" Property="Background" Value="{DynamicResource SeleneFocusBrush}"/>
-                                                        <Setter TargetName="Pill" Property="BorderBrush" Value="{DynamicResource SeleneFocusBrush}"/>
+                                                        <Setter TargetName="Rim" Property="BorderBrush" Value="{DynamicResource SeleneLiquidFocusRimBrush}"/>
                                                         <Setter Property="Foreground" Value="{DynamicResource SeleneOnFocusBrush}"/>
                                                         <Setter TargetName="Glow" Property="Opacity" Value="1"/>
                                                         <Trigger.EnterActions><BeginStoryboard><Storyboard>
@@ -1399,7 +1404,7 @@
                                                 </Grid>
 
                                                 <!-- running: "now playing" chip -->
-                                                <Border HorizontalAlignment="Left" Margin="2,24,0,0" CornerRadius="19" Padding="12,6,18,7" Background="{DynamicResource SeleneGlassLightBrush}" BorderBrush="{DynamicResource SeleneInk25Brush}" BorderThickness="1">
+                                                <Border HorizontalAlignment="Left" Margin="2,24,0,0" CornerRadius="19" Padding="12,6,18,7" Background="{DynamicResource SeleneGlassLightBrush}" BorderBrush="{DynamicResource SeleneLiquidRimBrush}" BorderThickness="{DynamicResource SeleneRimThickness}">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -1586,7 +1591,9 @@
                                                                         <ContentPresenter/>
                                                                     </Grid>
                                                                 </Border>
-                                                                <Border x:Name="TileRing" CornerRadius="17" Margin="-4" BorderBrush="{DynamicResource SeleneFocusBrush}" BorderThickness="3" Opacity="0" IsHitTestVisible="False"/>
+                                                                <!-- the liquid rim drawn over the picture (a border on the tile would shrink the picture inside its rounded clip) -->
+                                                                <Border Width="448" Height="252" CornerRadius="14" BorderBrush="{DynamicResource SeleneLiquidRimBrush}" BorderThickness="{DynamicResource SeleneRimThickness}" IsHitTestVisible="False"/>
+                                                                <Border x:Name="TileRing" CornerRadius="17" Margin="-4" BorderBrush="{DynamicResource SeleneFocusRingBrush}" BorderThickness="3" Opacity="0" IsHitTestVisible="False"/>
                                                             </Grid>
                                                             <ControlTemplate.Triggers>
                                                                 <Trigger Property="IsKeyboardFocused" Value="True">
@@ -1657,7 +1664,9 @@
                                                                         <ContentPresenter/>
                                                                     </Grid>
                                                                 </Border>
-                                                                <Border x:Name="NewsTileRing" CornerRadius="17" Margin="-4" BorderBrush="{DynamicResource SeleneFocusBrush}" BorderThickness="3" Opacity="0" IsHitTestVisible="False"/>
+                                                                <!-- the liquid rim drawn over the picture (a border on the tile would shrink the picture inside its rounded clip) -->
+                                                                <Border Width="448" Height="252" CornerRadius="14" BorderBrush="{DynamicResource SeleneLiquidRimBrush}" BorderThickness="{DynamicResource SeleneRimThickness}" IsHitTestVisible="False"/>
+                                                                <Border x:Name="NewsTileRing" CornerRadius="17" Margin="-4" BorderBrush="{DynamicResource SeleneFocusRingBrush}" BorderThickness="3" Opacity="0" IsHitTestVisible="False"/>
                                                             </Grid>
                                                             <ControlTemplate.Triggers>
                                                                 <Trigger Property="IsKeyboardFocused" Value="True">
@@ -1735,7 +1744,9 @@
                                                                         <ContentPresenter/>
                                                                     </Grid>
                                                                 </Border>
-                                                                <Border x:Name="YTtileRing" CornerRadius="17" Margin="-4" BorderBrush="{DynamicResource SeleneFocusBrush}" BorderThickness="3" Opacity="0" IsHitTestVisible="False"/>
+                                                                <!-- the liquid rim drawn over the picture (a border on the tile would shrink the picture inside its rounded clip) -->
+                                                                <Border Width="448" Height="252" CornerRadius="14" BorderBrush="{DynamicResource SeleneLiquidRimBrush}" BorderThickness="{DynamicResource SeleneRimThickness}" IsHitTestVisible="False"/>
+                                                                <Border x:Name="YTtileRing" CornerRadius="17" Margin="-4" BorderBrush="{DynamicResource SeleneFocusRingBrush}" BorderThickness="3" Opacity="0" IsHitTestVisible="False"/>
                                                             </Grid>
                                                             <ControlTemplate.Triggers>
                                                                 <Trigger Property="IsKeyboardFocused" Value="True">
@@ -1817,7 +1828,9 @@
                                                                         <ContentPresenter/>
                                                                     </Grid>
                                                                 </Border>
-                                                                <Border x:Name="BRtileRing" CornerRadius="17" Margin="-4" BorderBrush="{DynamicResource SeleneFocusBrush}" BorderThickness="3" Opacity="0" IsHitTestVisible="False"/>
+                                                                <!-- the liquid rim drawn over the picture (a border on the tile would shrink the picture inside its rounded clip) -->
+                                                                <Border Width="448" Height="252" CornerRadius="14" BorderBrush="{DynamicResource SeleneLiquidRimBrush}" BorderThickness="{DynamicResource SeleneRimThickness}" IsHitTestVisible="False"/>
+                                                                <Border x:Name="BRtileRing" CornerRadius="17" Margin="-4" BorderBrush="{DynamicResource SeleneFocusRingBrush}" BorderThickness="3" Opacity="0" IsHitTestVisible="False"/>
                                                             </Grid>
                                                             <ControlTemplate.Triggers>
                                                                 <Trigger Property="IsKeyboardFocused" Value="True">

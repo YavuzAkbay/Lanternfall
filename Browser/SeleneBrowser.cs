@@ -1348,6 +1348,12 @@ namespace SeleneBrowser
             header.Children.Add(bar);
             header.Children.Add(tabRow);
             Grid.SetRow(header, 0);
+            // the bars melt into the page instead of ending in a hard edge: a fade to the scrim at the seam here, and the start
+            // page fades in from the same scrim on its side (StartPage .ft / .fb)
+            var topShade = EdgeShade(true);
+            Grid.SetRow(topShade, 0);
+            BindTo(topShade, header);
+            root.Children.Add(topShade);
             root.Children.Add(header);
             topBar = header;
             headerFade = new Fader(header, -16);
@@ -1355,7 +1361,7 @@ namespace SeleneBrowser
             cursorHalo = new System.Windows.Shapes.Ellipse
             {
                 Width = 58, Height = 58,
-                Stroke = Theme.Accent, StrokeThickness = 3,
+                Stroke = Theme.FocusRing, StrokeThickness = 3,
                 Fill = Theme.Tint("SeleneFocusColor", "#FFFFFFFF", 0.16),
                 Opacity = 0, IsHitTestVisible = false
             };
@@ -1417,10 +1423,40 @@ namespace SeleneBrowser
             // the hints: bottom, 64 px side margins, 21 pt labels
             hintText.Margin = new Thickness(64, 6, 64, 30);
             Grid.SetRow(hintText, 2);
+            var bottomShade = EdgeShade(false);
+            Grid.SetRow(bottomShade, 2);
+            BindTo(bottomShade, hintText);
+            root.Children.Add(bottomShade);
             root.Children.Add(hintText);
             hintFade = new Fader(hintText, 14);
             UpdateAddress();
             return root;
+        }
+
+        // a fade from clear (away from the page) to the theme's scrim (at the page's edge)
+        private static Border EdgeShade(bool top)
+        {
+            var b = new Border { IsHitTestVisible = false };
+            Action paint = delegate
+            {
+                Color sc = Theme.ScrimColor;
+                var g = new LinearGradientBrush { StartPoint = new Point(0, top ? 0 : 1), EndPoint = new Point(0, top ? 1 : 0) };
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0, sc.R, sc.G, sc.B), 0));
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0x8C, sc.R, sc.G, sc.B), 0.55));
+                g.GradientStops.Add(new GradientStop(Color.FromArgb(0xFF, sc.R, sc.G, sc.B), 1));
+                g.Freeze();
+                b.Background = g;
+            };
+            paint();
+            Theme.Changed += paint;
+            return b;
+        }
+
+        // the shade shows and fades with its bar
+        private static void BindTo(FrameworkElement shade, FrameworkElement bar)
+        {
+            shade.SetBinding(UIElement.VisibilityProperty, new System.Windows.Data.Binding("Visibility") { Source = bar });
+            shade.SetBinding(UIElement.OpacityProperty, new System.Windows.Data.Binding("Opacity") { Source = bar });
         }
 
         // an icon button (its word when the theme's icon font is missing)
@@ -1471,17 +1507,24 @@ var NATIVE={A:1,BUTTON:1,INPUT:1,TEXTAREA:1,SELECT:1,SUMMARY:1};
 var hl=null, cur=null, enabled=true;
 
 // highlight box (never touches the page's own styles)
+var ring=null;
+function mixW(a,w){ var n=parseInt(a.slice(1,7),16), r=n>>16&255, g=n>>8&255, b=n&255; return 'rgb('+Math.round(r+(255-r)*w)+','+Math.round(g+(255-g)*w)+','+Math.round(b+(255-b)*w)+')'; }
+function ringBg(){ var a=ACCENT.slice(0,7); return 'linear-gradient(to bottom left,'+mixW(a,.55)+' 0%,'+a+' 10%,'+a+'99 30%,'+a+'73 50%,'+a+'99 70%,'+a+' 90%,'+mixW(a,.45)+' 100%)'; }
 function ensureHl(){
  if(hl&&hl.isConnected) return hl;
  hl=document.createElement('div');
- hl.style.cssText='position:fixed;z-index:2147483647;pointer-events:none;box-sizing:border-box;border:3px solid '+ACCENT+';border-radius:12px;box-shadow:0 0 18px '+ACCENT+'8C,0 0 0 1px '+SCRIM+',inset 0 0 0 1px '+SCRIM+';display:none;margin:0;padding:0;transition:left .14s cubic-bezier(.2,.7,.3,1),top .14s cubic-bezier(.2,.7,.3,1),width .14s cubic-bezier(.2,.7,.3,1),height .14s cubic-bezier(.2,.7,.3,1)';
+ hl.style.cssText='position:fixed;z-index:2147483647;pointer-events:none;box-sizing:border-box;border:3px solid transparent;border-radius:12px;box-shadow:0 0 18px '+ACCENT+'8C,0 0 0 1px '+SCRIM+',inset 0 0 0 1px '+SCRIM+';display:none;margin:0;padding:0;transition:left .14s cubic-bezier(.2,.7,.3,1),top .14s cubic-bezier(.2,.7,.3,1),width .14s cubic-bezier(.2,.7,.3,1),height .14s cubic-bezier(.2,.7,.3,1)';
+ // the liquid focus ring: the accent lit toward white on the curves (top-right, bottom-left), drawn only in the border ring
+ ring=document.createElement('div');
+ ring.style.cssText='position:absolute;left:-3px;top:-3px;right:-3px;bottom:-3px;border-radius:inherit;padding:3px;box-sizing:border-box;background:'+ringBg()+';-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude';
+ hl.appendChild(ring);
  document.documentElement.appendChild(hl);
  return hl;
 }
 // the theme changed: the ring takes the new accent at once
 function setTheme(a,s){
  ACCENT=a; SCRIM=s;
- if(hl){ hl.style.borderColor=ACCENT; hl.style.boxShadow='0 0 18px '+ACCENT+'8C,0 0 0 1px '+SCRIM+',inset 0 0 0 1px '+SCRIM; }
+ if(ring){ ring.style.background=ringBg(); } if(hl){ hl.style.boxShadow='0 0 18px '+ACCENT+'8C,0 0 0 1px '+SCRIM+',inset 0 0 0 1px '+SCRIM; }
 }
 // offset of a (possibly nested) frame document inside the top viewport
 function frameOffset(doc){

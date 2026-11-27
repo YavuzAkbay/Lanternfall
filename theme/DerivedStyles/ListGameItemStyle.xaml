@@ -52,7 +52,7 @@
                             </Border.OpacityMask>
                             <ContentPresenter />
                         </Border>
-                        <Border x:Name="MainBorder" BorderThickness="3" BorderBrush="{DynamicResource SeleneFocusBrush}" Margin="-6" Visibility="Collapsed" CornerRadius="16">
+                        <Border x:Name="MainBorder" BorderThickness="3" BorderBrush="{DynamicResource SeleneFocusRingBrush}" Margin="-6" Visibility="Collapsed" CornerRadius="16">
                             <Border.Effect>
                                 <DropShadowEffect ShadowDepth="0" Opacity="0.55" Color="{DynamicResource SeleneFocusColor}" RenderingBias="Performance" BlurRadius="18"/>
                             </Border.Effect>

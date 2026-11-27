@@ -365,7 +365,7 @@ namespace Selene
                 line.Children.Add(icon);
                 line.Children.Add(side);
                 line.Children.Add(words);
-                var row = new Border { Child = line, CornerRadius = new CornerRadius(16), Padding = new Thickness(16, 12, 24, 12), Margin = new Thickness(0, 0, 0, 8), BorderThickness = new Thickness(2), BorderBrush = Brushes.Transparent, Background = Ink.Brush("SeleneGlassColor", 0.72), Tag = it };
+                var row = new Border { Child = line, CornerRadius = new CornerRadius(16), Padding = new Thickness(16, 12, 24, 12), Margin = new Thickness(0, 0, 0, 8), BorderThickness = new Thickness(2), BorderBrush = Liquid.Rim, Background = Liquid.Fill(), Tag = it };
                 int clicked = rows.Count;
                 row.MouseLeftButtonUp += (sender, args) => { args.Handled = true; if (detail != null) return; inRecent = false; index = clicked; ShowRecentFocus(); ShowFocus(); Handle("A"); };   // a click opens it, as A (#40)
                 list.Children.Add(row);
@@ -419,7 +419,8 @@ namespace Selene
                 var t = (TextBlock)tabPills[i].Child;
                 t.Text = Tabs[i] + (set != null ? "  " + count : "");
                 bool on = i == tab;
-                tabPills[i].Background = on ? Ink.Brush("SeleneFocusColor") : Ink.Brush("SeleneInkColor", 0.1);
+                tabPills[i].Background = on ? Ink.Brush("SeleneFocusColor") : Liquid.Fill();
+                tabPills[i].BorderBrush = on ? Liquid.FocusRim : Liquid.Rim; tabPills[i].BorderThickness = Liquid.RimThickness;
                 t.Foreground = on ? Ink.Brush("SeleneOnFocusColor") : Ink.Brush("SeleneInkColor", 0.85);
             }
             sortLabel.Text = Sorts[sort];
@@ -431,8 +432,8 @@ namespace Selene
             for (int i = 0; i < rows.Count; i++)
             {
                 bool on = i == index && !inRecent;
-                rows[i].BorderBrush = on ? Ink.Brush("SeleneFocusColor") : Brushes.Transparent;
-                rows[i].Background = Ink.Brush("SeleneGlassColor", on ? 0.95 : 0.72);
+                rows[i].BorderBrush = on ? Liquid.FocusRing : Liquid.Rim;
+                rows[i].Background = Liquid.Fill();
             }
             if (index >= rows.Count) return;
             try

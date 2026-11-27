@@ -29,7 +29,7 @@ namespace Selene
             card = new Border
             {
                 Child = line, Width = 620, CornerRadius = new CornerRadius(20), Padding = new Thickness(28, 24, 28, 24),
-                Background = Ink.Brush("SeleneScrimColor", 0.78), BorderBrush = Ink.Brush("SeleneInkColor", 0.14), BorderThickness = new Thickness(1),
+                Background = Ink.Brush("SeleneScrimColor", 0.78), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness,
                 Effect = new System.Windows.Media.Effects.DropShadowEffect { ShadowDepth = 0, BlurRadius = 34, Opacity = 0.5, Color = Colors.Black },
                 HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 0, 120)
             };

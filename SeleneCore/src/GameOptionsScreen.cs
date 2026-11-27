@@ -536,7 +536,7 @@ namespace Selene
             words.Children.Add(new TextBlock { Text = e.Label, FontSize = 21, FontWeight = FontWeights.SemiBold, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor"), TextTrimming = TextTrimming.CharacterEllipsis });
             if (!string.IsNullOrEmpty(e.Sub)) words.Children.Add(new TextBlock { Text = e.Sub, FontSize = 15, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.6), TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(0, 3, 0, 0) });
             line.Children.Add(words);
-            var row = new Border { Child = line, CornerRadius = new CornerRadius(16), Padding = new Thickness(22, e.Sub != null ? 15 : 17, 24, e.Sub != null ? 15 : 17), Margin = new Thickness(0, 0, 0, 8), BorderThickness = new Thickness(2), BorderBrush = Brushes.Transparent, Background = Ink.Brush("SeleneGlassColor", 0.72), Tag = e };
+            var row = new Border { Child = line, CornerRadius = new CornerRadius(16), Padding = new Thickness(22, e.Sub != null ? 15 : 17, 24, e.Sub != null ? 15 : 17), Margin = new Thickness(0, 0, 0, 8), BorderThickness = new Thickness(2), BorderBrush = Liquid.Rim, Background = Liquid.Fill(), Tag = e };
             ShowToggle(row, false);
             return row;
         }
@@ -561,8 +561,8 @@ namespace Selene
             for (int i = 0; i < rows.Count; i++)
             {
                 bool on = i == l.Index;
-                rows[i].BorderBrush = on ? Ink.Brush("SeleneFocusColor") : Brushes.Transparent;
-                rows[i].Background = Ink.Brush("SeleneGlassColor", on ? 0.95 : 0.72);
+                rows[i].BorderBrush = on ? Liquid.FocusRing : Liquid.Rim;
+                rows[i].Background = Liquid.Fill();
             }
             if (l.Index >= rows.Count) return;
             try

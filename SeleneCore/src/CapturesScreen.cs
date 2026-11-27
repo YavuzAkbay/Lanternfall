@@ -561,7 +561,8 @@ namespace Selene
             for (int i = 0; i < tabs.Count; i++)
             {
                 bool on = i == filter;
-                tabs[i].Background = on ? (Brush)Ink.Brush("SeleneFocusColor", 0.95) : Brushes.Transparent;
+                tabs[i].Background = on ? (Brush)Ink.Brush("SeleneFocusColor", 0.95) : Liquid.Fill();
+                tabs[i].BorderBrush = on ? Liquid.FocusRim : Liquid.Rim; tabs[i].BorderThickness = Liquid.RimThickness;
                 var label = (TextBlock)tabs[i].Child;
                 label.Foreground = on ? Ink.Brush("SeleneOnFocusColor") : Ink.Brush("SeleneInkColor", 0.7);
                 label.FontWeight = on ? FontWeights.SemiBold : FontWeights.Normal;

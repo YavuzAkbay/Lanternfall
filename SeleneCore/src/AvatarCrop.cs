@@ -64,7 +64,7 @@ namespace Selene
             outside.Children.Add(new EllipseGeometry(new Rect(0, 0, Size, Size)));
             frame.Children.Add(new System.Windows.Shapes.Path { Data = outside, Fill = Ink.Brush("SeleneScrimColor", 0.7) });
             frame.Children.Add(new Ellipse { Stroke = Ink.Brush("SeleneFocusColor"), StrokeThickness = 3 });
-            var border = new Border { Child = frame, Margin = new Thickness(0, 36, 0, 0), BorderBrush = Ink.Brush("SeleneInkColor", 0.2), BorderThickness = new Thickness(1), HorizontalAlignment = HorizontalAlignment.Center };
+            var border = new Border { Child = frame, Margin = new Thickness(0, 36, 0, 0), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness, HorizontalAlignment = HorizontalAlignment.Center };
             col.Children.Add(border);
             Root.Children.Add(col);
             Root.Children.Add(Ui.Prompts(false, Ui.Prompt("B", "Cancel")));

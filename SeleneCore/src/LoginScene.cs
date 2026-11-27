@@ -1073,7 +1073,7 @@ namespace Selene
             Root.Children.Add(power.Root);
             menu = new Border
             {
-                CornerRadius = new CornerRadius(16), Background = Ink.Brush("SeleneGlassColor", 0.94), BorderBrush = Ink.Brush("SeleneInkColor", 0.2), BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(16), Background = Ink.Brush("SeleneGlassColor", 0.94), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness,
                 HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 0, 140),
                 Padding = new Thickness(8), Width = 320, Visibility = Visibility.Collapsed
             };
@@ -1239,6 +1239,7 @@ namespace Selene
             {
                 bool on = i == menuIndex;
                 menuRows[i].Background = on ? (Brush)Ink.Brush("SeleneFocusColor") : Brushes.Transparent;
+                menuRows[i].BorderBrush = on ? Liquid.FocusRim : Brushes.Transparent; menuRows[i].BorderThickness = Liquid.RimThickness;
                 foreach (TextBlock t in ((StackPanel)menuRows[i].Child).Children)
                     t.Foreground = on ? Ink.Brush("SeleneOnFocusColor") : Ink.Brush("SeleneInkColor");
             }

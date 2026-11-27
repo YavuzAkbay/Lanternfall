@@ -159,7 +159,7 @@ namespace Selene
                     var pill = Ui.Lifted(new Border
                     {
                         CornerRadius = new CornerRadius(22), Padding = new Thickness(24, 12, 28, 14), MaxWidth = 900,
-                        Background = Ink.Brush("SeleneGlassColor", 0.96), BorderBrush = Ink.Brush("SeleneInkColor", 0.30), BorderThickness = new Thickness(1),
+                        Background = Ink.Brush("SeleneGlassColor", 0.96), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness,
                         HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Top,
                         Child = row,
                         IsHitTestVisible = false

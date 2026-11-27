@@ -265,7 +265,7 @@ namespace Selene
                 panel.Children.Add(new Border
                 {
                     Child = line, CornerRadius = new CornerRadius(20), Padding = new Thickness(14, 7, 18, 8), Margin = new Thickness(0, 0, 10, 0),
-                    Background = Ink.Brush("SeleneInkColor", 0.1), BorderBrush = Ink.Brush("SeleneInkColor", 0.18), BorderThickness = new Thickness(1)
+                    Background = Ink.Brush("SeleneInkColor", 0.1), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness
                 });
             }
             if (names != null) names.Visibility = panel.Children.Count > 0 ? Visibility.Collapsed : Visibility.Visible;

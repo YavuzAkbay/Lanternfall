@@ -50,8 +50,28 @@ BRUSHES = [
     ("SeleneInk15Brush", "SeleneInkColor", 0.15), ("SeleneScrimBrush", "SeleneScrimColor", 1),
     ("SeleneScrim65Brush", "SeleneScrimColor", 0.65), ("SeleneScrim45Brush", "SeleneScrimColor", 0.45),
     ("SeleneGlassBrush", "SeleneGlassColor", 0.75), ("SeleneGlassSolidBrush", "SeleneGlassColor", 0.88),
-    ("SeleneGlassLightBrush", "SeleneGlassColor", 0.45), ("SeleneSuccessBrush", "SeleneSuccessColor", 1),
+    ("SeleneGlassLightBrush", "SeleneGlassColor", 0.45), ("SeleneGlassOpaqueBrush", "SeleneGlassColor", 1), ("SeleneButtonBrush", "SeleneButtonColor", 1), ("SeleneSuccessBrush", "SeleneSuccessColor", 1),
 ]
+
+
+def lift(color, white):
+    """color with `white` (0-1) of plain white laid over it, opaque: the liquid glass button fill"""
+    h = color.lstrip("#")[-6:]
+    return "#FF" + "".join("%02X" % round(int(h[i:i + 2], 16) * (1 - white) + 255 * white) for i in (0, 2, 4))
+
+
+def focus_ring(focus_c):
+    """the liquid focus ring (approved look, 2026-11-27): the focus color, lit toward white where the ring curves
+    (top-right, bottom-left) and softer along the straight edges"""
+    f = focus_c.lstrip("#")[-6:]
+    def at(alpha, white=0.0):
+        c = lift("#" + f, white)[3:] if white else f
+        return "#%02X%s" % (round(alpha * 255), c.upper())
+    stops = [(at(1, 0.55), 0), (at(1), 0.1), (at(0.6), 0.3), (at(0.45), 0.5), (at(0.6), 0.7), (at(1), 0.9), (at(1, 0.45), 1)]
+    out = ['    <LinearGradientBrush x:Key="SeleneFocusRingBrush" StartPoint="1,0" EndPoint="0,1">']
+    out += [f'        <GradientStop Color="{c}" Offset="{o}" />' for c, o in stops]
+    out.append("    </LinearGradientBrush>")
+    return out
 
 
 def luminance(color):
@@ -128,6 +148,8 @@ def xaml(theme_id, name, c, wallpaper):
         "SeleneInkColor": argb(ink),
         "SeleneScrimColor": argb(scrim),
         "SeleneGlassColor": argb(glass),
+        # buttons: opaque glass lifted by a little white (approved 2026-11-27; Constants.xaml SeleneLiquidFillBrush = #16 white)
+        "SeleneButtonColor": lift(glass, 0x16 / 255),
         "SeleneSuccessColor": argb(c.get("green", "#3DDC84")),
     })
     lines = [
@@ -149,6 +171,7 @@ def xaml(theme_id, name, c, wallpaper):
     lines += [
         f'    <DropShadowEffect x:Key="SeleneFocusGlow" ShadowDepth="0" BlurRadius="18" Color="{focus_c}" Opacity="0.35" />',
         f'    <DropShadowEffect x:Key="SeleneFocusGlowStrong" ShadowDepth="0" BlurRadius="18" Color="{focus_c}" Opacity="0.55" />',
+        *focus_ring(focus_c),
         '    <LinearGradientBrush x:Key="SelectionBrush" StartPoint="0.5,-0.5" EndPoint="1,1.5">',
         f'        <GradientStop Color="{focus_c}" Offset="0" />',
         f'        <GradientStop Color="{colors["GlyphColor"]}" Offset="1.0" />',

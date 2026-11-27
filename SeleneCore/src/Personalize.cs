@@ -463,10 +463,10 @@ namespace Selene
         private void Paint(int i)
         {
             bool on = options[i].On;
-            tiles[i].Face.Background = on ? Ink.Brush("SeleneFocusColor", 0.28) : Ink.Brush("SeleneGlassColor", 0.72);
-            tiles[i].Face.BorderBrush = on ? Ink.Brush("SeleneFocusColor") : Ink.Brush("SeleneInkColor", 0.16);
+            tiles[i].Face.Background = on ? Ink.Brush("SeleneFocusColor", 0.28) : Liquid.Fill();
+            tiles[i].Face.BorderBrush = on ? Liquid.FocusRing : Liquid.Rim;
             checks[i].Background = on ? Ink.Brush("SeleneFocusColor") : Brushes.Transparent;
-            checks[i].BorderBrush = on ? Ink.Brush("SeleneFocusColor") : new SolidColorBrush(Color.FromArgb(0x90, 0xFF, 0xFF, 0xFF));
+            checks[i].BorderBrush = on ? Liquid.FocusRing : new SolidColorBrush(Color.FromArgb(0x90, 0xFF, 0xFF, 0xFF));
             ((TextBlock)checks[i].Child).Foreground = on ? Ink.Brush("SeleneOnFocusColor") : Brushes.Transparent;
         }
 

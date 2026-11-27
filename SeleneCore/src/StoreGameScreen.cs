@@ -328,8 +328,8 @@ namespace Selene
         // the focused button is the filled one (the focus color), the others glass
         private static void PillLook(Border p, bool on)
         {
-            p.Background = on ? Ink.Brush("SeleneFocusColor") : Ink.Brush("SeleneInkColor", 0.12);
-            p.BorderBrush = on ? Ink.Brush("SeleneFocusColor") : Ink.Brush("SeleneInkColor", 0.2);
+            p.Background = on ? Ink.Brush("SeleneFocusColor") : Liquid.Fill();
+            p.BorderBrush = on ? Liquid.FocusRim : Liquid.Rim; p.BorderThickness = Liquid.RimThickness;
             var row = p.Child as StackPanel;
             if (row == null || row.Children.Count < 2) return;
             var dot = row.Children[0] as Grid;

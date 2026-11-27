@@ -41,7 +41,7 @@ namespace Selene
             panel = new Border
             {
                 Child = list, MinWidth = Math.Max(220, anchor.ActualWidth + 40), Padding = new Thickness(6), CornerRadius = new CornerRadius(18),
-                Background = Ink.Brush("SeleneGlassColor", 0.98), BorderBrush = Ink.Brush("SeleneInkColor", 0.14), BorderThickness = new Thickness(1),
+                Background = Ink.Brush("SeleneGlassColor", 0.98), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness,
                 Effect = new System.Windows.Media.Effects.DropShadowEffect { ShadowDepth = 0, BlurRadius = 36, Opacity = 0.55, Color = Colors.Black },
                 RenderTransformOrigin = new Point(1, 0.5), Opacity = 0
             };
@@ -86,6 +86,7 @@ namespace Selene
             {
                 bool on = i == index;
                 rows[i].Background = on ? Ink.Brush("SeleneFocusColor") : Brushes.Transparent;
+                rows[i].BorderBrush = on ? Liquid.FocusRim : Brushes.Transparent; rows[i].BorderThickness = Liquid.RimThickness;
                 var line = (DockPanel)rows[i].Child;
                 foreach (var t in line.Children)
                 {
@@ -127,7 +128,7 @@ namespace Selene
             value = new TextBlock { FontSize = 17, FontWeight = FontWeights.SemiBold, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor"), VerticalAlignment = VerticalAlignment.Center, MinWidth = 110, TextAlignment = TextAlignment.Center };
             pill.Children.Add(value);
             pill.Children.Add(new TextBlock { Text = Ui.Icon(0xE5CF /* expand_more */), FontFamily = Ui.Icons, FontSize = 22, Foreground = Ink.Brush("SeleneInkColor", 0.6), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(6, 0, 0, 0) });
-            return new Border { CornerRadius = new CornerRadius(17), Padding = new Thickness(14, 4, 10, 5), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(24, 0, 0, 0), Background = Ink.Brush("SeleneInkColor", 0.12), Child = pill };
+            return new Border { CornerRadius = new CornerRadius(17), Padding = new Thickness(14, 4, 10, 5), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(24, 0, 0, 0), Background = Liquid.Fill(), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness, Child = pill };
         }
     }
 

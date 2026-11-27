@@ -79,7 +79,7 @@ namespace Selene
                     content = text;
                 }
                 else content = ArticleRow(articles[i]);
-                var row = new Border { Child = content, Padding = manage ? new Thickness(22, 14, 22, 14) : new Thickness(14), Margin = new Thickness(0, 0, 0, manage ? 10 : 14), CornerRadius = new CornerRadius(manage ? 14 : 18), BorderThickness = new Thickness(2), Background = Ink.Brush("SeleneGlassColor", 0.8) };
+                var row = new Border { Child = content, Padding = manage ? new Thickness(22, 14, 22, 14) : new Thickness(14), Margin = new Thickness(0, 0, 0, manage ? 10 : 14), CornerRadius = new CornerRadius(manage ? 14 : 18), BorderThickness = new Thickness(2), BorderBrush = Liquid.Rim, Background = Liquid.Fill() };
                 if (i < 8) Ui.Rise(row, i * 45, 14, 260);
                 int selected = i; row.MouseLeftButtonUp += (s, e) => { index = selected; FocusRow(); Activate(); e.Handled = true; };
                 rows.Add(row); list.Children.Add(row);
@@ -153,7 +153,7 @@ namespace Selene
 
         private void FocusRow()
         {
-            for (int i = 0; i < rows.Count; i++) rows[i].BorderBrush = i == index ? Ink.Brush("SeleneFocusColor") : Brushes.Transparent;
+            for (int i = 0; i < rows.Count; i++) rows[i].BorderBrush = i == index ? Liquid.FocusRing : Liquid.Rim;
             if (index < rows.Count) rows[index].BringIntoView();
         }
         private bool Save()

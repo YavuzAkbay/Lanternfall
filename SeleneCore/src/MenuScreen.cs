@@ -157,7 +157,9 @@ namespace Selene
                 var dot = new Grid { Width = Ring, Height = Ring, VerticalAlignment = VerticalAlignment.Bottom, RenderTransformOrigin = new Point(0.5, 0.5) };
                 var scale = new ScaleTransform(1, 1);
                 dot.RenderTransform = scale;
-                var ring = new Ellipse { StrokeThickness = 3, Stroke = Ink.Brush("SeleneInkColor"), Fill = Ink.Brush("SeleneInkColor", 0.12), Opacity = 0 };
+                // the focused icon sits on a liquid glass button: the button fill inside the lit focus ring
+                var ring = new Ellipse { StrokeThickness = 3, Fill = Liquid.Fill(), Opacity = 0 };
+                ring.SetResourceReference(Shape.StrokeProperty, "SeleneFocusRingBrush");
                 dot.Children.Add(ring);
                 if (item.Picture != null) { item.Picture.HorizontalAlignment = HorizontalAlignment.Center; item.Picture.VerticalAlignment = VerticalAlignment.Center; dot.Children.Add(item.Picture); }
                 else dot.Children.Add(Ui.Glyph(item.Icon, Ui.Icons, 34, Ink.Brush("SeleneInkColor")));
@@ -255,7 +257,7 @@ namespace Selene
             powerList = new Border
             {
                 Child = list, CornerRadius = new CornerRadius(18), Padding = new Thickness(8), MinWidth = 240,
-                Background = Ink.Brush("SeleneGlassColor", 0.96), BorderBrush = Ink.Brush("SeleneInkColor", 0.16), BorderThickness = new Thickness(1),
+                Background = Ink.Brush("SeleneGlassColor", 0.96), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness,
                 HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Bottom,
                 Effect = new System.Windows.Media.Effects.DropShadowEffect { ShadowDepth = 0, BlurRadius = 40, Opacity = 0.5, Color = Colors.Black }
             };
@@ -277,6 +279,7 @@ namespace Selene
             {
                 bool on = i == powerIndex;
                 powerRows[i].Background = on ? Ink.Brush("SeleneFocusColor") : Brushes.Transparent;
+                powerRows[i].BorderBrush = on ? Liquid.FocusRim : Brushes.Transparent; powerRows[i].BorderThickness = Liquid.RimThickness;
                 foreach (var t in ((StackPanel)powerRows[i].Child).Children.OfType<TextBlock>())
                     t.Foreground = on ? Ink.Brush("SeleneOnFocusColor") : Ink.Brush("SeleneInkColor");
             }
@@ -364,7 +367,7 @@ namespace Selene
             soundList = new Border
             {
                 Child = list, CornerRadius = new CornerRadius(18), Padding = new Thickness(8),
-                Background = Ink.Brush("SeleneGlassColor", 0.96), BorderBrush = Ink.Brush("SeleneInkColor", 0.16), BorderThickness = new Thickness(1),
+                Background = Ink.Brush("SeleneGlassColor", 0.96), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness,
                 HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Bottom,
                 Effect = new System.Windows.Media.Effects.DropShadowEffect { ShadowDepth = 0, BlurRadius = 40, Opacity = 0.5, Color = Colors.Black }
             };
@@ -457,8 +460,8 @@ namespace Selene
             for (int i = 0; i < soundRows.Count; i++)
             {
                 bool on = i == soundIndex;
-                soundRows[i].Background = on ? Ink.Brush("SeleneInkColor", 0.1) : Brushes.Transparent;
-                soundRows[i].BorderBrush = on ? Ink.Brush("SeleneFocusColor") : Brushes.Transparent;
+                soundRows[i].Background = on ? Liquid.Fill() : Brushes.Transparent;
+                soundRows[i].BorderBrush = on ? Liquid.FocusRing : Liquid.Rim;
                 soundRows[i].BorderThickness = new Thickness(2);
             }
         }

@@ -16,6 +16,8 @@
          column for it is ~620 px wide, so the rows (at least 760) were cut off at the right, switches and focus ring included
          (#44); and over a bright home the rows were hard to read without a panel behind them -->
     <Style x:Key="SettingsSectionBorder" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{DynamicResource SeleneLiquidRimBrush}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource SeleneRimThickness}" />
         <Setter Property="Background" Value="{DynamicResource SeleneGlassSolidBrush}" />
         <Setter Property="CornerRadius" Value="24" />
         <Setter Property="Padding" Value="0,12,24,12" />
@@ -46,6 +48,8 @@
                         </Trigger>
                         <Trigger Property="IsFocused" Value="True">
                             <Setter TargetName="Fill" Property="Background" Value="{DynamicResource SeleneFocusBrush}" />
+                            <Setter TargetName="Fill" Property="BorderBrush" Value="{DynamicResource SeleneLiquidFocusRimBrush}" />
+                            <Setter TargetName="Fill" Property="BorderThickness" Value="{DynamicResource SeleneRimThickness}" />
                             <Setter TargetName="Content" Property="TextBlock.Foreground" Value="{DynamicResource SeleneOnFocusBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -81,7 +85,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="CheckBox">
-                    <Border x:Name="Row" CornerRadius="16" Padding="26,16,24,16" Background="{DynamicResource SeleneGlassLightBrush}" BorderThickness="2" BorderBrush="Transparent">
+                    <Border x:Name="Row" CornerRadius="16" Padding="26,16,24,16" Background="{DynamicResource SeleneButtonBrush}" BorderThickness="2" BorderBrush="{DynamicResource SeleneLiquidRimBrush}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -121,10 +125,10 @@
                             </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsFocused" Value="True">
-                            <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource SeleneFocusBrush}" />
+                            <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource SeleneFocusRingBrush}" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource SeleneFocusBrush}" />
+                            <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource SeleneFocusRingBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

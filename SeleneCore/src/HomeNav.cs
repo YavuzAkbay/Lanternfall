@@ -1905,7 +1905,7 @@ namespace Selene
                 layer.Children.Add(new Border
                 {
                     HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 60, 150),
-                    CornerRadius = new CornerRadius(16), Padding = new Thickness(18, 7, 18, 8), Background = Ink.Brush("SeleneGlassColor", 0.6),
+                    CornerRadius = new CornerRadius(16), Padding = new Thickness(18, 7, 18, 8), Background = Ink.Brush("SeleneGlassColor", 0.6), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness,
                     Child = new TextBlock { Text = "Example game art \u00B7 " + SampleName, FontSize = 18, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor", 0.85) }
                 });
             art.Children.Add(layer);

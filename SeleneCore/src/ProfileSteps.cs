@@ -282,7 +282,7 @@ namespace Selene
             box.Front.IsVisibleChanged += (s, e) => { if ((bool)e.NewValue) RefreshPreviewLater(); };   // a step coming up: up to date
             var frame = new Border
             {
-                Child = host, CornerRadius = new CornerRadius(16), BorderBrush = Ink.Brush("SeleneInkColor", 0.25), BorderThickness = new Thickness(1),
+                Child = host, CornerRadius = new CornerRadius(16), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness,
                 Effect = new System.Windows.Media.Effects.DropShadowEffect { ShadowDepth = 0, BlurRadius = 40, Opacity = 0.5, Color = Colors.Black },
                 // the frame and its shadow as one picture: a step sliding moved it without blurring the shadow again each frame
                 CacheMode = new BitmapCache(1.0)
@@ -393,8 +393,8 @@ namespace Selene
             else info.Children.Add(text("Clair Obscur: Expedition 33", 64, 1));
             var pills = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 34, 0, 0) };
             var play = text("Play", 24, 1); play.Foreground = PB("SeleneOnFocusColor"); play.FontWeight = FontWeights.SemiBold;
-            pills.Children.Add(new Border { Child = play, Padding = new Thickness(54, 12, 54, 14), CornerRadius = new CornerRadius(30), Background = PB("SeleneFocusColor"), Margin = new Thickness(0, 0, 16, 0) });
-            pills.Children.Add(new Border { Child = text("Details", 24, 1), Padding = new Thickness(44, 12, 44, 14), CornerRadius = new CornerRadius(30), Background = PB("SeleneGlassColor", 0.72), BorderBrush = PB("SeleneInkColor", 0.22), BorderThickness = new Thickness(1) });
+            pills.Children.Add(new Border { Child = play, Padding = new Thickness(54, 12, 54, 14), CornerRadius = new CornerRadius(30), Background = PB("SeleneFocusColor"), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness, Margin = new Thickness(0, 0, 16, 0) });
+            pills.Children.Add(new Border { Child = text("Details", 24, 1), Padding = new Thickness(44, 12, 44, 14), CornerRadius = new CornerRadius(30), Background = PB("SeleneButtonColor"), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness });
             info.Children.Add(pills);
             var line = text("Playtime 45 h   ·   Last played Today", 22, 0.85);
             line.Margin = new Thickness(4, 26, 0, 0);
@@ -489,7 +489,7 @@ namespace Selene
                 field = new Border
                 {
                     Width = 560, Height = 68, CornerRadius = new CornerRadius(34), Child = line, HorizontalAlignment = HorizontalAlignment.Center,
-                    Background = Ink.Brush("SeleneInkColor", 0.1), BorderBrush = Ink.Brush("SeleneFocusColor"), BorderThickness = new Thickness(2)
+                    Background = Ink.Brush("SeleneInkColor", 0.1), BorderBrush = Liquid.FocusRing, BorderThickness = new Thickness(2)
                 };
                 layout.Children.Add(field);
                 var board = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 40, 0, 0) };
@@ -894,7 +894,7 @@ namespace Selene
             {
                 var tile = new Tile(132, 76, 14, 5) { FocusScale = 1.08 };
                 tile.Face.Background = new SolidColorBrush(Parse(t.Background, Colors.Black));
-                tile.Face.BorderBrush = new SolidColorBrush(Color.FromArgb(0x40, 0xFF, 0xFF, 0xFF));
+                tile.Face.BorderBrush = Liquid.Rim;
                 var host = new Grid();
                 // the wallpaper goes under this; the theme's background color fades in from the left so "Aa" stays readable
                 var bg = Parse(t.Background, Colors.Black);
@@ -944,7 +944,7 @@ namespace Selene
                     var chip = new Border
                     {
                         Width = 46, Height = 26, CornerRadius = new CornerRadius(8), Margin = new Thickness(0, 0, 8, 0),
-                        Background = new SolidColorBrush(Parse(list[i], Colors.Gray)), BorderBrush = Ink.Brush("SeleneInkColor", 0.25), BorderThickness = new Thickness(1)
+                        Background = new SolidColorBrush(Parse(list[i], Colors.Gray)), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness
                     };
                     colors.Children.Add(chip);
                     Ui.Rise(chip, i * 25, 8, 200);

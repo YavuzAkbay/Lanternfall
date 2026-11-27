@@ -430,7 +430,7 @@ namespace Selene
             card = new Border
             {
                 Width = CardWidth, CornerRadius = new CornerRadius(12), Padding = new Thickness(16, 0, 16, 0), Height = CardHeight,
-                Background = glass, BorderBrush = Ink.Brush("SeleneInkColor", 0.08), BorderThickness = new Thickness(1),   // see-through
+                Background = glass, BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness,   // see-through
                 Effect = new System.Windows.Media.Effects.DropShadowEffect { ShadowDepth = 0, BlurRadius = 30, Opacity = 0.45, Color = Colors.Black },
                 Child = row, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top,   // (right: a card narrower than the layer keeps to the screen's edge)
                 Margin = new Thickness(ShadowRoom, ShadowRoom, Edge, ShadowRoom), RenderTransform = slideIn,

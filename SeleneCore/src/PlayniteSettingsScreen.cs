@@ -206,7 +206,7 @@ namespace Selene
                 var line = new StackPanel { Orientation = Orientation.Horizontal };
                 line.Children.Add(new TextBlock { Text = Ui.Icon(s.Icon), FontFamily = Ui.Icons, FontSize = 24, Foreground = Ink.Brush("SeleneInkColor"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 16, 0) });
                 line.Children.Add(new TextBlock { Text = s.Name, FontSize = 21, FontFamily = Ui.Body, Foreground = Ink.Brush("SeleneInkColor"), VerticalAlignment = VerticalAlignment.Center });
-                var row = new Border { Child = line, CornerRadius = new CornerRadius(14), Padding = new Thickness(20, 14, 20, 14), Margin = new Thickness(0, 0, 24, 6) };
+                var row = new Border { Child = line, CornerRadius = new CornerRadius(14), Padding = new Thickness(20, 14, 20, 14), Margin = new Thickness(0, 0, 24, 6), BorderThickness = Liquid.RimThickness, BorderBrush = Liquid.Rim, Background = Liquid.Fill() };
                 left.Children.Add(row);
                 groupRows.Add(row);
             }
@@ -301,7 +301,7 @@ namespace Selene
                 DockPanel.SetDock(track, Dock.Right);
                 line.Children.Add(track);
                 line.Children.Add(text);
-                var row = new Border { Child = line, CornerRadius = new CornerRadius(16), Padding = new Thickness(26, 18, 24, 18), Margin = new Thickness(0, 0, 0, 8), BorderThickness = new Thickness(2), BorderBrush = Brushes.Transparent, Background = Ink.Brush("SeleneInkColor", 0.06) };
+                var row = new Border { Child = line, CornerRadius = new CornerRadius(16), Padding = new Thickness(26, 18, 24, 18), Margin = new Thickness(0, 0, 0, 8), BorderThickness = new Thickness(2), BorderBrush = Liquid.Rim, Background = Liquid.Fill() };
                 optionList.Children.Add(row);
                 rows.Add(row); knobs.Add(knob); tracks.Add(track); values.Add(value); sliders.Add(slider);
                 ShowValue(i, false);
@@ -327,11 +327,13 @@ namespace Selene
             for (int i = 0; i < groupRows.Count; i++)
             {
                 bool chosen = i == group;
-                groupRows[i].Background = chosen ? (inOptions ? Ink.Brush("SeleneInkColor", 0.1) : Ink.Brush("SeleneFocusColor")) : Brushes.Transparent;
+                // liquid glass buttons: the chosen group lit (focus fill) or, while its options have the focus, a lighter glass
+                groupRows[i].Background = chosen ? (inOptions ? Ink.Brush("SeleneInkColor", 0.16) : Ink.Brush("SeleneFocusColor")) : Liquid.Fill();
+                groupRows[i].BorderBrush = chosen && !inOptions ? Liquid.FocusRim : Liquid.Rim;
                 foreach (var t in ((StackPanel)groupRows[i].Child).Children.OfType<TextBlock>())
                     t.Foreground = chosen && !inOptions ? Ink.Brush("SeleneOnFocusColor") : Ink.Brush("SeleneInkColor", chosen ? 1 : 0.7);
             }
-            for (int i = 0; i < rows.Count; i++) rows[i].BorderBrush = inOptions && i == index ? Ink.Brush("SeleneFocusColor") : Brushes.Transparent;
+            for (int i = 0; i < rows.Count; i++) rows[i].BorderBrush = inOptions && i == index ? Liquid.FocusRing : Liquid.Rim;
             // the focused row in view
             if (inOptions && index < rows.Count)
             {

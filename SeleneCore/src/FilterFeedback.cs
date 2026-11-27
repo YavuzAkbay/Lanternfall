@@ -88,7 +88,7 @@ namespace Selene
             pill = new Border
             {
                 Child = content, CornerRadius = new CornerRadius(20), Padding = new Thickness(10, 8, 10, 9),
-                Background = Ink.Brush("SeleneGlassColor", 0.62), BorderBrush = Ink.Brush("SeleneInkColor", 0.28), BorderThickness = new Thickness(1),
+                Background = Ink.Brush("SeleneGlassColor", 0.62), BorderBrush = Liquid.Rim, BorderThickness = Liquid.RimThickness,
                 HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Top,
                 Margin = new Thickness(0, -34, 0, 0), IsHitTestVisible = false, Opacity = 0, Visibility = Visibility.Collapsed
             };

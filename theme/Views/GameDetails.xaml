@@ -21,7 +21,7 @@
                             <Border.Effect><DropShadowEffect ShadowDepth="0" BlurRadius="22" Color="{DynamicResource SeleneFocusColor}" Opacity="0.4"/></Border.Effect>
                         </Border>
                         <!-- dark glass, like the home's pills -->
-                        <Border x:Name="Pill" CornerRadius="26" Height="52" MinWidth="{TemplateBinding MinWidth}" Padding="36,0" Background="{DynamicResource SeleneGlassBrush}" BorderBrush="{DynamicResource SeleneInk15Brush}" BorderThickness="1">
+                        <Border x:Name="Pill" CornerRadius="26" Height="52" MinWidth="{TemplateBinding MinWidth}" Padding="36,0" Background="{DynamicResource SeleneButtonBrush}" BorderBrush="{DynamicResource SeleneLiquidRimBrush}" BorderThickness="{DynamicResource SeleneRimThickness}">
                             <ContentPresenter x:Name="Label" HorizontalAlignment="Center" VerticalAlignment="Center"
                                               TextElement.Foreground="{DynamicResource SeleneInkBrush}" TextElement.FontSize="21"
                                               TextElement.FontFamily="Segoe UI Variable Display, Segoe UI"/>

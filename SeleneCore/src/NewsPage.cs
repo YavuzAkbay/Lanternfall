@@ -177,7 +177,8 @@ namespace Selene
             for (int i = 0; i < pills.Count; i++)
             {
                 bool on = (i == 0 && filter.Length == 0) || (i > 0 && sourceNames[i - 1] == filter);
-                pills[i].Background = on ? Ink.Brush("SeleneFocusColor") : Brushes.Transparent;
+                pills[i].Background = on ? Ink.Brush("SeleneFocusColor") : Liquid.Fill();
+                pills[i].BorderBrush = on ? Liquid.FocusRim : Liquid.Rim; pills[i].BorderThickness = Liquid.RimThickness;
                 ((TextBlock)pills[i].Child).Foreground = on ? Ink.Brush("SeleneOnFocusColor") : Ink.Brush("SeleneInkColor", 0.7);
             }
         }

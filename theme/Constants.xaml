@@ -61,6 +61,7 @@
     <Color x:Key="SeleneInkColor">#FFFFFFFF</Color>        <!-- text and icons over game art -->
     <Color x:Key="SeleneScrimColor">#FF000000</Color>      <!-- darkens art under text (lightens it in light themes) -->
     <Color x:Key="SeleneGlassColor">#FF14181F</Color>      <!-- glass panels and cards -->
+    <Color x:Key="SeleneButtonColor">#FF282C32</Color>     <!-- buttons: opaque glass lifted by #16 white (tools/make_palettes.py lift) -->
     <Color x:Key="SeleneSuccessColor">#FF3DDC84</Color>
 
     <SolidColorBrush x:Key="SeleneFocusBrush" Color="{DynamicResource SeleneFocusColor}" />
@@ -76,7 +77,48 @@
     <SolidColorBrush x:Key="SeleneGlassBrush" Color="{DynamicResource SeleneGlassColor}" Opacity="0.75" />
     <SolidColorBrush x:Key="SeleneGlassSolidBrush" Color="{DynamicResource SeleneGlassColor}" Opacity="0.88" />
     <SolidColorBrush x:Key="SeleneGlassLightBrush" Color="{DynamicResource SeleneGlassColor}" Opacity="0.45" />
+    <SolidColorBrush x:Key="SeleneGlassOpaqueBrush" Color="{DynamicResource SeleneGlassColor}" />
+    <SolidColorBrush x:Key="SeleneButtonBrush" Color="{DynamicResource SeleneButtonColor}" />
     <SolidColorBrush x:Key="SeleneSuccessBrush" Color="{DynamicResource SeleneSuccessColor}" />
+
+    <!-- Liquid glass (approved 2026-11-27): every button is SeleneButtonBrush (opaque) with the rim; every container gets
+         at least the rim. The rim is a thin line of plain white that catches the light on the curved ends (top-right,
+         bottom-left) and all but vanishes along straight edges, so it works over every color theme. Code uses the same
+         values: SeleneCore Liquid (Ui.cs), Browser Theme.Rim. Reference with DynamicResource. -->
+    <sys:Double x:Key="SeleneRimWidth">1.25</sys:Double>
+    <Thickness x:Key="SeleneRimThickness">1.25</Thickness>
+    <SolidColorBrush x:Key="SeleneLiquidFillBrush" Color="#16FFFFFF" />
+    <!-- the rim of a FOCUSED button (a light, solid focus fill): bright ends, a faint dark line between them, so the edge
+         still reads on a pale fill -->
+    <LinearGradientBrush x:Key="SeleneLiquidFocusRimBrush" StartPoint="1,0" EndPoint="0,1">
+        <GradientStop Color="#FFFFFFFF" Offset="0" />
+        <GradientStop Color="#CCFFFFFF" Offset="0.07" />
+        <GradientStop Color="#26000000" Offset="0.2" />
+        <GradientStop Color="#33000000" Offset="0.5" />
+        <GradientStop Color="#26000000" Offset="0.8" />
+        <GradientStop Color="#CCFFFFFF" Offset="0.93" />
+        <GradientStop Color="#F0FFFFFF" Offset="1" />
+    </LinearGradientBrush>
+    <!-- the focus ring around a focused card/tile/avatar: the focus color lit toward white on the curves (each palette
+         writes its own, tools/make_palettes.py focus_ring; this is Lanternfall's white) -->
+    <LinearGradientBrush x:Key="SeleneFocusRingBrush" StartPoint="1,0" EndPoint="0,1">
+        <GradientStop Color="#FFFFFFFF" Offset="0" />
+        <GradientStop Color="#FFFFFFFF" Offset="0.1" />
+        <GradientStop Color="#99FFFFFF" Offset="0.3" />
+        <GradientStop Color="#73FFFFFF" Offset="0.5" />
+        <GradientStop Color="#99FFFFFF" Offset="0.7" />
+        <GradientStop Color="#FFFFFFFF" Offset="0.9" />
+        <GradientStop Color="#FFFFFFFF" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="SeleneLiquidRimBrush" StartPoint="1,0" EndPoint="0,1">
+        <GradientStop Color="#99FFFFFF" Offset="0" />
+        <GradientStop Color="#66FFFFFF" Offset="0.07" />
+        <GradientStop Color="#1AFFFFFF" Offset="0.2" />
+        <GradientStop Color="#0CFFFFFF" Offset="0.5" />
+        <GradientStop Color="#1AFFFFFF" Offset="0.8" />
+        <GradientStop Color="#66FFFFFF" Offset="0.93" />
+        <GradientStop Color="#8CFFFFFF" Offset="1" />
+    </LinearGradientBrush>
     <sys:String x:Key="SeleneStatGames">-</sys:String>
     <sys:String x:Key="SeleneBrowserStatBookmarks">-</sys:String>
     <sys:String x:Key="SeleneBrowserStatLast">-</sys:String>
